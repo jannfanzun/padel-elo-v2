@@ -14,7 +14,7 @@ exports.getDashboard = async (req, res) => {
     const gameCount = await Game.countDocuments();
     const pendingRequestsCount = await RegistrationRequest.countDocuments({ status: 'pending' });
     
-    // Get recent games
+    // Get Letzte Spiele
     const recentGames = await Game.find()
       .sort({ createdAt: -1 })
       .limit(5)

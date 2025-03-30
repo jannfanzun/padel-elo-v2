@@ -13,7 +13,7 @@ exports.getProfile = async (req, res) => {
     const user = req.user;
     const rank = await user.getRank();
     
-    // Get recent games
+    // Get Letzte Spiele
     const recentGames = await Game.find({
       $or: [
         { 'team1.player': userId },

@@ -7,83 +7,83 @@
 </div>
 
 <div class="row mb-4">
-  <!-- Stats Cards -->
-  <div class="col-md-4 mb-3 mb-md-0">
-    <div class="card text-white bg-primary h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="card-title mb-0">Total Players</h5>
-            <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
+    <!-- Statistik-Karten -->
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="card text-white bg-primary h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title mb-0">Gesamtanzahl Spieler</h5>
+              <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
+            </div>
+            <i class="fas fa-users fa-3x opacity-50"></i>
           </div>
-          <i class="fas fa-users fa-3x opacity-50"></i>
+          <a href="/admin/users" class="text-white text-decoration-none stretched-link">
+            <small>Spieler verwalten <i class="fas fa-arrow-right ms-1"></i></small>
+          </a>
         </div>
-        <a href="/admin/users" class="text-white text-decoration-none stretched-link">
-          <small>Manage Players <i class="fas fa-arrow-right ms-1"></i></small>
-        </a>
       </div>
     </div>
-  </div>
-  
-  <div class="col-md-4 mb-3 mb-md-0">
-    <div class="card text-white bg-success h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="card-title mb-0">Total Games</h5>
-            <p class="card-text display-4 fw-bold"><%= stats.gameCount %></p>
+    
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="card text-white bg-success h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title mb-0">Gesamtanzahl Spiele</h5>
+              <p class="card-text display-4 fw-bold"><%= stats.gameCount %></p>
+            </div>
+            <i class="fas fa-table-tennis fa-3x opacity-50"></i>
           </div>
-          <i class="fas fa-table-tennis fa-3x opacity-50"></i>
+          <a href="/admin/games" class="text-white text-decoration-none stretched-link">
+            <small>Spiele verwalten <i class="fas fa-arrow-right ms-1"></i></small>
+          </a>
         </div>
-        <a href="/admin/games" class="text-white text-decoration-none stretched-link">
-          <small>Manage Games <i class="fas fa-arrow-right ms-1"></i></small>
-        </a>
       </div>
     </div>
-  </div>
-  
-  <div class="col-md-4">
-    <div class="card text-white bg-warning h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="card-title mb-0">Pending Requests</h5>
-            <p class="card-text display-4 fw-bold"><%= stats.pendingRequestsCount %></p>
+    
+    <div class="col-md-4">
+      <div class="card text-white bg-warning h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title mb-0">Ausstehende Anfragen</h5>
+              <p class="card-text display-4 fw-bold"><%= stats.pendingRequestsCount %></p>
+            </div>
+            <i class="fas fa-user-plus fa-3x opacity-50"></i>
           </div>
-          <i class="fas fa-user-plus fa-3x opacity-50"></i>
+          <a href="/admin/registration-requests" class="text-white text-decoration-none stretched-link">
+            <small>Anfragen überprüfen <i class="fas fa-arrow-right ms-1"></i></small>
+          </a>
         </div>
-        <a href="/admin/registration-requests" class="text-white text-decoration-none stretched-link">
-          <small>Review Requests <i class="fas fa-arrow-right ms-1"></i></small>
-        </a>
       </div>
     </div>
-  </div>
-</div>
+  </div>  
 
 <div class="row">
-  <!-- Recent Games -->
+  <!-- Letzte Spiele -->
   <div class="col-lg-6 mb-4">
     <div class="card shadow-sm h-100">
       <div class="card-header bg-white">
         <div class="d-flex justify-content-between align-items-center">
-          <h3 class="h5 mb-0">Recent Games</h3>
-          <a href="/admin/games" class="btn btn-sm btn-outline-primary">View All</a>
+          <h3 class="h5 mb-0">Letzte Spiele</h3>
+          <a href="/admin/games" class="btn btn-sm btn-outline-primary">Alle anzeigen</a>
         </div>
       </div>
       <div class="card-body p-0">
         <% if (recentGames.length === 0) { %>
           <div class="p-4 text-center">
-            <p class="text-muted mb-0">No games recorded yet.</p>
+            <p class="text-muted mb-0">Keine Spiele gefunden.</p>
           </div>
         <% } else { %>
           <div class="table-responsive">
             <table class="table table-hover mb-0">
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th>Datum</th>
                   <th>Teams</th>
-                  <th>Score</th>
-                  <th>Actions</th>
+                  <th>Resultat</th>
+                  <th>Aktionen</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,25 +126,25 @@
     <div class="card shadow-sm h-100">
       <div class="card-header bg-white">
         <div class="d-flex justify-content-between align-items-center">
-          <h3 class="h5 mb-0">Recent Players</h3>
-          <a href="/admin/users" class="btn btn-sm btn-outline-primary">View All</a>
+          <h3 class="h5 mb-0">Aktuelle Spieler</h3>
+          <a href="/admin/users" class="btn btn-sm btn-outline-primary">Alle ansehen</a>
         </div>
       </div>
       <div class="card-body p-0">
         <% if (recentUsers.length === 0) { %>
           <div class="p-4 text-center">
-            <p class="text-muted mb-0">No players registered yet.</p>
+            <p class="text-muted mb-0">Noch keine Spieler registriert.</p>
           </div>
         <% } else { %>
           <div class="table-responsive">
             <table class="table table-hover mb-0">
               <thead>
                 <tr>
-                  <th>Username</th>
+                  <th>Benutzername</th>
                   <th>Email</th>
                   <th>ELO</th>
-                  <th>Registered</th>
-                  <th>Actions</th>
+                  <th>Registrierung</th>
+                  <th>Aktionen</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,16 +175,16 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Confirm Deletion</h5>
+        <h5 class="modal-title">Löschung bestätigen</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p>Are you sure you want to delete this game? This action will revert ELO changes and cannot be undone.</p>
+        <p>Bist du sicher, dass du dieses Spiel löschen möchtest? Diese Aktion setzt die ELO-Änderungen zurück und kann nicht rückgängig gemacht werden.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <form id="deleteGameForm" method="POST" action="">
-          <button type="submit" class="btn btn-danger">Delete Game</button>
+          <button type="submit" class="btn btn-danger">Spiel löschen</button>
         </form>
       </div>
     </div>

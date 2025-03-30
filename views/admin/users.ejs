@@ -1,138 +1,138 @@
 <%- include('../partials/header') %>
 
 <div class="row mb-4">
-  <div class="col-md-12">
-    <div class="d-flex justify-content-between align-items-center">
-      <h2>Manage Players</h2>
-      <a href="/admin/dashboard" class="btn btn-secondary">
-        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-      </a>
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2>Spieler verwalten</h2>
+        <a href="/admin/dashboard" class="btn btn-secondary">
+          <i class="fas fa-arrow-left me-2"></i>Zurück zum Dashboard
+        </a>
+      </div>
     </div>
   </div>
-</div>
-
-<div class="row mb-4">
-  <div class="col-md-12">
-    <div class="card shadow-sm">
-      <div class="card-header bg-white">
-        <form method="GET" action="/admin/users" class="row g-2">
-          <div class="col-md-8">
-            <div class="input-group">
-              <span class="input-group-text"><i class="fas fa-search"></i></span>
-              <input type="text" class="form-control" name="search" placeholder="Search by username or email" value="<%= search || '' %>">
+  
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <form method="GET" action="/admin/users" class="row g-2">
+            <div class="col-md-8">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" name="search" placeholder="Suche nach Benutzername oder E-Mail" value="<%= search || '' %>">
+              </div>
             </div>
-          </div>
-          <div class="col-md-4 d-flex">
-            <button type="submit" class="btn btn-primary me-2">Search</button>
-            <a href="/admin/users" class="btn btn-outline-secondary">Reset</a>
-          </div>
-        </form>
+            <div class="col-md-4 d-flex">
+              <button type="submit" class="btn btn-primary me-2">Suchen</button>
+              <a href="/admin/users" class="btn btn-outline-secondary">Zurücksetzen</a>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
-
-<div class="row">
-  <div class="col-md-12">
-    <div class="card shadow">
-      <div class="card-header bg-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <h3 class="h5 mb-0">Players</h3>
-          <span class="badge bg-primary"><%= users.length %> players</span>
-        </div>
-      </div>
-      <div class="card-body p-0">
-        <% if (users.length === 0) { %>
-          <div class="p-4 text-center">
-            <p class="text-muted mb-0">
-              <% if (search) { %>
-                No players found matching "<%= search %>".
-              <% } else { %>
-                No players found.
-              <% } %>
-            </p>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow">
+        <div class="card-header bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0">Spieler</h3>
+            <span class="badge bg-primary"><%= users.length %> Spieler</span>
           </div>
-        <% } else { %>
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>ELO Rating</th>
-                  <th>Registration Date</th>
-                  <th>Last Activity</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% users.forEach(user => { %>
-                  <% 
-                    const sevenDaysAgo = new Date();
-                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                    const isInactive = user.lastActivity < sevenDaysAgo;
-                  %>
+        </div>
+        <div class="card-body p-0">
+          <% if (users.length === 0) { %>
+            <div class="p-4 text-center">
+              <p class="text-muted mb-0">
+                <% if (search) { %>
+                  Keine Spieler gefunden für "<%= search %>".
+                <% } else { %>
+                  Keine Spieler gefunden.
+                <% } %>
+              </p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
                   <tr>
-                    <td><%= user.username %></td>
-                    <td><%= user.email %></td>
-                    <td><%= user.eloRating %></td>
-                    <td><%= moment(user.createdAt).format('MMM D, YYYY') %></td>
-                    <td><%= moment(user.lastActivity).fromNow() %></td>
-                    <td>
-                      <% if (isInactive) { %>
-                        <span class="badge bg-warning text-dark">Inactive</span>
-                      <% } else { %>
-                        <span class="badge bg-success">Active</span>
-                      <% } %>
-                    </td>
-                    <td>
-                      <a href="/admin/games?userId=<%= user._id %>" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-history"></i> Games
-                      </a>
-                      <button class="btn btn-sm btn-outline-danger" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#deleteUserModal"
-                        data-id="<%= user._id %>"
-                        data-username="<%= user.username %>">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </td>
+                    <th>Benutzername</th>
+                    <th>E-Mail</th>
+                    <th>ELO-Wertung</th>
+                    <th>Registrierungsdatum</th>
+                    <th>Letzte Aktivität</th>
+                    <th>Status</th>
+                    <th>Aktionen</th>
                   </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
-        <% } %>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Delete User Modal -->
-<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Confirm Deletion</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Are you sure you want to delete the user <strong id="userToDelete"></strong>?</p>
-        <div class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          This action cannot be undone. You must delete all games associated with this user first.
+                </thead>
+                <tbody>
+                  <% users.forEach(user => { %>
+                    <% 
+                      const sevenDaysAgo = new Date();
+                      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                      const isInactive = user.lastActivity < sevenDaysAgo;
+                    %>
+                    <tr>
+                      <td><%= user.username %></td>
+                      <td><%= user.email %></td>
+                      <td><%= user.eloRating %></td>
+                      <td><%= moment(user.createdAt).format('MMM D, YYYY') %></td>
+                      <td><%= moment(user.lastActivity).fromNow() %></td>
+                      <td>
+                        <% if (isInactive) { %>
+                          <span class="badge bg-warning text-dark">Inaktiv</span>
+                        <% } else { %>
+                          <span class="badge bg-success">Aktiv</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <a href="/admin/games?userId=<%= user._id %>" class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-history"></i> Spiele
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#deleteUserModal"
+                          data-id="<%= user._id %>"
+                          data-username="<%= user.username %>">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <form id="deleteUserForm" method="POST" action="">
-          <button type="submit" class="btn btn-danger">Delete User</button>
-        </form>
-      </div>
     </div>
   </div>
-</div>
+  
+  <!-- Benutzer löschen Modal -->
+  <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Löschung bestätigen</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+        </div>
+        <div class="modal-body">
+          <p>Sind Sie sicher, dass Sie den Benutzer <strong id="userToDelete"></strong> löschen möchten?</p>
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Diese Aktion kann nicht rückgängig gemacht werden. Sie müssen zuerst alle mit diesem Benutzer verknüpften Spiele löschen.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+          <form id="deleteUserForm" method="POST" action="">
+            <button type="submit" class="btn btn-danger">Benutzer löschen</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>  
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
