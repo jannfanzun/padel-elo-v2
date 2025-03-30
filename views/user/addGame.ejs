@@ -23,18 +23,24 @@
                   </div>
                 </div>
                 
-                <!-- Teammate (Player 2) -->
-                <div class="col-md-6">
-                  <label for="teammate" class="form-label">Teamkollege</label>
-                  <select class="form-select" id="teammate" name="teammate" required>
-                    <option value="" selected disabled>Teamkollege auswählen</option>
-                    <% users.forEach(player => { %>
-                      <% if (player._id.toString() !== user._id.toString()) { %>
-                        <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
-                      <% } %>
-                    <% }) %>
-                  </select>
+              <!-- Teammate (Player 2) -->
+              <div class="col-md-6">
+                <label for="teammateSearch" class="form-label">Teammate</label>
+                <div class="autocomplete-container">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control player-search" id="teammateSearch" placeholder="Spieler suchen..." autocomplete="off">
+                  </div>
+                  <input type="hidden" id="teammate" name="teammate" required>
+                  <div class="autocomplete-items" id="teammateItems"></div>
                 </div>
+                <div id="teammateSelected" class="selected-player mt-2 d-none">
+                  <span class="badge bg-primary p-2">
+                    <span id="teammateText"></span>
+                    <i class="fas fa-times ms-2 remove-player" data-target="teammate"></i>
+                  </span>
+                </div>
+              </div>
               </div>
             </div>
             
@@ -44,31 +50,44 @@
               <hr>
               
               <div class="row g-3">
-                <!-- Opponent 1 -->
-                <div class="col-md-6">
-                  <label for="opponent1" class="form-label">Gegner 1</label>
-                  <select class="form-select" id="opponent1" name="opponent1" required>
-                    <option value="" selected disabled>Gegner 1 auswählen</option>
-                    <% users.forEach(player => { %>
-                      <% if (player._id.toString() !== user._id.toString()) { %>
-                        <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
-                      <% } %>
-                    <% }) %>
-                  </select>
+
+              <!-- Opponent 1 -->
+              <div class="col-md-6">
+                <label for="opponent1Search" class="form-label">Opponent 1</label>
+                <div class="autocomplete-container">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control player-search" id="opponent1Search" placeholder="Spieler suchen..." autocomplete="off">
+                  </div>
+                  <input type="hidden" id="opponent1" name="opponent1" required>
+                  <div class="autocomplete-items" id="opponent1Items"></div>
                 </div>
-                
-                <!-- Opponent 2 -->
-                <div class="col-md-6">
-                  <label for="opponent2" class="form-label">Gegner 2</label>
-                  <select class="form-select" id="opponent2" name="opponent2" required>
-                    <option value="" selected disabled>Gegner 2 auswählen</option>
-                    <% users.forEach(player => { %>
-                      <% if (player._id.toString() !== user._id.toString()) { %>
-                        <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
-                      <% } %>
-                    <% }) %>
-                  </select>
+                <div id="opponent1Selected" class="selected-player mt-2 d-none">
+                  <span class="badge bg-primary p-2">
+                    <span id="opponent1Text"></span>
+                    <i class="fas fa-times ms-2 remove-player" data-target="opponent1"></i>
+                  </span>
                 </div>
+              </div>
+              
+              <!-- Opponent 2 -->
+              <div class="col-md-6">
+                <label for="opponent2Search" class="form-label">Opponent 2</label>
+                <div class="autocomplete-container">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control player-search" id="opponent2Search" placeholder="Spieler suchen..." autocomplete="off">
+                  </div>
+                  <input type="hidden" id="opponent2" name="opponent2" required>
+                  <div class="autocomplete-items" id="opponent2Items"></div>
+                </div>
+                <div id="opponent2Selected" class="selected-player mt-2 d-none">
+                  <span class="badge bg-primary p-2">
+                    <span id="opponent2Text"></span>
+                    <i class="fas fa-times ms-2 remove-player" data-target="opponent2"></i>
+                  </span>
+                </div>
+              </div>
               </div>
             </div>
             
@@ -120,129 +139,224 @@
     </div>
   </div>  
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('addGameForm');
-    const teammate = document.getElementById('teammate');
-    const opponent1 = document.getElementById('opponent1');
-    const opponent2 = document.getElementById('opponent2');
-    const team1Score = document.getElementById('team1Score');
-    const team2Score = document.getElementById('team2Score');
-    const scoreValidationError = document.getElementById('scoreValidationError');
-    const submitButton = document.getElementById('submitButton');
-    
-    // Validation function
-    function validateForm() {
-      // Reset validation errors
-      scoreValidationError.classList.add('d-none');
-      
-      // Check for duplicate player selections
-      const players = [
-        teammate.value,
-        opponent1.value,
-        opponent2.value
-      ];
-      
-      const uniquePlayers = new Set(players.filter(p => p));
-      if (uniquePlayers.size !== players.filter(p => p).length) {
-        return false;
-      }
-      
-      // Validate scores
-      const score1 = parseInt(team1Score.value);
-      const score2 = parseInt(team2Score.value);
-      
-      if (isNaN(score1) || isNaN(score2)) {
-        return true; // Let the server handle this
-      }
-      
-      // Check for invalid score combinations
-      if ((score1 === score2) || 
-          (score1 === 0 && score2 === 0) || 
-          (score1 === 7 && score2 === 7)) {
-        scoreValidationError.classList.remove('d-none');
-        return false;
-      }
-      
-      return true;
+  <style>
+    .autocomplete-container {
+      position: relative;
+      width: 100%;
     }
     
-    // Event listeners for score validation
-    team1Score.addEventListener('change', validateForm);
-    team2Score.addEventListener('change', validateForm);
+    .autocomplete-items {
+      position: absolute;
+      border: 1px solid #ddd;
+      border-top: none;
+      z-index: 99;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 250px;
+      overflow-y: auto;
+      border-radius: 0 0 4px 4px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      background-color: #fff;
+    }
     
-    // Form submission
-    form.addEventListener('submit', function(e) {
-      if (!validateForm()) {
-        e.preventDefault();
-      } else {
-        // Disable submit button to prevent double submission
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Lädt...';
+    .autocomplete-items div {
+      padding: 10px;
+      cursor: pointer;
+      background-color: #fff;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .autocomplete-items div:hover {
+      background-color: #e9e9e9;
+    }
+    
+    .autocomplete-active {
+      background-color: #0d6efd !important;
+      color: #ffffff;
+    }
+    
+    .selected-player {
+      margin-top: 5px;
+    }
+    
+    .remove-player {
+      cursor: pointer;
+    }
+    
+    .badge {
+      font-size: 14px;
+    }
+  </style>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('addGameForm');
+      const team1Score = document.getElementById('team1Score');
+      const team2Score = document.getElementById('team2Score');
+      const scoreValidationError = document.getElementById('scoreValidationError');
+      const submitButton = document.getElementById('submitButton');
+      
+      // Player data from server
+      const players = [
+        <% users.forEach(player => { %>
+          <% if (player._id.toString() !== user._id.toString()) { %>
+            {
+              id: "<%= player._id %>",
+              username: "<%= player.username %>",
+              eloRating: <%= player.eloRating %>
+            },
+          <% } %>
+        <% }); %>
+      ];
+      
+      // Selected players
+      const selectedPlayers = {
+        teammate: null,
+        opponent1: null,
+        opponent2: null
+      };
+      
+      // Initialize autocomplete for each player field
+      setupAutocomplete('teammate');
+      setupAutocomplete('opponent1');
+      setupAutocomplete('opponent2');
+      
+      // Setup autocomplete for a specific field
+      function setupAutocomplete(fieldId) {
+        const searchInput = document.getElementById(`${fieldId}Search`);
+        const hiddenInput = document.getElementById(fieldId);
+        const itemsContainer = document.getElementById(`${fieldId}Items`);
+        const selectedContainer = document.getElementById(`${fieldId}Selected`);
+        const selectedText = document.getElementById(`${fieldId}Text`);
+        
+        // Add input event listener
+        searchInput.addEventListener('input', function() {
+          const value = this.value.toLowerCase();
+          
+          // Clear previous items
+          itemsContainer.innerHTML = '';
+          
+          if (value.length < 1) {
+            return false;
+          }
+          
+          // Filter available players
+          const availablePlayers = players.filter(player => {
+            // Skip already selected players
+            if (
+              (selectedPlayers.teammate && player.id === selectedPlayers.teammate.id) ||
+              (selectedPlayers.opponent1 && player.id === selectedPlayers.opponent1.id) ||
+              (selectedPlayers.opponent2 && player.id === selectedPlayers.opponent2.id)
+            ) {
+              return false;
+            }
+            
+            return player.username.toLowerCase().includes(value);
+          });
+          
+          // Create suggestion items
+          availablePlayers.forEach(player => {
+            const item = document.createElement('div');
+            item.innerHTML = `<strong>${player.username}</strong> (${player.eloRating} ELO)`;
+            
+            // Add click event
+            item.addEventListener('click', function() {
+              // Set selected player
+              selectedPlayers[fieldId] = player;
+              
+              // Set hidden input value
+              hiddenInput.value = player.id;
+              
+              // Show selected player badge
+              selectedText.textContent = `${player.username} (${player.eloRating} ELO)`;
+              selectedContainer.classList.remove('d-none');
+              
+              // Clear search input and suggestions
+              searchInput.value = '';
+              itemsContainer.innerHTML = '';
+              
+              // Validate form
+              validateForm();
+            });
+            
+            itemsContainer.appendChild(item);
+          });
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+          if (e.target !== searchInput && !itemsContainer.contains(e.target)) {
+            itemsContainer.innerHTML = '';
+          }
+        });
+        
+        // Handle remove player button
+        const removeButton = document.querySelector(`.remove-player[data-target="${fieldId}"]`);
+        removeButton.addEventListener('click', function() {
+          // Clear selection
+          selectedPlayers[fieldId] = null;
+          hiddenInput.value = '';
+          selectedContainer.classList.add('d-none');
+          
+          // Validate form
+          validateForm();
+        });
       }
-    });
-    
-    // Prevent selecting the same player in different roles
-    teammate.addEventListener('change', function() {
-      Array.from(opponent1.options).forEach(option => {
-        if (option.value === teammate.value) {
-          option.disabled = true;
+      
+      // Validation function
+      function validateForm() {
+        // Reset validation errors
+        scoreValidationError.classList.add('d-none');
+        
+        // Check if all players are selected
+        if (!selectedPlayers.teammate || !selectedPlayers.opponent1 || !selectedPlayers.opponent2) {
+          return false;
+        }
+        
+        // Validate scores
+        const score1 = parseInt(team1Score.value);
+        const score2 = parseInt(team2Score.value);
+        
+        if (isNaN(score1) || isNaN(score2)) {
+          return true; // Let the server handle this
+        }
+        
+        // Check for invalid score combinations
+        if ((score1 === score2) || 
+            (score1 === 0 && score2 === 0) || 
+            (score1 === 7 && score2 === 7)) {
+          scoreValidationError.classList.remove('d-none');
+          return false;
+        }
+        
+        return true;
+      }
+      
+      // Event listeners for score validation
+      team1Score.addEventListener('change', validateForm);
+      team2Score.addEventListener('change', validateForm);
+      
+      // Form submission
+      form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+          e.preventDefault();
+          
+          // Check which fields are missing
+          if (!selectedPlayers.teammate) {
+            document.getElementById('teammateSearch').focus();
+          } else if (!selectedPlayers.opponent1) {
+            document.getElementById('opponent1Search').focus();
+          } else if (!selectedPlayers.opponent2) {
+            document.getElementById('opponent2Search').focus();
+          }
         } else {
-          option.disabled = false;
+          // Disable submit button to prevent double submission
+          submitButton.disabled = true;
+          submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
         }
       });
-      
-      Array.from(opponent2.options).forEach(option => {
-        if (option.value === teammate.value) {
-          option.disabled = true;
-        } else {
-          option.disabled = false;
-        }
-      });
-      
-      validateForm();
     });
-    
-    opponent1.addEventListener('change', function() {
-      Array.from(teammate.options).forEach(option => {
-        if (option.value === opponent1.value) {
-          option.disabled = true;
-        } else if (option.value !== opponent2.value) {
-          option.disabled = false;
-        }
-      });
-      
-      Array.from(opponent2.options).forEach(option => {
-        if (option.value === opponent1.value) {
-          option.disabled = true;
-        } else {
-          option.disabled = false;
-        }
-      });
-      
-      validateForm();
-    });
-    
-    opponent2.addEventListener('change', function() {
-      Array.from(teammate.options).forEach(option => {
-        if (option.value === opponent2.value) {
-          option.disabled = true;
-        } else if (option.value !== opponent1.value) {
-          option.disabled = false;
-        }
-      });
-      
-      Array.from(opponent1.options).forEach(option => {
-        if (option.value === opponent2.value) {
-          option.disabled = true;
-        } else {
-          option.disabled = false;
-        }
-      });
-      
-      validateForm();
-    });
-  });
-</script>
-
-<%- include('../partials/footer') %>
+  </script>
+  
+  <%- include('../partials/footer') %>
