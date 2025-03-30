@@ -1,0 +1,80 @@
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2>Registration Requests</h2>
+      <a href="/admin/dashboard" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="h5 mb-0">Pending Requests</h3>
+          <% if (requests.length > 0) { %>
+            <span class="badge bg-warning text-dark"><%= requests.length %> pending</span>
+          <% } %>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% if (requests.length === 0) { %>
+          <div class="p-4 text-center">
+            <p class="text-muted mb-0">No pending registration requests.</p>
+          </div>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Date</th>
+                  <th>IP Address</th>
+                  <th>Browser</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% requests.forEach(request => { %>
+                  <tr>
+                    <td><%= request.username %></td>
+                    <td><%= request.email %></td>
+                    <td><%= moment(request.createdAt).format('MMM D, YYYY HH:mm') %></td>
+                    <td><small><%= request.ipAddress || 'N/A' %></small></td>
+                    <td>
+                      <small class="text-truncate d-inline-block" style="max-width: 200px;">
+                        <%= request.userAgent || 'N/A' %>
+                      </small>
+                    </td>
+                    <td>
+                      <div class="d-flex">
+                        <form method="POST" action="/admin/registration-requests/<%= request._id %>/approve" class="me-2">
+                          <button type="submit" class="btn btn-sm btn-success">
+                            <i class="fas fa-check me-1"></i>Approve
+                          </button>
+                        </form>
+                        <form method="POST" action="/admin/registration-requests/<%= request._id %>/reject">
+                          <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="fas fa-times me-1"></i>Reject
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,110 @@
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="mb-0">My Games</h2>
+      <a href="/game/add" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-2"></i>Add New Game
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="h5 mb-0">Game History</h3>
+          <small class="text-muted"><%= games.length %> games</small>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% if (games.length === 0) { %>
+          <div class="p-4 text-center">
+            <p class="mb-0">You haven't played any games yet.</p>
+          </div>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Teams</th>
+                  <th>Score</th>
+                  <th>Result</th>
+                  <th>ELO Change</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% games.forEach(game => { %>
+                  <% 
+                    // Find if user was in team1 or team2
+                    let userTeam = null;
+                    let userEloChange = 0;
+                    
+                    game.team1.forEach(player => {
+                      if (player.player._id.toString() === user._id.toString()) {
+                        userTeam = 'team1';
+                        userEloChange = player.eloChange;
+                      }
+                    });
+                    
+                    if (!userTeam) {
+                      game.team2.forEach(player => {
+                        if (player.player._id.toString() === user._id.toString()) {
+                          userTeam = 'team2';
+                          userEloChange = player.eloChange;
+                        }
+                      });
+                    }
+                    
+                    const isWinner = userTeam === game.winner;
+                  %>
+                  <tr>
+                    <td><%= new Date(game.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+                    <td>
+                      <div class="small">
+                        <strong class="<%= userTeam === 'team1' ? 'text-primary' : '' %>">
+                          <%= game.team1[0].player.username %> & <%= game.team1[1].player.username %>
+                        </strong>
+                        <span class="text-muted">vs</span>
+                        <strong class="<%= userTeam === 'team2' ? 'text-primary' : '' %>">
+                          <%= game.team2[0].player.username %> & <%= game.team2[1].player.username %>
+                        </strong>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-danger' %>"><%= game.score.team1 %></span>
+                      -
+                      <span class="<%= game.winner === 'team2' ? 'text-success' : 'text-danger' %>"><%= game.score.team2 %></span>
+                    </td>
+                    <td>
+                      <span class="badge <%= isWinner ? 'bg-success' : 'bg-danger' %>">
+                        <%= isWinner ? 'Won' : 'Lost' %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="<%= userEloChange >= 0 ? 'text-success' : 'text-danger' %>">
+                        <%= userEloChange >= 0 ? '+' : '' %><%= userEloChange %>
+                      </span>
+                    </td>
+                    <td>
+                      <a href="/game/<%= game._id %>" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

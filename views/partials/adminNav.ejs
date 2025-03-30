@@ -1,0 +1,32 @@
+<ul class="navbar-nav">
+    <li class="nav-item">
+      <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/admin/users">Users</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/admin/games">Games</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link position-relative" href="/admin/registration-requests">
+        Registration Requests
+        <% if (typeof pendingRequestsCount !== 'undefined' && pendingRequestsCount > 0) { %>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            <%= pendingRequestsCount %>
+            <span class="visually-hidden">pending requests</span>
+          </span>
+        <% } %>
+      </a>
+    </li>
+  </ul>
+  <ul class="navbar-nav ms-auto">
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-user-shield me-1"></i> Admin
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+        <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+      </ul>
+    </li>
+  </ul>

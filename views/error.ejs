@@ -1,0 +1,26 @@
+<%- include('partials/header') %>
+
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body text-center p-5">
+        <% if (title.includes('404')) { %>
+          <i class="fas fa-map-signs text-primary display-1 mb-4"></i>
+        <% } else if (title.includes('Forbidden') || title.includes('403')) { %>
+          <i class="fas fa-lock text-warning display-1 mb-4"></i>
+        <% } else { %>
+          <i class="fas fa-exclamation-circle text-danger display-1 mb-4"></i>
+        <% } %>
+        
+        <h1 class="h3 mb-4"><%= title %></h1>
+        <p class="mb-4"><%= message %></p>
+        
+        <a href="/" class="btn btn-primary">
+          <i class="fas fa-home me-2"></i>Return to Home
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

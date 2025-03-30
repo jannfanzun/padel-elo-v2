@@ -1,0 +1,183 @@
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2>Manage Games</h2>
+      <a href="/admin/dashboard" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <form method="GET" action="/admin/games" class="row g-2">
+          <div class="col-md-8">
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-user"></i></span>
+              <select name="userId" class="form-select">
+                <option value="">All Players</option>
+                <% users.forEach(user => { %>
+                  <option value="<%= user._id %>" <%= selectedUserId === user._id.toString() ? 'selected' : '' %>>
+                    <%= user.username %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex">
+            <button type="submit" class="btn btn-primary me-2">Filter</button>
+            <a href="/admin/games" class="btn btn-outline-secondary">Reset</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="h5 mb-0">Games</h3>
+          <span class="badge bg-primary"><%= games.length %> games</span>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% if (games.length === 0) { %>
+          <div class="p-4 text-center">
+            <p class="text-muted mb-0">
+              <% if (selectedUserId) { %>
+                No games found for selected player.
+              <% } else { %>
+                No games recorded yet.
+              <% } %>
+            </p>
+          </div>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Teams</th>
+                  <th>Score</th>
+                  <th>Winner</th>
+                  <th>ELO Change</th>
+                  <th>Added By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% games.forEach(game => { %>
+                  <tr>
+                    <td><%= moment(game.createdAt).format('MMM D, YYYY') %></td>
+                    <td class="small">
+                      <div><%= game.team1[0].player.username %> & <%= game.team1[1].player.username %></div>
+                      <div class="text-muted">vs</div>
+                      <div><%= game.team2[0].player.username %> & <%= game.team2[1].player.username %></div>
+                    </td>
+                    <td>
+                      <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>"><%= game.score.team1 %></span>
+                      -
+                      <span class="<%= game.winner === 'team2' ? 'text-success' : 'text-muted' %>"><%= game.score.team2 %></span>
+                    </td>
+                    <td>
+                      <span class="badge bg-success">
+                        <%= game.winner === 'team1' ? 'Team 1' : 'Team 2' %>
+                      </span>
+                    </td>
+                    <td>
+                      <div>
+                        <small class="<%= game.team1[0].eloChange >= 0 ? 'text-success' : 'text-danger' %>">
+                          <%= game.team1[0].player.username %>: <%= game.team1[0].eloChange >= 0 ? '+' : '' %><%= game.team1[0].eloChange %>
+                        </small>
+                      </div>
+                      <div>
+                        <small class="<%= game.team1[1].eloChange >= 0 ? 'text-success' : 'text-danger' %>">
+                          <%= game.team1[1].player.username %>: <%= game.team1[1].eloChange >= 0 ? '+' : '' %><%= game.team1[1].eloChange %>
+                        </small>
+                      </div>
+                      <div>
+                        <small class="<%= game.team2[0].eloChange >= 0 ? 'text-success' : 'text-danger' %>">
+                          <%= game.team2[0].player.username %>: <%= game.team2[0].eloChange >= 0 ? '+' : '' %><%= game.team2[0].eloChange %>
+                        </small>
+                      </div>
+                      <div>
+                        <small class="<%= game.team2[1].eloChange >= 0 ? 'text-success' : 'text-danger' %>">
+                          <%= game.team2[1].player.username %>: <%= game.team2[1].eloChange >= 0 ? '+' : '' %><%= game.team2[1].eloChange %>
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <%= game.createdBy.username %>
+                    </td>
+                    <td>
+                      <a href="/game/<%= game._id %>" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                      <button class="btn btn-sm btn-outline-danger" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deleteGameModal"
+                        data-id="<%= game._id %>">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Game Modal -->
+<div class="modal fade" id="deleteGameModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this game?</p>
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          This will revert all ELO changes for the players involved. This action cannot be undone.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteGameForm" method="POST" action="">
+          <button type="submit" class="btn btn-danger">Delete Game</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = document.getElementById('deleteGameModal');
+    deleteModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const gameId = button.getAttribute('data-id');
+      const form = document.getElementById('deleteGameForm');
+      
+      const userId = '<%= selectedUserId || "" %>';
+      const params = userId ? `?userId=${userId}` : '';
+      
+      form.action = `/admin/games/${gameId}/delete${params}`;
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

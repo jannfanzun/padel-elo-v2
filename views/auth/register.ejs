@@ -1,0 +1,69 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">Register</h3>
+      </div>
+      <div class="card-body">
+        <% if (typeof success !== 'undefined' && success) { %>
+          <div class="alert alert-success mb-4">
+            <i class="fas fa-check-circle me-2"></i><%= success %>
+          </div>
+        <% } else { %>
+          <p class="text-muted mb-4">
+            <i class="fas fa-info-circle me-1"></i> After registration, an admin must approve your account before you can login.
+          </p>
+          
+          <form method="POST" action="/auth/register">
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <input type="text" class="form-control" id="username" name="username" required>
+              </div>
+              <div class="form-text">Your public display name (3-30 characters)</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                <input type="password" class="form-control" id="password" name="password" minlength="6" required>
+              </div>
+              <div class="form-text">Minimum 6 characters</div>
+            </div>
+            
+            <div class="mb-4">
+              <label for="confirmPassword" class="form-label">Confirm Password</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" minlength="6" required>
+              </div>
+            </div>
+            
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Register
+              </button>
+            </div>
+          </form>
+        <% } %>
+      </div>
+      <div class="card-footer bg-white">
+        <p class="mb-0 text-center">Already have an account? <a href="/auth/login">Login</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

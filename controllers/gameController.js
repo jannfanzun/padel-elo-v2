@@ -1,0 +1,210 @@
+const User = require('../models/User');
+const Game = require('../models/Game');
+const { calculateEloForMatch } = require('../utils/eloCalculator');
+
+// @desc    Show add game page
+// @route   GET /game/add
+// @access  Private
+exports.getAddGame = async (req, res) => {
+  try {
+    // Get all users (excluding admin) for player selection
+    const users = await User.find({ isAdmin: false })
+      .sort({ username: 1 })
+      .select('username eloRating');
+    
+    res.render('user/addGame', {
+      title: 'Add Game',
+      users,
+      error: req.query.error || null,
+      success: req.query.success || null
+    });
+  } catch (error) {
+    console.error('Get add game error:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error',
+      message: 'An error occurred while loading the page'
+    });
+  }
+};
+
+// @desc    Process new game
+// @route   POST /game/add
+// @access  Private
+exports.postAddGame = async (req, res) => {
+  try {
+    const { 
+      teammate, opponent1, opponent2, 
+      team1Score, team2Score 
+    } = req.body;
+    
+    // Validate input
+    if (!teammate || !opponent1 || !opponent2 || team1Score === undefined || team2Score === undefined) {
+      return res.redirect('/game/add?error=Please fill in all fields');
+    }
+    
+    // Convert scores to numbers
+    const scoreTeam1 = parseInt(team1Score);
+    const scoreTeam2 = parseInt(team2Score);
+    
+    // Validate scores
+    if (isNaN(scoreTeam1) || isNaN(scoreTeam2)) {
+      return res.redirect('/game/add?error=Invalid score format');
+    }
+    
+    if (scoreTeam1 < 0 || scoreTeam1 > 7 || scoreTeam2 < 0 || scoreTeam2 > 7) {
+      return res.redirect('/game/add?error=Scores must be between 0 and 7');
+    }
+    
+    if (scoreTeam1 === 0 && scoreTeam2 === 0) {
+      return res.redirect('/game/add?error=At least one team must score points');
+    }
+    
+    if (scoreTeam1 === scoreTeam2) {
+      return res.redirect('/game/add?error=The game cannot end in a tie');
+    }
+    
+    if (scoreTeam1 === 7 && scoreTeam2 === 7) {
+      return res.redirect('/game/add?error=Both teams cannot have 7 points');
+    }
+    
+    // Check if players are unique
+    const currentUserId = req.user._id.toString();
+    
+    if (teammate === currentUserId) {
+      return res.redirect('/game/add?error=You cannot select yourself as a teammate');
+    }
+    
+    if (opponent1 === currentUserId || opponent1 === teammate) {
+      return res.redirect('/game/add?error=You cannot select the same player in multiple roles');
+    }
+    
+    if (opponent2 === currentUserId || opponent2 === teammate || opponent2 === opponent1) {
+      return res.redirect('/game/add?error=You cannot select the same player in multiple roles');
+    }
+    
+    // Get all players
+    const player1 = await User.findById(currentUserId);
+    const player2 = await User.findById(teammate);
+    const player3 = await User.findById(opponent1);
+    const player4 = await User.findById(opponent2);
+    
+    if (!player1 || !player2 || !player3 || !player4) {
+      return res.redirect('/game/add?error=One or more players not found');
+    }
+    
+    // Prepare teams
+    const team1 = {
+      player1: player1,
+      player2: player2
+    };
+    
+    const team2 = {
+      player1: player3,
+      player2: player4
+    };
+    
+    // Prepare score
+    const score = {
+      team1: scoreTeam1,
+      team2: scoreTeam2
+    };
+    
+    // Calculate ELO changes
+    const eloResults = calculateEloForMatch(team1, team2, score);
+    
+    // Create game record
+    const game = await Game.create({
+      team1: eloResults.team1,
+      team2: eloResults.team2,
+      score,
+      teamElo: eloResults.teamElo,
+      winner: eloResults.winner,
+      createdBy: player1._id
+    });
+    
+    // Update all players' ELO ratings
+    await User.findByIdAndUpdate(player1._id, { 
+      eloRating: eloResults.team1[0].eloAfterGame,
+      lastActivity: Date.now()
+    });
+    
+    await User.findByIdAndUpdate(player2._id, { 
+      eloRating: eloResults.team1[1].eloAfterGame,
+      lastActivity: Date.now()
+    });
+    
+    await User.findByIdAndUpdate(player3._id, { 
+      eloRating: eloResults.team2[0].eloAfterGame,
+      lastActivity: Date.now()
+    });
+    
+    await User.findByIdAndUpdate(player4._id, { 
+      eloRating: eloResults.team2[1].eloAfterGame,
+      lastActivity: Date.now()
+    });
+    
+    res.redirect(`/game/${game._id}?success=Game added successfully`);
+  } catch (error) {
+    console.error('Add game error:', error);
+    res.redirect('/game/add?error=Server error');
+  }
+};
+
+// @desc    Show game details
+// @route   GET /game/:id
+// @access  Private
+exports.getGameDetails = async (req, res) => {
+  try {
+    const game = await Game.findById(req.params.id)
+      .populate('team1.player team2.player createdBy', 'username');
+    
+    if (!game) {
+      return res.status(404).render('error', { 
+        title: 'Not Found',
+        message: 'Game not found'
+      });
+    }
+    
+    res.render('user/gameDetails', {
+      title: 'Game Details',
+      game,
+      success: req.query.success || null
+    });
+  } catch (error) {
+    console.error('Get game details error:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error',
+      message: 'An error occurred while loading the game details'
+    });
+  }
+};
+
+// @desc    Get user games
+// @route   GET /game/user
+// @access  Private
+exports.getUserGames = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Find games where the user participated
+    const games = await Game.find({
+      $or: [
+        { 'team1.player': userId },
+        { 'team2.player': userId }
+      ]
+    })
+    .sort({ createdAt: -1 })
+    .populate('team1.player team2.player createdBy', 'username');
+    
+    res.render('user/games', {
+      title: 'My Games',
+      games
+    });
+  } catch (error) {
+    console.error('Get user games error:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error',
+      message: 'An error occurred while loading the games'
+    });
+  }
+};

@@ -1,0 +1,248 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h2 class="h5 mb-0">Add New Game</h2>
+      </div>
+      <div class="card-body">
+        <form id="addGameForm" method="POST" action="/game/add">
+          <!-- Team 1 -->
+          <div class="mb-4">
+            <h4 class="h6 text-primary">Team 1</h4>
+            <hr>
+            
+            <div class="row g-3">
+              <!-- Current User (Player 1) -->
+              <div class="col-md-6">
+                <label class="form-label">You</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-user"></i></span>
+                  <input type="text" class="form-control" value="<%= user.username %> (<%= user.eloRating %> ELO)" disabled>
+                </div>
+              </div>
+              
+              <!-- Teammate (Player 2) -->
+              <div class="col-md-6">
+                <label for="teammate" class="form-label">Teammate</label>
+                <select class="form-select" id="teammate" name="teammate" required>
+                  <option value="" selected disabled>Select Teammate</option>
+                  <% users.forEach(player => { %>
+                    <% if (player._id.toString() !== user._id.toString()) { %>
+                      <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
+                    <% } %>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Team 2 -->
+          <div class="mb-4">
+            <h4 class="h6 text-primary">Team 2</h4>
+            <hr>
+            
+            <div class="row g-3">
+              <!-- Opponent 1 -->
+              <div class="col-md-6">
+                <label for="opponent1" class="form-label">Opponent 1</label>
+                <select class="form-select" id="opponent1" name="opponent1" required>
+                  <option value="" selected disabled>Select Opponent 1</option>
+                  <% users.forEach(player => { %>
+                    <% if (player._id.toString() !== user._id.toString()) { %>
+                      <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
+                    <% } %>
+                  <% }) %>
+                </select>
+              </div>
+              
+              <!-- Opponent 2 -->
+              <div class="col-md-6">
+                <label for="opponent2" class="form-label">Opponent 2</label>
+                <select class="form-select" id="opponent2" name="opponent2" required>
+                  <option value="" selected disabled>Select Opponent 2</option>
+                  <% users.forEach(player => { %>
+                    <% if (player._id.toString() !== user._id.toString()) { %>
+                      <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
+                    <% } %>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Game Score -->
+          <div class="mb-4">
+            <h4 class="h6 text-primary">Game Score</h4>
+            <hr>
+            
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="team1Score" class="form-label">Team 1 Score</label>
+                <select class="form-select" id="team1Score" name="team1Score" required>
+                  <option value="" selected disabled>Select</option>
+                  <% for (let i = 0; i <= 7; i++) { %>
+                    <option value="<%= i %>"><%= i %></option>
+                  <% } %>
+                </select>
+              </div>
+              
+              <div class="col-md-6">
+                <label for="team2Score" class="form-label">Team 2 Score</label>
+                <select class="form-select" id="team2Score" name="team2Score" required>
+                  <option value="" selected disabled>Select</option>
+                  <% for (let i = 0; i <= 7; i++) { %>
+                    <option value="<%= i %>"><%= i %></option>
+                  <% } %>
+                </select>
+              </div>
+            </div>
+            
+            <div id="scoreValidationError" class="text-danger mt-2 d-none">
+              Invalid score. The score must be different for each team, and can't be 0-0 or 7-7.
+            </div>
+          </div>
+          
+          <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Important:</strong> Make sure all player selections and score details are correct before submitting. Game submissions cannot be edited after they are recorded.
+          </div>
+          
+          <div class="d-grid">
+            <button type="submit" id="submitButton" class="btn btn-primary">
+              <i class="fas fa-plus-circle me-2"></i>Add Game
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addGameForm');
+    const teammate = document.getElementById('teammate');
+    const opponent1 = document.getElementById('opponent1');
+    const opponent2 = document.getElementById('opponent2');
+    const team1Score = document.getElementById('team1Score');
+    const team2Score = document.getElementById('team2Score');
+    const scoreValidationError = document.getElementById('scoreValidationError');
+    const submitButton = document.getElementById('submitButton');
+    
+    // Validation function
+    function validateForm() {
+      // Reset validation errors
+      scoreValidationError.classList.add('d-none');
+      
+      // Check for duplicate player selections
+      const players = [
+        teammate.value,
+        opponent1.value,
+        opponent2.value
+      ];
+      
+      const uniquePlayers = new Set(players.filter(p => p));
+      if (uniquePlayers.size !== players.filter(p => p).length) {
+        return false;
+      }
+      
+      // Validate scores
+      const score1 = parseInt(team1Score.value);
+      const score2 = parseInt(team2Score.value);
+      
+      if (isNaN(score1) || isNaN(score2)) {
+        return true; // Let the server handle this
+      }
+      
+      // Check for invalid score combinations
+      if ((score1 === score2) || 
+          (score1 === 0 && score2 === 0) || 
+          (score1 === 7 && score2 === 7)) {
+        scoreValidationError.classList.remove('d-none');
+        return false;
+      }
+      
+      return true;
+    }
+    
+    // Event listeners for score validation
+    team1Score.addEventListener('change', validateForm);
+    team2Score.addEventListener('change', validateForm);
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+      if (!validateForm()) {
+        e.preventDefault();
+      } else {
+        // Disable submit button to prevent double submission
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+      }
+    });
+    
+    // Prevent selecting the same player in different roles
+    teammate.addEventListener('change', function() {
+      Array.from(opponent1.options).forEach(option => {
+        if (option.value === teammate.value) {
+          option.disabled = true;
+        } else {
+          option.disabled = false;
+        }
+      });
+      
+      Array.from(opponent2.options).forEach(option => {
+        if (option.value === teammate.value) {
+          option.disabled = true;
+        } else {
+          option.disabled = false;
+        }
+      });
+      
+      validateForm();
+    });
+    
+    opponent1.addEventListener('change', function() {
+      Array.from(teammate.options).forEach(option => {
+        if (option.value === opponent1.value) {
+          option.disabled = true;
+        } else if (option.value !== opponent2.value) {
+          option.disabled = false;
+        }
+      });
+      
+      Array.from(opponent2.options).forEach(option => {
+        if (option.value === opponent1.value) {
+          option.disabled = true;
+        } else {
+          option.disabled = false;
+        }
+      });
+      
+      validateForm();
+    });
+    
+    opponent2.addEventListener('change', function() {
+      Array.from(teammate.options).forEach(option => {
+        if (option.value === opponent2.value) {
+          option.disabled = true;
+        } else if (option.value !== opponent1.value) {
+          option.disabled = false;
+        }
+      });
+      
+      Array.from(opponent1.options).forEach(option => {
+        if (option.value === opponent2.value) {
+          option.disabled = true;
+        } else {
+          option.disabled = false;
+        }
+      });
+      
+      validateForm();
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>
