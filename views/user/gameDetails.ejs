@@ -4,12 +4,25 @@
     <div class="col-lg-8">
       <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h2 class="h5 mb-0">Spiel Details</h2>
-          <span class="badge bg-light text-primary">
-            <%= new Date(game.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) %>
-          </span>
-        </div>
-        <div class="card-body">
+            <h2 class="h5 mb-0">Game Details</h2>
+            <span class="badge bg-light text-primary">
+              <%= new Date(game.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+            </span>
+          </div>
+          <div class="card-body">
+            <% if (typeof success !== 'undefined' && success) { %>
+              <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-check-circle me-2"></i><%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>
+            
+            <% if (typeof error !== 'undefined' && error) { %>
+              <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>
           <div class="row mb-4">
             <div class="col-md-6 text-center <%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>">
               <h3 class="h5 mb-3">
@@ -148,18 +161,66 @@
           </div>
         </div>
         <div class="card-footer bg-white">
-          <div class="d-flex justify-content-between">
-            <a href="javascript:history.back()" class="btn btn-secondary">
-              <i class="fas fa-arrow-left me-2"></i>Zurück
-            </a>
-            
-            <a href="/game/add" class="btn btn-primary">
-              <i class="fas fa-plus-circle me-2"></i>Neues Spiel Hinzufügen
-            </a>
+            <div class="d-flex justify-content-between">
+              <a href="javascript:history.back()" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Zurück
+              </a>
+              
+              <div>
+                <button class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#reportGameModal">
+                  <i class="fas fa-flag me-2"></i>Problem melden
+                </button>
+                
+                <a href="/game/add" class="btn btn-primary">
+                  <i class="fas fa-plus-circle me-2"></i>Neues Spiel
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
       </div>
     </div>
   </div>  
+
+  <!-- Report Game Modal -->
+<div class="modal fade" id="reportGameModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form action="/game/<%= game._id %>/report" method="POST">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Problem mit diesem Spiel melden</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="reportReason" class="form-label">Was ist das Problem mit diesem Spiel?</label>
+              <select class="form-select" id="reportReason" name="reason" required>
+                <option value="" selected disabled>Bitte auswählen...</option>
+                <option value="wrong_score">Falsches Ergebnis eingetragen</option>
+                <option value="wrong_players">Falsche Spieler eingetragen</option>
+                <option value="duplicate">Doppelter Eintrag</option>
+                <option value="other">Anderes Problem</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="reportDetails" class="form-label">Zusätzliche Details</label>
+              <textarea class="form-control" id="reportDetails" name="details" rows="3" placeholder="Bitte beschreibe das Problem genauer..."></textarea>
+            </div>
+            
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              Diese Meldung wird an den Administrator gesendet, der das Spiel überprüfen und gegebenenfalls löschen wird.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-paper-plane me-2"></i>Meldung senden
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
 <%- include('../partials/footer') %>

@@ -136,8 +136,77 @@ const sendPasswordResetEmail = async (user, resetUrl) => {
     }
   };
   
+// Send game report email to admin
+const sendGameReportEmail = async (user, game, reason, details) => {
+    try {
+      const transporter = createTransporter();
+      
+      // Map reason code to readable text
+      const reasonText = {
+        'wrong_score': 'Falsches Ergebnis eingetragen',
+        'wrong_players': 'Falsche Spieler eingetragen',
+        'duplicate': 'Doppelter Eintrag',
+        'other': 'Anderes Problem'
+      }[reason] || reason;
+      
+      // Format game date
+      const gameDate = new Date(game.createdAt).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Email content
+      const mailOptions = {
+        from: `"Padel Ranking" <${process.env.EMAIL_FROM}>`,
+        to: process.env.ADMIN_EMAIL,
+        subject: `🚨 Problem-Meldung für Spiel #${game._id.toString().substr(-6)}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+            <h2 style="color: #dc3545;">Problem mit einem Spiel gemeldet</h2>
+            
+            <p>${user.username} hat ein Problem mit folgendem Spiel gemeldet:</p>
+            
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+              <p><strong>Spiel ID:</strong> ${game._id}</p>
+              <p><strong>Datum:</strong> ${gameDate}</p>
+              <p><strong>Teams:</strong> ${game.team1[0].player.username} & ${game.team1[1].player.username} vs ${game.team2[0].player.username} & ${game.team2[1].player.username}</p>
+              <p><strong>Ergebnis:</strong> ${game.score.team1} - ${game.score.team2}</p>
+              <p><strong>Gemeldet von:</strong> ${user.username} (${user.email})</p>
+            </div>
+            
+            <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 15px 0;">
+              <p><strong>Grund der Meldung:</strong> ${reasonText}</p>
+              <p><strong>Details:</strong> ${details || 'Keine weiteren Details angegeben.'}</p>
+            </div>
+            
+            <p>Bitte überprüfe dieses Spiel im <a href="${process.env.SITE_URL}/admin/games" style="color: #0d6efd; text-decoration: none;">Admin Dashboard</a>.</p>
+            
+            <div style="margin-top: 30px; text-align: center;">
+              <a href="${process.env.SITE_URL}/admin/games" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                Zum Admin Dashboard
+              </a>
+            </div>
+            
+            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatische Nachricht von Padel Ranking.</p>
+          </div>
+        `
+      };
+      
+      // Send email
+      await transporter.sendMail(mailOptions);
+      console.log(`Game report email sent to admin for game: ${game._id}`);
+      
+    } catch (error) {
+      console.error('Error sending game report email:', error);
+    }
+  };
+  
   module.exports = {
     sendRegistrationRequestEmail,
     sendRegistrationApprovedEmail,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    sendGameReportEmail
   };
