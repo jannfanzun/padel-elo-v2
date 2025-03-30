@@ -95,7 +95,49 @@ const sendRegistrationApprovedEmail = async (user) => {
   }
 };
 
-module.exports = {
-  sendRegistrationRequestEmail,
-  sendRegistrationApprovedEmail
-};
+// Send password reset email
+const sendPasswordResetEmail = async (user, resetUrl) => {
+    try {
+      const transporter = createTransporter();
+      
+      // Email content
+      const mailOptions = {
+        from: `"Padel Ranking" <${process.env.EMAIL_FROM}>`,
+        to: user.email,
+        subject: '🔑 Passwort zurücksetzen - Padel Ranking',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+            <h2 style="color: #0d6efd;">Passwort zurücksetzen</h2>
+            <p>Hallo ${user.username},</p>
+            
+            <p>Du hast eine Anfrage gestellt, um dein Passwort zurückzusetzen. Bitte klicke auf den folgenden Link, um ein neues Passwort zu erstellen:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Passwort zurücksetzen
+              </a>
+            </div>
+            
+            <p>Dieser Link ist nur 30 Minuten gültig.</p>
+            
+            <p>Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren und dein Passwort bleibt unverändert.</p>
+            
+            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatische Nachricht von Padel Ranking.</p>
+          </div>
+        `
+      };
+      
+      // Send email
+      await transporter.sendMail(mailOptions);
+      console.log(`Password reset email sent to: ${user.email}`);
+      
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+    }
+  };
+  
+  module.exports = {
+    sendRegistrationRequestEmail,
+    sendRegistrationApprovedEmail,
+    sendPasswordResetEmail
+  };

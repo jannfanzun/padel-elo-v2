@@ -1,7 +1,8 @@
 const User = require('../models/User');
 const RegistrationRequest = require('../models/RegistrationRequest');
 const { generateToken } = require('../config/jwt');
-const { sendRegistrationRequestEmail } = require('../config/email');
+const { sendRegistrationRequestEmail, sendPasswordResetEmail } = require('../config/email');
+const crypto = require('crypto');
 
 // @desc    Show login page
 // @route   GET /auth/login
@@ -177,10 +178,162 @@ const newRequest = await RegistrationRequest.create({
 // @route   GET /auth/logout
 // @access  Private
 exports.logout = (req, res) => {
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000), // 10 seconds
-    httpOnly: true
-  });
+    res.cookie('token', 'none', {
+      expires: new Date(Date.now() + 10 * 1000), // 10 seconds
+      httpOnly: true
+    });
+    
+    res.redirect('/');
+  };
   
-  res.redirect('/');
-};
+  // @desc    Show forgot password page
+  // @route   GET /auth/forgot-password
+  // @access  Public
+  exports.getForgotPassword = (req, res) => {
+    res.render('auth/forgotPassword', {
+      title: 'Passwort vergessen',
+      error: req.query.error || null,
+      success: req.query.success || null
+    });
+  };
+  
+  // @desc    Process forgot password request
+  // @route   POST /auth/forgot-password
+  // @access  Public
+  exports.postForgotPassword = async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      // Find user by email
+      const user = await User.findOne({ email });
+      
+      if (!user) {
+        // We don't want to reveal if a user exists or not for security reasons
+        // Just show a success message anyway
+        return res.render('auth/forgotPassword', {
+          title: 'Passwort vergessen',
+          success: 'Wenn eine Benutzer-Registrierung mit dieser E-Mail existiert, wurde dir ein Link zum Zurücksetzen des Passworts zugeschickt.'
+        });
+      }
+      
+      // Generate reset token
+      const resetToken = crypto.randomBytes(20).toString('hex');
+      
+      // Hash token and set to resetPasswordToken field
+      user.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+      
+      // Set expire (30 minutes)
+      user.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
+      
+      // Save user
+      await user.save();
+      
+      // Create reset URL
+      const resetUrl = `${process.env.SITE_URL}/auth/reset-password/${resetToken}`;
+      
+      // Send email
+      await sendPasswordResetEmail(user, resetUrl);
+      
+      res.render('auth/forgotPassword', {
+        title: 'Passwort vergessen',
+        success: 'Wenn eine Benutzer-Registrierung mit dieser E-Mail existiert, wurde dir ein Link zum Zurücksetzen des Passworts zugeschickt.'
+      });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      
+      // Reset user fields in case of error
+      if (error.user) {
+        error.user.resetPasswordToken = undefined;
+        error.user.resetPasswordExpire = undefined;
+        await error.user.save();
+      }
+      
+      res.redirect('/auth/forgot-password?error=Beim Senden der E-Mail ist ein Fehler aufgetreten. Bitte versuche es später erneut.');
+    }
+  };
+  
+  // @desc    Show reset password page
+  // @route   GET /auth/reset-password/:resetToken
+  // @access  Public
+  exports.getResetPassword = async (req, res) => {
+    try {
+      const { resetToken } = req.params;
+      
+      // Hash token
+      const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+      
+      // Find user by token and check if expired
+      const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() }
+      });
+      
+      if (!user) {
+        return res.redirect('/auth/forgot-password?error=Ungültiger oder abgelaufener Token. Bitte fordere einen neuen Link an.');
+      }
+      
+      res.render('auth/resetPassword', {
+        title: 'Passwort zurücksetzen',
+        resetToken,
+        error: req.query.error || null,
+        success: null
+      });
+    } catch (error) {
+      console.error('Reset password page error:', error);
+      res.redirect('/auth/forgot-password?error=Beim Laden der Seite ist ein Fehler aufgetreten. Bitte versuche es später erneut.');
+    }
+  };
+  
+  // @desc    Process reset password
+  // @route   POST /auth/reset-password/:resetToken
+  // @access  Public
+  exports.postResetPassword = async (req, res) => {
+    try {
+      const { resetToken } = req.params;
+      const { password, confirmPassword } = req.body;
+      
+      // Check if passwords match
+      if (password !== confirmPassword) {
+        return res.redirect(`/auth/reset-password/${resetToken}?error=Die Passwörter stimmen nicht überein.`);
+      }
+      
+      // Hash token
+      const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+      
+      // Find user by token and check if expired
+      const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() }
+      });
+      
+      if (!user) {
+        return res.redirect('/auth/forgot-password?error=Ungültiger oder abgelaufener Token. Bitte fordere einen neuen Link an.');
+      }
+      
+      // Set new password
+      user.password = password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      
+      // Save user
+      await user.save();
+      
+      res.render('auth/resetPassword', {
+        title: 'Passwort zurücksetzen',
+        resetToken: null,
+        success: 'Dein Passwort wurde erfolgreich zurückgesetzt.'
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.redirect(`/auth/reset-password/${req.params.resetToken}?error=Beim Zurücksetzen des Passworts ist ein Fehler aufgetreten. Bitte versuche es später erneut.`);
+    }
+  };
