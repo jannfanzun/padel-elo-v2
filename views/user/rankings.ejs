@@ -1,72 +1,123 @@
 <%- include('../partials/header') %>
 
 <div class="row mb-4">
-    <div class="col-md-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Spieler-Ranglisten</h2>
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="mb-0">Spieler Rankings</h2>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <!-- Ranking Type Tabs -->
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo">
+          <i class="fas fa-trophy me-2"></i>ELO Rangliste
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement">
+          <i class="fas fa-chart-line me-2"></i>Quartal: ELO-Verbesserung
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link <%= rankingType === 'quarterly-games' ? 'active' : '' %>" href="?type=quarterly-games">
+          <i class="fas fa-gamepad me-2"></i>Quartal: Spieleanzahl
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <% if (rankingType === 'elo') { %>
+            <h3 class="h5 mb-0">Aktuelle Rangliste</h3>
+          <% } else if (rankingType === 'quarterly-improvement') { %>
+            <h3 class="h5 mb-0">ELO-Verbesserung (<%= quarterName %>)</h3>
+          <% } else if (rankingType === 'quarterly-games') { %>
+            <h3 class="h5 mb-0">Anzahl Spiele (<%= quarterName %>)</h3>
+          <% } %>
+          <small class="text-muted"><%= rankings.length %> Spieler</small>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% if (rankings.length === 0) { %>
+          <div class="p-4 text-center">
+            <p class="mb-0">Noch keine Spieler verfügbar.</p>
+          </div>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Spieler</th>
+                  <% if (rankingType === 'elo') { %>
+                    <th>ELO Punkte</th>
+                  <% } else if (rankingType === 'quarterly-improvement') { %>
+                    <th>ELO Verbesserung</th>
+                    <th>Start ELO</th>
+                    <th>Aktuell ELO</th>
+                  <% } else if (rankingType === 'quarterly-games') { %>
+                    <th>Anzahl Spiele</th>
+                    <th>ELO Punkte</th>
+                  <% } %>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% rankings.forEach(ranking => { %>
+                  <tr class="<%= ranking.user._id.toString() === user._id.toString() ? 'table-primary' : '' %>">
+                    <td><%= ranking.rank %></td>
+                    <td><strong><%= ranking.user.username %></strong></td>
+                    
+                    <% if (rankingType === 'elo') { %>
+                      <td><%= ranking.user.eloRating %></td>
+                    <% } else if (rankingType === 'quarterly-improvement') { %>
+                      <td>
+                        <span class="<%= ranking.quarterlyEloChange > 0 ? 'text-success' : (ranking.quarterlyEloChange < 0 ? 'text-danger' : 'text-muted') %>">
+                          <%= ranking.quarterlyEloChange > 0 ? '+' : '' %><%= ranking.quarterlyEloChange %>
+                        </span>
+                      </td>
+                      <td><%= ranking.initialQuarterElo %></td>
+                      <td><%= ranking.user.eloRating %></td>
+                    <% } else if (rankingType === 'quarterly-games') { %>
+                      <td><%= ranking.quarterlyGames %></td>
+                      <td><%= ranking.user.eloRating %></td>
+                    <% } %>
+                    
+                    <td>
+                      <% if (ranking.isInactive) { %>
+                        <span class="badge bg-warning text-dark">Inaktiv</span>
+                      <% } else { %>
+                        <span class="badge bg-success">Aktiv</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+      <div class="card-footer bg-white">
+        <div class="d-flex justify-content-between">
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i> Spieler starten mit 500 ELO Punkten
+          </small>
+          <small class="text-muted">
+            <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
+          </small>
+        </div>
       </div>
     </div>
   </div>
-  
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card shadow">
-        <div class="card-header bg-white">
-          <div class="d-flex justify-content-between align-items-center">
-            <h3 class="h5 mb-0">Aktuelle Rangliste</h3>
-            <small class="text-muted"><%= rankings.length %> Spieler</small>
-          </div>
-        </div>
-        <div class="card-body p-0">
-          <% if (rankings.length === 0) { %>
-            <div class="p-4 text-center">
-              <p class="mb-0">Noch keine Spieler verfügbar.</p>
-            </div>
-          <% } else { %>
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Spieler</th>
-                    <th>ELO-Rating</th>
-                    <th>Letzte Aktivität</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% rankings.forEach(ranking => { %>
-                    <tr class="<%= ranking.user._id.toString() === user._id.toString() ? 'table-primary' : '' %>">
-                      <td><%= ranking.rank %></td>
-                      <td><strong><%= ranking.user.username %></strong></td>
-                      <td><%= ranking.user.eloRating %></td>
-                      <td><%= moment(ranking.user.lastActivity).fromNow() %></td>
-                      <td>
-                        <% if (ranking.isInactive) { %>
-                          <span class="badge bg-warning text-dark">Inaktiv</span>
-                        <% } else { %>
-                          <span class="badge bg-success">Aktiv</span>
-                        <% } %>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-          <% } %>
-        </div>
-        <div class="card-footer bg-white">
-          <div class="d-flex justify-content-between">
-            <small class="text-muted">
-              <i class="fas fa-info-circle me-1"></i> Spieler starten mit 500 ELO-Punkten
-            </small>
-            <small class="text-muted">
-              <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
-            </small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>  
+</div>
 
 <%- include('../partials/footer') %>

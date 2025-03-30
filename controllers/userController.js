@@ -74,32 +74,140 @@ exports.getProfile = async (req, res) => {
 // @route   GET /user/rankings
 // @access  Private
 exports.getRankings = async (req, res) => {
-  try {
-    // Get all users (excluding admin)
-    const users = await User.find({ isAdmin: false })
-      .sort({ eloRating: -1 })
-      .select('username eloRating lastActivity');
-    
-    const rankings = users.map((user, index) => {
-      const isInactive = user.isInactive();
+    try {
+      // Get ranking type from query (default to 'elo')
+      const rankingType = req.query.type || 'elo';
       
-      return {
-        rank: index + 1,
-        user,
-        isInactive
-      };
-    });
-    
-    res.render('user/rankings', {
-      title: 'Rankings',
-      rankings,
-      moment
-    });
-  } catch (error) {
-    console.error('Get rankings error:', error);
-    res.status(500).render('error', { 
-      title: 'Server Error',
-      message: 'An error occurred while loading the rankings'
-    });
-  }
-};
+      // Get current date
+      const now = new Date();
+      
+      // Calculate start of current quarter
+      const currentQuarter = Math.floor(now.getMonth() / 3);
+      const quarterStart = new Date(now.getFullYear(), currentQuarter * 3, 1);
+      
+      // Get all users (excluding admin)
+      const users = await User.find({ isAdmin: false })
+        .sort({ eloRating: -1 })
+        .select('username eloRating lastActivity');
+      
+      // Get all games in this quarter
+      const quarterGames = await Game.find({
+        createdAt: { $gte: quarterStart }
+      }).populate('team1.player team2.player', 'username');
+      
+      // Calculate quarterly stats for each user
+      const userStats = {};
+      
+      // Initialize stats for all users
+      users.forEach(user => {
+        userStats[user._id.toString()] = {
+          quarterlyGames: 0,
+          quarterlyEloChange: 0,
+          initialElo: null,
+          currentElo: user.eloRating
+        };
+      });
+      
+      // Process games to calculate stats
+      quarterGames.forEach(game => {
+        // Process Team 1 players
+        game.team1.forEach(playerData => {
+          const playerId = playerData.player._id.toString();
+          if (userStats[playerId]) {
+            userStats[playerId].quarterlyGames++;
+            userStats[playerId].quarterlyEloChange += playerData.eloChange;
+            
+            // If this is the first game we've found for this player, 
+            // set the initialElo based on the eloBeforeGame
+            if (userStats[playerId].initialElo === null) {
+              userStats[playerId].initialElo = playerData.eloBeforeGame;
+            } else {
+              // Find the earliest game to get the true initial ELO
+              if (playerData.eloBeforeGame < userStats[playerId].initialElo) {
+                userStats[playerId].initialElo = playerData.eloBeforeGame;
+              }
+            }
+          }
+        });
+        
+        // Process Team 2 players
+        game.team2.forEach(playerData => {
+          const playerId = playerData.player._id.toString();
+          if (userStats[playerId]) {
+            userStats[playerId].quarterlyGames++;
+            userStats[playerId].quarterlyEloChange += playerData.eloChange;
+            
+            if (userStats[playerId].initialElo === null) {
+              userStats[playerId].initialElo = playerData.eloBeforeGame;
+            } else {
+              if (playerData.eloBeforeGame < userStats[playerId].initialElo) {
+                userStats[playerId].initialElo = playerData.eloBeforeGame;
+              }
+            }
+          }
+        });
+      });
+      
+      // Create rankings array with different sorting based on ranking type
+      let rankings = [];
+      
+      users.forEach(user => {
+        const userId = user._id.toString();
+        const stats = userStats[userId] || { 
+          quarterlyGames: 0, 
+          quarterlyEloChange: 0,
+          initialElo: user.eloRating,
+          currentElo: user.eloRating
+        };
+        
+        // For users with no games in this quarter, use their current ELO as the initial ELO
+        if (stats.initialElo === null) {
+          stats.initialElo = user.eloRating;
+        }
+        
+        const isInactive = user.isInactive();
+        
+        rankings.push({
+          user,
+          isInactive,
+          quarterlyGames: stats.quarterlyGames,
+          quarterlyEloChange: stats.quarterlyEloChange,
+          initialQuarterElo: stats.initialElo
+        });
+      });
+      
+      // Sort based on ranking type
+      if (rankingType === 'quarterly-improvement') {
+        rankings.sort((a, b) => b.quarterlyEloChange - a.quarterlyEloChange);
+      } else if (rankingType === 'quarterly-games') {
+        rankings.sort((a, b) => b.quarterlyGames - a.quarterlyGames);
+      } else {
+        // Default 'elo' sorting - already sorted by the database query
+      }
+      
+      // Add rank property to each item
+      rankings = rankings.map((item, index) => ({
+        ...item,
+        rank: index + 1
+      }));
+      
+      // Format quarter name for display
+      const months = ['Januar', 'April', 'Juli', 'Oktober'];
+      const quarterName = `${months[currentQuarter]} - ${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
+      
+      res.render('user/rankings', {
+        title: 'Rankings',
+        rankings,
+        rankingType,
+        quarterName,
+        quarterStart,
+        moment
+      });
+    } catch (error) {
+      console.error('Get rankings error:', error);
+      res.status(500).render('error', { 
+        title: 'Server Error',
+        message: 'An error occurred while loading the rankings'
+      });
+    }
+  };
