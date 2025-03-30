@@ -18,15 +18,8 @@
           <form method="GET" action="/admin/games" class="row g-2">
             <div class="col-md-8">
               <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-user"></i></span>
-                <select name="userId" class="form-select">
-                  <option value="">Alle Spieler</option>
-                  <% users.forEach(user => { %>
-                    <option value="<%= user._id %>" <%= selectedUserId === user._id.toString() ? 'selected' : '' %>>
-                      <%= user.username %>
-                    </option>
-                  <% }) %>
-                </select>
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" name="search" placeholder="Spielername suchen..." value="<%= search || '' %>">
               </div>
             </div>
             <div class="col-md-4 d-flex">
@@ -49,17 +42,19 @@
           </div>
         </div>
         <div class="card-body p-0">
-          <% if (games.length === 0) { %>
-            <div class="p-4 text-center">
-              <p class="text-muted mb-0">
-                <% if (selectedUserId) { %>
-                  Keine Spiele für den ausgewählten Spieler gefunden.
-                <% } else { %>
-                  Es wurden noch keine Spiele aufgezeichnet.
-                <% } %>
-              </p>
-            </div>
-          <% } else { %>
+            <% if (games.length === 0) { %>
+              <div class="p-4 text-center">
+                <p class="text-muted mb-0">
+                  <% if (search) { %>
+                    Keine Spiele gefunden für "<%= search %>".
+                  <% } else if (selectedUserId) { %>
+                    Keine Spiele gefunden für den ausgewählten Spieler.
+                  <% } else { %>
+                    Noch keine Spiele vorhanden.
+                  <% } %>
+                </p>
+              </div>
+            <% } else { %>
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead>

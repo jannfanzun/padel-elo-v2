@@ -131,49 +131,98 @@ exports.deleteUser = async (req, res) => {
 // @route   GET /admin/games
 // @access  Private (Admin only)
 exports.manageGames = async (req, res) => {
-  try {
-    // Get query parameters
-    const { userId } = req.query;
-    
-    // Build query
-    let query = {};
-    
-    if (userId) {
-      query = {
-        $or: [
-          { 'team1.player': userId },
-          { 'team2.player': userId }
-        ]
-      };
+    try {
+      // Get query parameters
+      const { userId, search } = req.query;
+      
+      // Build query
+      let query = {};
+      
+      // Filter by user if provided
+      if (userId) {
+        query = {
+          $or: [
+            { 'team1.player': userId },
+            { 'team2.player': userId }
+          ]
+        };
+      }
+      
+      // If search term is provided, get user ids that match the search
+      if (search) {
+        const matchingUsers = await User.find({
+          username: { $regex: search, $options: 'i' },
+          isAdmin: false
+        }).select('_id');
+        
+        const userIds = matchingUsers.map(user => user._id);
+        
+        // If we already have a userId filter, combine with search
+        if (userId) {
+          // If the search doesn't match the selected user, return no results
+          if (!userIds.some(id => id.toString() === userId)) {
+            return res.render('admin/games', {
+              title: 'Manage Games',
+              games: [],
+              users: await User.find({ isAdmin: false }).sort({ username: 1 }).select('username'),
+              selectedUserId: userId,
+              search,
+              moment,
+              success: req.query.success || null,
+              error: req.query.error || null
+            });
+          }
+        } else if (userIds.length > 0) {
+          // Add search filter
+          query = {
+            $or: [
+              { 'team1.player': { $in: userIds } },
+              { 'team2.player': { $in: userIds } }
+            ]
+          };
+        } else {
+          // No matching users found, return no results
+          return res.render('admin/games', {
+            title: 'Manage Games',
+            games: [],
+            users: await User.find({ isAdmin: false }).sort({ username: 1 }).select('username'),
+            selectedUserId: userId,
+            search,
+            moment,
+            success: req.query.success || null,
+            error: req.query.error || null
+          });
+        }
+      }
+      
+      // Get games
+      const games = await Game.find(query)
+        .sort({ createdAt: -1 })
+        .populate('team1.player team2.player createdBy', 'username');
+      
+      // Get all users for filter
+      const users = await User.find({ isAdmin: false })
+        .sort({ username: 1 })
+        .select('username');
+      
+      res.render('admin/games', {
+        title: 'Manage Games',
+        games,
+        users,
+        selectedUserId: userId,
+        search,
+        moment,
+        success: req.query.success || null,
+        error: req.query.error || null
+      });
+    } catch (error) {
+      console.error('Manage games error:', error);
+      res.status(500).render('error', { 
+        title: 'Server Error',
+        message: 'An error occurred while loading the games'
+      });
     }
-    
-    // Get games
-    const games = await Game.find(query)
-      .sort({ createdAt: -1 })
-      .populate('team1.player team2.player createdBy', 'username');
-    
-    // Get all users for filter
-    const users = await User.find({ isAdmin: false })
-      .sort({ username: 1 })
-      .select('username');
-    
-    res.render('admin/games', {
-      title: 'Manage Games',
-      games,
-      users,
-      selectedUserId: userId,
-      moment,
-      success: req.query.success || null,
-      error: req.query.error || null
-    });
-  } catch (error) {
-    console.error('Manage games error:', error);
-    res.status(500).render('error', { 
-      title: 'Server Error',
-      message: 'An error occurred while loading the games'
-    });
-  }
-};
+  };
 
 // @desc    Delete game
 // @route   POST /admin/games/:id/delete
