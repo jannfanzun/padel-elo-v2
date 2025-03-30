@@ -35,8 +35,6 @@
                   <th>Username</th>
                   <th>Email</th>
                   <th>Date</th>
-                  <th>IP Address</th>
-                  <th>Browser</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -46,12 +44,6 @@
                     <td><%= request.username %></td>
                     <td><%= request.email %></td>
                     <td><%= moment(request.createdAt).format('MMM D, YYYY HH:mm') %></td>
-                    <td><small><%= request.ipAddress || 'N/A' %></small></td>
-                    <td>
-                      <small class="text-truncate d-inline-block" style="max-width: 200px;">
-                        <%= request.userAgent || 'N/A' %>
-                      </small>
-                    </td>
                     <td>
                       <div class="d-flex">
                         <form method="POST" action="/admin/registration-requests/<%= request._id %>/approve" class="me-2">
