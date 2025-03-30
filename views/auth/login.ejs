@@ -1,45 +1,45 @@
 <%- include('../partials/header') %>
 
 <div class="row justify-content-center">
-  <div class="col-md-6 col-lg-5">
-    <div class="card shadow">
-      <div class="card-header bg-primary text-white">
-        <h3 class="mb-0">Login</h3>
-      </div>
-      <div class="card-body">
-        <form method="POST" action="/auth/login">
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-              <input type="email" class="form-control" id="email" name="email" required>
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Anmelden</h3>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/auth/login">
+            <div class="mb-3">
+              <label for="email" class="form-label">E-Mail</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
             </div>
-          </div>
-          
-          <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="fas fa-lock"></i></span>
-              <input type="password" class="form-control" id="password" name="password" required>
+            
+            <div class="mb-3">
+              <label for="password" class="form-label">Passwort</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                <input type="password" class="form-control" id="password" name="password" required>
+              </div>
             </div>
-          </div>
-          
-          <div class="mb-4 text-end">
-            <a href="/auth/forgot-password" class="text-decoration-none small">Passwort vergessen?</a>
-          </div>
-          
-          <div class="d-grid">
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-sign-in-alt me-2"></i>Login
-            </button>
-          </div>
-        </form>
-      </div>
-      <div class="card-footer bg-white">
-        <p class="mb-0 text-center">Don't have an account? <a href="/auth/register">Register</a></p>
+            
+            <div class="mb-4 text-end">
+              <a href="/auth/forgot-password" class="text-decoration-none small">Passwort vergessen?</a>
+            </div>
+            
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt me-2"></i>Anmelden
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="card-footer bg-white">
+          <p class="mb-0 text-center">Kein Konto? <a href="/auth/register">Registrieren</a></p>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+  </div>  
 
 <%- include('../partials/footer') %>
