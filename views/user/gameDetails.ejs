@@ -1,165 +1,165 @@
 <%- include('../partials/header') %>
 
 <div class="row justify-content-center">
-  <div class="col-lg-8">
-    <div class="card shadow">
-      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0">Game Details</h2>
-        <span class="badge bg-light text-primary">
-          <%= new Date(game.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) %>
-        </span>
-      </div>
-      <div class="card-body">
-        <div class="row mb-4">
-          <div class="col-md-6 text-center <%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>">
-            <h3 class="h5 mb-3">
-              Team 1
-              <% if (game.winner === 'team1') { %>
-                <span class="badge bg-success ms-2">Winner</span>
-              <% } %>
-            </h3>
-            
-            <div class="row g-3">
-              <div class="col-6">
-                <div class="card h-100 <%= game.winner === 'team1' ? 'border-success' : '' %>">
-                  <div class="card-body">
-                    <h5 class="card-title"><%= game.team1[0].player.username %></h5>
-                    <div class="d-flex justify-content-around">
-                      <div>
-                        <small class="text-muted">Before</small>
-                        <p class="mb-0"><%= game.team1[0].eloBeforeGame %></p>
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h2 class="h5 mb-0">Spiel Details</h2>
+          <span class="badge bg-light text-primary">
+            <%= new Date(game.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6 text-center <%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>">
+              <h3 class="h5 mb-3">
+                Team 1
+                <% if (game.winner === 'team1') { %>
+                  <span class="badge bg-success ms-2">Gewinner</span>
+                <% } %>
+              </h3>
+              
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="card h-100 <%= game.winner === 'team1' ? 'border-success' : '' %>">
+                    <div class="card-body">
+                      <h5 class="card-title"><%= game.team1[0].player.username %></h5>
+                      <div class="d-flex justify-content-around">
+                        <div>
+                          <small class="text-muted">Vorher</small>
+                          <p class="mb-0"><%= game.team1[0].eloBeforeGame %></p>
+                        </div>
+                        <div>
+                          <small class="text-muted">Nachher</small>
+                          <p class="mb-0"><%= game.team1[0].eloAfterGame %></p>
+                        </div>
                       </div>
-                      <div>
-                        <small class="text-muted">After</small>
-                        <p class="mb-0"><%= game.team1[0].eloAfterGame %></p>
-                      </div>
+                      <span class="badge <%= game.team1[0].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
+                        <%= game.team1[0].eloChange >= 0 ? '+' : '' %><%= game.team1[0].eloChange %>
+                      </span>
                     </div>
-                    <span class="badge <%= game.team1[0].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
-                      <%= game.team1[0].eloChange >= 0 ? '+' : '' %><%= game.team1[0].eloChange %>
-                    </span>
+                  </div>
+                </div>
+                
+                <div class="col-6">
+                  <div class="card h-100 <%= game.winner === 'team1' ? 'border-success' : '' %>">
+                    <div class="card-body">
+                      <h5 class="card-title"><%= game.team1[1].player.username %></h5>
+                      <div class="d-flex justify-content-around">
+                        <div>
+                          <small class="text-muted">Vorher</small>
+                          <p class="mb-0"><%= game.team1[1].eloBeforeGame %></p>
+                        </div>
+                        <div>
+                          <small class="text-muted">Nachher</small>
+                          <p class="mb-0"><%= game.team1[1].eloAfterGame %></p>
+                        </div>
+                      </div>
+                      <span class="badge <%= game.team1[1].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
+                        <%= game.team1[1].eloChange >= 0 ? '+' : '' %><%= game.team1[1].eloChange %>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
               
-              <div class="col-6">
-                <div class="card h-100 <%= game.winner === 'team1' ? 'border-success' : '' %>">
-                  <div class="card-body">
-                    <h5 class="card-title"><%= game.team1[1].player.username %></h5>
-                    <div class="d-flex justify-content-around">
-                      <div>
-                        <small class="text-muted">Before</small>
-                        <p class="mb-0"><%= game.team1[1].eloBeforeGame %></p>
-                      </div>
-                      <div>
-                        <small class="text-muted">After</small>
-                        <p class="mb-0"><%= game.team1[1].eloAfterGame %></p>
-                      </div>
-                    </div>
-                    <span class="badge <%= game.team1[1].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
-                      <%= game.team1[1].eloChange >= 0 ? '+' : '' %><%= game.team1[1].eloChange %>
-                    </span>
-                  </div>
-                </div>
+              <div class="mt-3">
+                <span class="h4">Team Elo: <%= game.teamElo.team1 %></span>
               </div>
             </div>
             
-            <div class="mt-3">
-              <span class="h4">Team Elo: <%= game.teamElo.team1 %></span>
-            </div>
-          </div>
-          
-          <div class="col-md-6 text-center <%= game.winner === 'team2' ? 'text-success' : 'text-muted' %>">
-            <h3 class="h5 mb-3">
-              Team 2
-              <% if (game.winner === 'team2') { %>
-                <span class="badge bg-success ms-2">Winner</span>
-              <% } %>
-            </h3>
-            
-            <div class="row g-3">
-              <div class="col-6">
-                <div class="card h-100 <%= game.winner === 'team2' ? 'border-success' : '' %>">
-                  <div class="card-body">
-                    <h5 class="card-title"><%= game.team2[0].player.username %></h5>
-                    <div class="d-flex justify-content-around">
-                      <div>
-                        <small class="text-muted">Before</small>
-                        <p class="mb-0"><%= game.team2[0].eloBeforeGame %></p>
+            <div class="col-md-6 text-center <%= game.winner === 'team2' ? 'text-success' : 'text-muted' %>">
+              <h3 class="h5 mb-3">
+                Team 2
+                <% if (game.winner === 'team2') { %>
+                  <span class="badge bg-success ms-2">Gewinner</span>
+                <% } %>
+              </h3>
+              
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="card h-100 <%= game.winner === 'team2' ? 'border-success' : '' %>">
+                    <div class="card-body">
+                      <h5 class="card-title"><%= game.team2[0].player.username %></h5>
+                      <div class="d-flex justify-content-around">
+                        <div>
+                          <small class="text-muted">Vorher</small>
+                          <p class="mb-0"><%= game.team2[0].eloBeforeGame %></p>
+                        </div>
+                        <div>
+                          <small class="text-muted">Nachher</small>
+                          <p class="mb-0"><%= game.team2[0].eloAfterGame %></p>
+                        </div>
                       </div>
-                      <div>
-                        <small class="text-muted">After</small>
-                        <p class="mb-0"><%= game.team2[0].eloAfterGame %></p>
-                      </div>
+                      <span class="badge <%= game.team2[0].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
+                        <%= game.team2[0].eloChange >= 0 ? '+' : '' %><%= game.team2[0].eloChange %>
+                      </span>
                     </div>
-                    <span class="badge <%= game.team2[0].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
-                      <%= game.team2[0].eloChange >= 0 ? '+' : '' %><%= game.team2[0].eloChange %>
-                    </span>
+                  </div>
+                </div>
+                
+                <div class="col-6">
+                  <div class="card h-100 <%= game.winner === 'team2' ? 'border-success' : '' %>">
+                    <div class="card-body">
+                      <h5 class="card-title"><%= game.team2[1].player.username %></h5>
+                      <div class="d-flex justify-content-around">
+                        <div>
+                          <small class="text-muted">Vorher</small>
+                          <p class="mb-0"><%= game.team2[1].eloBeforeGame %></p>
+                        </div>
+                        <div>
+                          <small class="text-muted">Nachher</small>
+                          <p class="mb-0"><%= game.team2[1].eloAfterGame %></p>
+                        </div>
+                      </div>
+                      <span class="badge <%= game.team2[1].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
+                        <%= game.team2[1].eloChange >= 0 ? '+' : '' %><%= game.team2[1].eloChange %>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
               
-              <div class="col-6">
-                <div class="card h-100 <%= game.winner === 'team2' ? 'border-success' : '' %>">
-                  <div class="card-body">
-                    <h5 class="card-title"><%= game.team2[1].player.username %></h5>
-                    <div class="d-flex justify-content-around">
-                      <div>
-                        <small class="text-muted">Before</small>
-                        <p class="mb-0"><%= game.team2[1].eloBeforeGame %></p>
-                      </div>
-                      <div>
-                        <small class="text-muted">After</small>
-                        <p class="mb-0"><%= game.team2[1].eloAfterGame %></p>
-                      </div>
-                    </div>
-                    <span class="badge <%= game.team2[1].eloChange >= 0 ? 'bg-success' : 'bg-danger' %> mt-2">
-                      <%= game.team2[1].eloChange >= 0 ? '+' : '' %><%= game.team2[1].eloChange %>
-                    </span>
-                  </div>
-                </div>
+              <div class="mt-3">
+                <span class="h4">Team Elo: <%= game.teamElo.team2 %></span>
               </div>
             </div>
-            
-            <div class="mt-3">
-              <span class="h4">Team Elo: <%= game.teamElo.team2 %></span>
+          </div>
+          
+          <div class="text-center mb-4">
+            <div class="display-4 fw-bold">
+              <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>"><%= game.score.team1 %></span>
+              <span class="text-muted">-</span>
+              <span class="<%= game.winner === 'team2' ? 'text-success' : 'text-muted' %>"><%= game.score.team2 %></span>
             </div>
           </div>
-        </div>
-        
-        <div class="text-center mb-4">
-          <div class="display-4 fw-bold">
-            <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>"><%= game.score.team1 %></span>
-            <span class="text-muted">-</span>
-            <span class="<%= game.winner === 'team2' ? 'text-success' : 'text-muted' %>"><%= game.score.team2 %></span>
+          
+          <div class="text-center text-muted">
+            <small>
+              Spiel hinzugefügt von <strong><%= game.createdBy.username %></strong> am 
+              <%= new Date(game.createdAt).toLocaleDateString('en-US', { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) %>
+            </small>
           </div>
         </div>
-        
-        <div class="text-center text-muted">
-          <small>
-            Game added by <strong><%= game.createdBy.username %></strong> on 
-            <%= new Date(game.createdAt).toLocaleDateString('en-US', { 
-              day: 'numeric', 
-              month: 'short', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) %>
-          </small>
-        </div>
-      </div>
-      <div class="card-footer bg-white">
-        <div class="d-flex justify-content-between">
-          <a href="javascript:history.back()" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back
-          </a>
-          
-          <a href="/game/add" class="btn btn-primary">
-            <i class="fas fa-plus-circle me-2"></i>Add New Game
-          </a>
+        <div class="card-footer bg-white">
+          <div class="d-flex justify-content-between">
+            <a href="javascript:history.back()" class="btn btn-secondary">
+              <i class="fas fa-arrow-left me-2"></i>Zurück
+            </a>
+            
+            <a href="/game/add" class="btn btn-primary">
+              <i class="fas fa-plus-circle me-2"></i>Neues Spiel Hinzufügen
+            </a>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  </div>  
 
 <%- include('../partials/footer') %>

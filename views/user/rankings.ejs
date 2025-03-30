@@ -1,72 +1,72 @@
 <%- include('../partials/header') %>
 
 <div class="row mb-4">
-  <div class="col-md-12">
-    <div class="d-flex justify-content-between align-items-center">
-      <h2 class="mb-0">Player Rankings</h2>
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Spieler-Ranglisten</h2>
+      </div>
     </div>
   </div>
-</div>
-
-<div class="row">
-  <div class="col-md-12">
-    <div class="card shadow">
-      <div class="card-header bg-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <h3 class="h5 mb-0">Current Rankings</h3>
-          <small class="text-muted"><%= rankings.length %> players</small>
-        </div>
-      </div>
-      <div class="card-body p-0">
-        <% if (rankings.length === 0) { %>
-          <div class="p-4 text-center">
-            <p class="mb-0">No players available yet.</p>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow">
+        <div class="card-header bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0">Aktuelle Rangliste</h3>
+            <small class="text-muted"><%= rankings.length %> Spieler</small>
           </div>
-        <% } else { %>
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Player</th>
-                  <th>ELO Rating</th>
-                  <th>Last Activity</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% rankings.forEach(ranking => { %>
-                  <tr class="<%= ranking.user._id.toString() === user._id.toString() ? 'table-primary' : '' %>">
-                    <td><%= ranking.rank %></td>
-                    <td><strong><%= ranking.user.username %></strong></td>
-                    <td><%= ranking.user.eloRating %></td>
-                    <td><%= moment(ranking.user.lastActivity).fromNow() %></td>
-                    <td>
-                      <% if (ranking.isInactive) { %>
-                        <span class="badge bg-warning text-dark">Inactive</span>
-                      <% } else { %>
-                        <span class="badge bg-success">Active</span>
-                      <% } %>
-                    </td>
+        </div>
+        <div class="card-body p-0">
+          <% if (rankings.length === 0) { %>
+            <div class="p-4 text-center">
+              <p class="mb-0">Noch keine Spieler verfügbar.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Spieler</th>
+                    <th>ELO-Rating</th>
+                    <th>Letzte Aktivität</th>
+                    <th>Status</th>
                   </tr>
-                <% }) %>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <% rankings.forEach(ranking => { %>
+                    <tr class="<%= ranking.user._id.toString() === user._id.toString() ? 'table-primary' : '' %>">
+                      <td><%= ranking.rank %></td>
+                      <td><strong><%= ranking.user.username %></strong></td>
+                      <td><%= ranking.user.eloRating %></td>
+                      <td><%= moment(ranking.user.lastActivity).fromNow() %></td>
+                      <td>
+                        <% if (ranking.isInactive) { %>
+                          <span class="badge bg-warning text-dark">Inaktiv</span>
+                        <% } else { %>
+                          <span class="badge bg-success">Aktiv</span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+        <div class="card-footer bg-white">
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i> Spieler starten mit 500 ELO-Punkten
+            </small>
+            <small class="text-muted">
+              <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
+            </small>
           </div>
-        <% } %>
-      </div>
-      <div class="card-footer bg-white">
-        <div class="d-flex justify-content-between">
-          <small class="text-muted">
-            <i class="fas fa-info-circle me-1"></i> Players start with 500 ELO points
-          </small>
-          <small class="text-muted">
-            <span class="badge bg-warning text-dark me-1">Inactive</span> No games in the last 7 days
-          </small>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  </div>  
 
 <%- include('../partials/footer') %>

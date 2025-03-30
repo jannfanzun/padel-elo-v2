@@ -1,124 +1,124 @@
 <%- include('../partials/header') %>
 
 <div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card shadow">
-      <div class="card-header bg-primary text-white">
-        <h2 class="h5 mb-0">Add New Game</h2>
-      </div>
-      <div class="card-body">
-        <form id="addGameForm" method="POST" action="/game/add">
-          <!-- Team 1 -->
-          <div class="mb-4">
-            <h4 class="h6 text-primary">Team 1</h4>
-            <hr>
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h5 mb-0">Neues Spiel Hinzufügen</h2>
+        </div>
+        <div class="card-body">
+          <form id="addGameForm" method="POST" action="/game/add">
+            <!-- Team 1 -->
+            <div class="mb-4">
+              <h4 class="h6 text-primary">Team 1</h4>
+              <hr>
+              
+              <div class="row g-3">
+                <!-- Current User (Player 1) -->
+                <div class="col-md-6">
+                  <label class="form-label">Du</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" value="<%= user.username %> (<%= user.eloRating %> ELO)" disabled>
+                  </div>
+                </div>
+                
+                <!-- Teammate (Player 2) -->
+                <div class="col-md-6">
+                  <label for="teammate" class="form-label">Teamkollege</label>
+                  <select class="form-select" id="teammate" name="teammate" required>
+                    <option value="" selected disabled>Teamkollege auswählen</option>
+                    <% users.forEach(player => { %>
+                      <% if (player._id.toString() !== user._id.toString()) { %>
+                        <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
+                      <% } %>
+                    <% }) %>
+                  </select>
+                </div>
+              </div>
+            </div>
             
-            <div class="row g-3">
-              <!-- Current User (Player 1) -->
-              <div class="col-md-6">
-                <label class="form-label">You</label>
-                <div class="input-group">
-                  <span class="input-group-text"><i class="fas fa-user"></i></span>
-                  <input type="text" class="form-control" value="<%= user.username %> (<%= user.eloRating %> ELO)" disabled>
+            <!-- Team 2 -->
+            <div class="mb-4">
+              <h4 class="h6 text-primary">Team 2</h4>
+              <hr>
+              
+              <div class="row g-3">
+                <!-- Opponent 1 -->
+                <div class="col-md-6">
+                  <label for="opponent1" class="form-label">Gegner 1</label>
+                  <select class="form-select" id="opponent1" name="opponent1" required>
+                    <option value="" selected disabled>Gegner 1 auswählen</option>
+                    <% users.forEach(player => { %>
+                      <% if (player._id.toString() !== user._id.toString()) { %>
+                        <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
+                      <% } %>
+                    <% }) %>
+                  </select>
+                </div>
+                
+                <!-- Opponent 2 -->
+                <div class="col-md-6">
+                  <label for="opponent2" class="form-label">Gegner 2</label>
+                  <select class="form-select" id="opponent2" name="opponent2" required>
+                    <option value="" selected disabled>Gegner 2 auswählen</option>
+                    <% users.forEach(player => { %>
+                      <% if (player._id.toString() !== user._id.toString()) { %>
+                        <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
+                      <% } %>
+                    <% }) %>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Game Score -->
+            <div class="mb-4">
+              <h4 class="h6 text-primary">Spielstand</h4>
+              <hr>
+              
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="team1Score" class="form-label">Team 1 Spielstand</label>
+                  <select class="form-select" id="team1Score" name="team1Score" required>
+                    <option value="" selected disabled>Wählen</option>
+                    <% for (let i = 0; i <= 7; i++) { %>
+                      <option value="<%= i %>"><%= i %></option>
+                    <% } %>
+                  </select>
+                </div>
+                
+                <div class="col-md-6">
+                  <label for="team2Score" class="form-label">Team 2 Spielstand</label>
+                  <select class="form-select" id="team2Score" name="team2Score" required>
+                    <option value="" selected disabled>Wählen</option>
+                    <% for (let i = 0; i <= 7; i++) { %>
+                      <option value="<%= i %>"><%= i %></option>
+                    <% } %>
+                  </select>
                 </div>
               </div>
               
-              <!-- Teammate (Player 2) -->
-              <div class="col-md-6">
-                <label for="teammate" class="form-label">Teammate</label>
-                <select class="form-select" id="teammate" name="teammate" required>
-                  <option value="" selected disabled>Select Teammate</option>
-                  <% users.forEach(player => { %>
-                    <% if (player._id.toString() !== user._id.toString()) { %>
-                      <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
-                    <% } %>
-                  <% }) %>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Team 2 -->
-          <div class="mb-4">
-            <h4 class="h6 text-primary">Team 2</h4>
-            <hr>
-            
-            <div class="row g-3">
-              <!-- Opponent 1 -->
-              <div class="col-md-6">
-                <label for="opponent1" class="form-label">Opponent 1</label>
-                <select class="form-select" id="opponent1" name="opponent1" required>
-                  <option value="" selected disabled>Select Opponent 1</option>
-                  <% users.forEach(player => { %>
-                    <% if (player._id.toString() !== user._id.toString()) { %>
-                      <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
-                    <% } %>
-                  <% }) %>
-                </select>
-              </div>
-              
-              <!-- Opponent 2 -->
-              <div class="col-md-6">
-                <label for="opponent2" class="form-label">Opponent 2</label>
-                <select class="form-select" id="opponent2" name="opponent2" required>
-                  <option value="" selected disabled>Select Opponent 2</option>
-                  <% users.forEach(player => { %>
-                    <% if (player._id.toString() !== user._id.toString()) { %>
-                      <option value="<%= player._id %>"><%= player.username %> (<%= player.eloRating %> ELO)</option>
-                    <% } %>
-                  <% }) %>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Game Score -->
-          <div class="mb-4">
-            <h4 class="h6 text-primary">Game Score</h4>
-            <hr>
-            
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label for="team1Score" class="form-label">Team 1 Score</label>
-                <select class="form-select" id="team1Score" name="team1Score" required>
-                  <option value="" selected disabled>Select</option>
-                  <% for (let i = 0; i <= 7; i++) { %>
-                    <option value="<%= i %>"><%= i %></option>
-                  <% } %>
-                </select>
-              </div>
-              
-              <div class="col-md-6">
-                <label for="team2Score" class="form-label">Team 2 Score</label>
-                <select class="form-select" id="team2Score" name="team2Score" required>
-                  <option value="" selected disabled>Select</option>
-                  <% for (let i = 0; i <= 7; i++) { %>
-                    <option value="<%= i %>"><%= i %></option>
-                  <% } %>
-                </select>
+              <div id="scoreValidationError" class="text-danger mt-2 d-none">
+                Ungültiger Spielstand. Die Punkte müssen für jedes Team unterschiedlich sein und dürfen nicht 0-0 oder 7-7 sein.
               </div>
             </div>
             
-            <div id="scoreValidationError" class="text-danger mt-2 d-none">
-              Invalid score. The score must be different for each team, and can't be 0-0 or 7-7.
+            <div class="alert alert-info mb-4">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Wichtig:</strong> Vergewissere dich, dass alle Spieler-Auswahlen und Spielstanddaten korrekt sind, bevor du absendest. Spielaufzeichnungen können nach der Einreichung nicht mehr bearbeitet werden.
             </div>
-          </div>
-          
-          <div class="alert alert-info mb-4">
-            <i class="fas fa-info-circle me-2"></i>
-            <strong>Important:</strong> Make sure all player selections and score details are correct before submitting. Game submissions cannot be edited after they are recorded.
-          </div>
-          
-          <div class="d-grid">
-            <button type="submit" id="submitButton" class="btn btn-primary">
-              <i class="fas fa-plus-circle me-2"></i>Add Game
-            </button>
-          </div>
-        </form>
+            
+            <div class="d-grid">
+              <button type="submit" id="submitButton" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Spiel Hinzufügen
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+  </div>  
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -178,7 +178,7 @@
       } else {
         // Disable submit button to prevent double submission
         submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Lädt...';
       }
     });
     

@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
           
           // Disable and show loading state
           button.disabled = true;
-          button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+          button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Lädt...';
         });
       });
     });

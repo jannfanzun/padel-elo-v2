@@ -1,149 +1,149 @@
 <%- include('../partials/header') %>
 
 <div class="row">
-  <div class="col-md-4 mb-4">
-    <div class="card shadow-sm">
-      <div class="card-header bg-primary text-white">
-        <h2 class="h5 mb-0">Player Profile</h2>
-      </div>
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <span class="display-1 text-primary mb-0">
-            <i class="fas fa-user-circle"></i>
-          </span>
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h5 mb-0">Spielerprofil</h2>
         </div>
-        
-        <h3 class="mb-0"><%= user.username %></h3>
-        <p class="text-muted"><%= user.email %></p>
-        
-        <div class="d-flex justify-content-center mb-3">
-          <div class="me-4 text-center">
-            <h4 class="mb-0 text-primary"><%= user.eloRating %></h4>
-            <small class="text-muted">ELO Rating</small>
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <span class="display-1 text-primary mb-0">
+              <i class="fas fa-user-circle"></i>
+            </span>
           </div>
-          <div class="text-center">
-            <h4 class="mb-0 text-primary">#<%= rank %></h4>
-            <small class="text-muted">Ranking</small>
+          
+          <h3 class="mb-0"><%= user.username %></h3>
+          <p class="text-muted"><%= user.email %></p>
+          
+          <div class="d-flex justify-content-center mb-3">
+            <div class="me-4 text-center">
+              <h4 class="mb-0 text-primary"><%= user.eloRating %></h4>
+              <small class="text-muted">ELO-Rating</small>
+            </div>
+            <div class="text-center">
+              <h4 class="mb-0 text-primary">#<%= rank %></h4>
+              <small class="text-muted">Rang</small>
+            </div>
           </div>
-        </div>
-        
-        <% if (stats.isInactive) { %>
-          <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            You haven't played in the last 7 days. Your ELO rating will be reduced by 10 points for inactivity.
-          </div>
-        <% } %>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col-md-8">
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white">
-        <h2 class="h5 mb-0">Statistics</h2>
-      </div>
-      <div class="card-body">
-        <div class="row text-center">
-          <div class="col-md-4 mb-3 mb-md-0">
-            <h3 class="text-primary mb-0"><%= stats.gamesPlayed %></h3>
-            <p class="text-muted mb-0">Games Played</p>
-          </div>
-          <div class="col-md-4 mb-3 mb-md-0">
-            <h3 class="text-primary mb-0"><%= stats.gamesWon %></h3>
-            <p class="text-muted mb-0">Games Won</p>
-          </div>
-          <div class="col-md-4">
-            <h3 class="text-primary mb-0"><%= stats.winRate %>%</h3>
-            <p class="text-muted mb-0">Win Rate</p>
-          </div>
+          
+          <% if (stats.isInactive) { %>
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Du hast in den letzten 7 Tagen kein Spiel gespielt. Dein ELO-Rating wird aufgrund der Inaktivität um 10 Punkte reduziert.
+            </div>
+          <% } %>
         </div>
       </div>
     </div>
     
-    <div class="card shadow-sm">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0">Letzte Spiele</h2>
-        <a href="/game/user/history" class="btn btn-sm btn-outline-primary">
-          View All
-        </a>
+    <div class="col-md-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h2 class="h5 mb-0">Statistiken</h2>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-4 mb-3 mb-md-0">
+              <h3 class="text-primary mb-0"><%= stats.gamesPlayed %></h3>
+              <p class="text-muted mb-0">Gespielte Spiele</p>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+              <h3 class="text-primary mb-0"><%= stats.gamesWon %></h3>
+              <p class="text-muted mb-0">Gewonnene Spiele</p>
+            </div>
+            <div class="col-md-4">
+              <h3 class="text-primary mb-0"><%= stats.winRate %>%</h3>
+              <p class="text-muted mb-0">Gewinnrate</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Teams</th>
-                <th>Score</th>
-                <th>ELO Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (recentGames.length === 0) { %>
+      
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h2 class="h5 mb-0">Letzte Spiele</h2>
+          <a href="/game/user/history" class="btn btn-sm btn-outline-primary">
+            Alle ansehen
+          </a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
                 <tr>
-                  <td colspan="4" class="text-center py-3">No games played yet</td>
+                  <th>Datum</th>
+                  <th>Teams</th>
+                  <th>Ergebnis</th>
+                  <th>ELO-Änderung</th>
                 </tr>
-              <% } else { %>
-                <% recentGames.forEach(game => { %>
+              </thead>
+              <tbody>
+                <% if (recentGames.length === 0) { %>
                   <tr>
-                    <td>
-                      <a href="/game/<%= game._id %>" class="text-decoration-none">
-                        <%= moment(game.createdAt).format('MMM D, YYYY') %>
-                      </a>
-                    </td>
-                    <td>
-                      <div class="small">
-                        <strong><%= game.team1[0].player.username %></strong> & 
-                        <strong><%= game.team1[1].player.username %></strong>
-                        <span class="text-muted">vs</span> 
-                        <strong><%= game.team2[0].player.username %></strong> & 
-                        <strong><%= game.team2[1].player.username %></strong>
-                      </div>
-                    </td>
-                    <td>
-                      <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-danger' %>">
-                        <%= game.score.team1 %>-<%= game.score.team2 %>
-                      </span>
-                    </td>
-                    <td>
-                      <% 
-                        // Find user's ELO change
-                        let eloChange = 0;
-                        let playerTeam = '';
-                        
-                        // Check team 1
-                        game.team1.forEach(player => {
-                          if (player.player._id.toString() === user._id.toString()) {
-                            eloChange = player.eloChange;
-                            playerTeam = 'team1';
-                          }
-                        });
-                        
-                        // Check team 2
-                        game.team2.forEach(player => {
-                          if (player.player._id.toString() === user._id.toString()) {
-                            eloChange = player.eloChange;
-                            playerTeam = 'team2';
-                          }
-                        });
-                        
-                        const winner = game.winner;
-                        const isWinner = playerTeam === winner;
-                      %>
-                      
-                      <span class="<%= eloChange >= 0 ? 'text-success' : 'text-danger' %>">
-                        <%= eloChange >= 0 ? '+' : '' %><%= eloChange %>
-                      </span>
-                    </td>
+                    <td colspan="4" class="text-center py-3">Noch keine Spiele gespielt</td>
                   </tr>
-                <% }) %>
-              <% } %>
-            </tbody>
-          </table>
+                <% } else { %>
+                  <% recentGames.forEach(game => { %>
+                    <tr>
+                      <td>
+                        <a href="/game/<%= game._id %>" class="text-decoration-none">
+                          <%= moment(game.createdAt).format('D. MMM YYYY') %>
+                        </a>
+                      </td>
+                      <td>
+                        <div class="small">
+                          <strong><%= game.team1[0].player.username %></strong> & 
+                          <strong><%= game.team1[1].player.username %></strong>
+                          <span class="text-muted">vs</span> 
+                          <strong><%= game.team2[0].player.username %></strong> & 
+                          <strong><%= game.team2[1].player.username %></strong>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-danger' %>">
+                          <%= game.score.team1 %>-<%= game.score.team2 %>
+                        </span>
+                      </td>
+                      <td>
+                        <% 
+                          // Finde die ELO-Änderung des Benutzers
+                          let eloChange = 0;
+                          let playerTeam = '';
+                          
+                          // Überprüfe Team 1
+                          game.team1.forEach(player => {
+                            if (player.player._id.toString() === user._id.toString()) {
+                              eloChange = player.eloChange;
+                              playerTeam = 'team1';
+                            }
+                          });
+                          
+                          // Überprüfe Team 2
+                          game.team2.forEach(player => {
+                            if (player.player._id.toString() === user._id.toString()) {
+                              eloChange = player.eloChange;
+                              playerTeam = 'team2';
+                            }
+                          });
+                          
+                          const winner = game.winner;
+                          const isWinner = playerTeam === winner;
+                        %>
+                        
+                        <span class="<%= eloChange >= 0 ? 'text-success' : 'text-danger' %>">
+                          <%= eloChange >= 0 ? '+' : '' %><%= eloChange %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  </div>  
 
 <%- include('../partials/footer') %>
