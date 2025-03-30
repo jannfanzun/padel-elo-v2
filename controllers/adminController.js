@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Game = require('../models/Game');
 const RegistrationRequest = require('../models/RegistrationRequest');
 const moment = require('moment');
+const { sendRegistrationApprovedEmail } = require('../config/email');
 
 // @desc    Admin dashboard
 // @route   GET /admin/dashboard
@@ -269,28 +270,35 @@ exports.approveRegistrationRequest = async (req, res) => {
         return res.redirect('/admin/registration-requests?error=Email already exists');
       }
       
-      // Create user with direct DB operation to bypass Mongoose hooks
-      const newUser = {
-        username: request.username,
-        email: request.email,
-        password: request.password, // Already hashed
-        eloRating: 500,
-        isAdmin: false,
-        createdAt: new Date(),
-        lastActivity: new Date()
-      };
-      
-      // Insert directly into MongoDB collection
-      await User.collection.insertOne(newUser);
-      
-      // Update request status
-      request.status = 'approved';
-      await request.save();
-      
-      // Success message
-      console.log(`User ${request.username} successfully approved and created`);
-      
-      res.redirect('/admin/registration-requests?success=Registration request approved');
+ // Create user with direct DB operation to bypass Mongoose hooks
+ const newUser = {
+    username: request.username,
+    email: request.email,
+    password: request.password, // Already hashed
+    eloRating: 500,
+    isAdmin: false,
+    createdAt: new Date(),
+    lastActivity: new Date()
+  };
+  
+  // Insert directly into MongoDB collection
+  const result = await User.collection.insertOne(newUser);
+  
+  // Update request status
+  request.status = 'approved';
+  await request.save();
+  
+  // Success message
+  console.log(`User ${request.username} successfully approved and created`);
+  
+  // Send approval email to user
+  await sendRegistrationApprovedEmail({
+    _id: result.insertedId,
+    username: request.username,
+    email: request.email
+  });
+  
+  res.redirect('/admin/registration-requests?success=Registration request approved');
     } catch (error) {
       console.error('Approve registration request error:', error);
       res.redirect('/admin/registration-requests?error=Server error');

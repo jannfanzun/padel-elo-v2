@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const RegistrationRequest = require('../models/RegistrationRequest');
 const { generateToken } = require('../config/jwt');
+const { sendRegistrationRequestEmail } = require('../config/email');
 
 // @desc    Show login page
 // @route   GET /auth/login
@@ -153,16 +154,19 @@ exports.postRegister = async (req, res) => {
       return res.redirect('/auth/register?error=A registration request with this email is already pending');
     }
     
-    // Create registration request
-    await RegistrationRequest.create({
-      username,
-      email,
-      password,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
-    
-    res.redirect('/auth/register?success=Registration request submitted. Please wait for admin approval.');
+// Create registration request
+const newRequest = await RegistrationRequest.create({
+    username,
+    email,
+    password,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+  
+  // Send email notification to admin
+  await sendRegistrationRequestEmail(newRequest);
+  
+  res.redirect('/auth/register?success=Registration request submitted. Please wait for admin approval.');
   } catch (error) {
     console.error('Registration error:', error);
     res.redirect('/auth/register?error=Server error');
