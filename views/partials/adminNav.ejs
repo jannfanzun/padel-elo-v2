@@ -3,18 +3,18 @@
       <a class="nav-link" href="/admin/dashboard">Dashboard</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="/admin/users">Users</a>
+      <a class="nav-link" href="/admin/users">Benutzer</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="/admin/games">Games</a>
+      <a class="nav-link" href="/admin/games">Spiele</a>
     </li>
     <li class="nav-item">
       <a class="nav-link position-relative" href="/admin/registration-requests">
-        Registration Requests
+        Anmeldeanfragen
         <% if (typeof pendingRequestsCount !== 'undefined' && pendingRequestsCount > 0) { %>
           <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
             <%= pendingRequestsCount %>
-            <span class="visually-hidden">pending requests</span>
+            <span class="visually-hidden">ausstehende Anfragen</span>
           </span>
         <% } %>
       </a>
@@ -26,7 +26,7 @@
         <i class="fas fa-user-shield me-1"></i> Admin
       </a>
       <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-        <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+        <li><a class="dropdown-item" href="/auth/logout">Abmelden</a></li>
       </ul>
     </li>
   </ul>

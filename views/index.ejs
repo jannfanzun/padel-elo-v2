@@ -1,68 +1,68 @@
 <%- include('partials/header') %>
 
 <div class="row mb-4">
-  <div class="col-md-12">
-    <div class="jumbotron bg-primary text-white rounded p-4">
-      <h1 class="display-4">Padel Rankings</h1>
-      <p class="lead">Welcome to the official Padel ranking system. Track your ELO rating and compete with other players.</p>
-      
-      <% if (!user) { %>
-        <hr class="my-4">
-        <p>Join now to record your games and climb the rankings!</p>
-        <a class="btn btn-light me-2" href="/auth/register" role="button">Register</a>
-        <a class="btn btn-outline-light" href="/auth/login" role="button">Login</a>
-      <% } %>
+    <div class="col-md-12">
+      <div class="jumbotron bg-primary text-white rounded p-4">
+        <h1 class="display-4">Padel-Rangliste</h1>
+        <p class="lead">Willkommen im offiziellen Padel-Ranglistensystem. Verfolge deine ELO-Wertung und tritt gegen andere Spieler an.</p>
+        
+        <% if (!user) { %>
+          <hr class="my-4">
+          <p>Jetzt beitreten, Spiele aufzeichnen und in der Rangliste aufsteigen!</p>
+          <a class="btn btn-light me-2" href="/auth/register" role="button">Registrieren</a>
+          <a class="btn btn-outline-light" href="/auth/login" role="button">Anmelden</a>
+        <% } %>
+      </div>
     </div>
   </div>
-</div>
-
-<div class="row">
-  <div class="col-md-12">
-    <div class="card shadow-sm">
-      <div class="card-header bg-white">
-        <h2 class="h5 mb-0">Current Rankings</h2>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover table-striped mb-0">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Player</th>
-                <th scope="col" class="text-end">ELO Rating</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (rankings.length === 0) { %>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h2 class="h5 mb-0">Aktuelle Rangliste</h2>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+              <thead>
                 <tr>
-                  <td colspan="3" class="text-center py-3">No players yet</td>
+                  <th scope="col">#</th>
+                  <th scope="col">Spieler</th>
+                  <th scope="col" class="text-end">ELO-Wertung</th>
                 </tr>
-              <% } else { %>
-                <% rankings.forEach(ranking => { %>
-                  <tr<%= ranking.isInactive ? ' class="table-warning"' : '' %>>
-                    <td><%= ranking.rank %></td>
-                    <td>
-                      <%= ranking.user.username %>
-                      <% if (ranking.isInactive) { %>
-                        <span class="badge bg-warning text-dark ms-1">Inactive</span>
-                      <% } %>
-                    </td>
-                    <td class="text-end"><strong><%= ranking.user.eloRating %></strong></td>
+              </thead>
+              <tbody>
+                <% if (rankings.length === 0) { %>
+                  <tr>
+                    <td colspan="3" class="text-center py-3">Noch keine Spieler</td>
                   </tr>
-                <% }) %>
-              <% } %>
-            </tbody>
-          </table>
+                <% } else { %>
+                  <% rankings.forEach(ranking => { %>
+                    <tr<%= ranking.isInactive ? ' class="table-warning"' : '' %>>
+                      <td><%= ranking.rank %></td>
+                      <td>
+                        <%= ranking.user.username %>
+                        <% if (ranking.isInactive) { %>
+                          <span class="badge bg-warning text-dark ms-1">Inaktiv</span>
+                        <% } %>
+                      </td>
+                      <td class="text-end"><strong><%= ranking.user.eloRating %></strong></td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer bg-white">
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i> Spieler starten mit 500 ELO-Punkten. 
+            <span class="badge bg-warning text-dark ms-1">Inaktiv</span> bedeutet, dass ein Spieler in den letzten 7 Tagen nicht gespielt hat.
+          </small>
         </div>
       </div>
-      <div class="card-footer bg-white">
-        <small class="text-muted">
-          <i class="fas fa-info-circle me-1"></i> Players start with 500 ELO points. 
-          <span class="badge bg-warning text-dark ms-1">Inactive</span> players have not played in the last 7 days.
-        </small>
-      </div>
     </div>
-  </div>
-</div>
+  </div>  
 
 <%- include('partials/footer') %>
