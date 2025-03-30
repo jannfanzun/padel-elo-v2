@@ -244,49 +244,58 @@ exports.getRegistrationRequests = async (req, res) => {
 // @route   POST /admin/registration-requests/:id/approve
 // @access  Private (Admin only)
 exports.approveRegistrationRequest = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Find request
-    const request = await RegistrationRequest.findById(id);
-    
-    if (!request) {
-      return res.redirect('/admin/registration-requests?error=Request not found');
+    try {
+      const { id } = req.params;
+      
+      // Get the full request document with password
+      const request = await RegistrationRequest.findById(id).select('+password');
+      
+      if (!request) {
+        return res.redirect('/admin/registration-requests?error=Request not found');
+      }
+      
+      if (request.status !== 'pending') {
+        return res.redirect('/admin/registration-requests?error=Request already processed');
+      }
+      
+      // Check for existing users
+      const existingUsername = await User.findOne({ username: request.username });
+      if (existingUsername) {
+        return res.redirect('/admin/registration-requests?error=Username already exists');
+      }
+      
+      const existingEmail = await User.findOne({ email: request.email });
+      if (existingEmail) {
+        return res.redirect('/admin/registration-requests?error=Email already exists');
+      }
+      
+      // Create user with direct DB operation to bypass Mongoose hooks
+      const newUser = {
+        username: request.username,
+        email: request.email,
+        password: request.password, // Already hashed
+        eloRating: 500,
+        isAdmin: false,
+        createdAt: new Date(),
+        lastActivity: new Date()
+      };
+      
+      // Insert directly into MongoDB collection
+      await User.collection.insertOne(newUser);
+      
+      // Update request status
+      request.status = 'approved';
+      await request.save();
+      
+      // Success message
+      console.log(`User ${request.username} successfully approved and created`);
+      
+      res.redirect('/admin/registration-requests?success=Registration request approved');
+    } catch (error) {
+      console.error('Approve registration request error:', error);
+      res.redirect('/admin/registration-requests?error=Server error');
     }
-    
-    if (request.status !== 'pending') {
-      return res.redirect('/admin/registration-requests?error=Request already processed');
-    }
-    
-    // Check if username or email already exists in User collection
-    const existingUsername = await User.findOne({ username: request.username });
-    if (existingUsername) {
-      return res.redirect('/admin/registration-requests?error=Username already exists');
-    }
-    
-    const existingEmail = await User.findOne({ email: request.email });
-    if (existingEmail) {
-      return res.redirect('/admin/registration-requests?error=Email already exists');
-    }
-    
-    // Create new user
-    await User.create({
-      username: request.username,
-      email: request.email,
-      password: request.password, // Already hashed in the request model
-      eloRating: 500
-    });
-    
-    // Update request status
-    request.status = 'approved';
-    await request.save();
-    
-    res.redirect('/admin/registration-requests?success=Registration request approved');
-  } catch (error) {
-    console.error('Approve registration request error:', error);
-    res.redirect('/admin/registration-requests?error=Server error');
-  }
-};
+  };
 
 // @desc    Reject registration request
 // @route   POST /admin/registration-requests/:id/reject
