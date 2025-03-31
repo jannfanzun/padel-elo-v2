@@ -129,7 +129,7 @@ router.get('/', async (req, res) => {
       const quarterName = `${months[currentQuarter]} - ${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
       
       res.render('index', {
-        title: 'Padel Rankings',
+        title: 'Padelo Rankings',
         rankings,
         rankingType,
         quarterName,

@@ -20,13 +20,13 @@ const sendRegistrationRequestEmail = async (request) => {
     
     // Email content
     const mailOptions = {
-        from: `"Padel Ranking" <${process.env.EMAIL_FROM}>`,
+        from: `"Padelo Ranking" <${process.env.EMAIL_FROM}>`,
         to: process.env.ADMIN_EMAIL,
         subject: '🏓 Neue Registrierungsanfrage',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
             <h2 style="color: #0d6efd;">Neue Registrierungsanfrage</h2>
-            <p>Ein neuer Benutzer hat eine Anfrage zur Registrierung im Padel Ranking System gestellt.</p>
+            <p>Ein neuer Benutzer hat eine Anfrage zur Registrierung im Padelo Ranking System gestellt.</p>
             
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
               <p><strong>Benutzername:</strong> ${request.username}</p>
@@ -37,7 +37,7 @@ const sendRegistrationRequestEmail = async (request) => {
             
             <p>Bitte melde dich im <a href="${process.env.SITE_URL}/admin/registration-requests" style="color: #0d6efd; text-decoration: none;">Admin-Dashboard</a> an, um diese Anfrage zu überprüfen.</p>
             
-            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatisierte Nachricht des Padel Ranking Systems.</p>
+            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatisierte Nachricht des Padelo Ranking Systems.</p>
           </div>
         `
       };      
@@ -58,15 +58,15 @@ const sendRegistrationApprovedEmail = async (user) => {
     
     // Email content
     const mailOptions = {
-        from: `"Padel Ranking" <${process.env.EMAIL_FROM}>`,
+        from: `"Padelo Ranking" <${process.env.EMAIL_FROM}>`,
         to: user.email,
-        subject: '🎉 Willkommen bei Padel Ranking – Registrierung bestätigt!',
+        subject: '🎉 Willkommen bei Padelo Ranking – Registrierung bestätigt!',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
             <h2 style="color: #0d6efd;">Registrierung bestätigt!</h2>
             <p>Hallo ${user.username},</p>
             
-            <p>Deine Registrierung im Padel Ranking System wurde erfolgreich bestätigt! Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</p>
+            <p>Deine Registrierung im Padelo Ranking System wurde erfolgreich bestätigt! Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</p>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="${process.env.SITE_URL}/auth/login" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
@@ -81,7 +81,7 @@ const sendRegistrationApprovedEmail = async (user) => {
             
             <p>Wir freuen uns, dich in unserer Padel-Community begrüßen zu dürfen. Fange an, Spiele einzutragen und klettere in der Rangliste nach oben!</p>
             
-            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatisierte Nachricht des Padel Ranking Systems.</p>
+            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatisierte Nachricht des Padelo Ranking Systems.</p>
           </div>
         `
       };
@@ -102,9 +102,9 @@ const sendPasswordResetEmail = async (user, resetUrl) => {
       
       // Email content
       const mailOptions = {
-        from: `"Padel Ranking" <${process.env.EMAIL_FROM}>`,
+        from: `"Padelo Ranking" <${process.env.EMAIL_FROM}>`,
         to: user.email,
-        subject: '🔑 Passwort zurücksetzen - Padel Ranking',
+        subject: '🔑 Passwort zurücksetzen - Padelo Ranking',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
             <h2 style="color: #0d6efd;">Passwort zurücksetzen</h2>
@@ -122,7 +122,7 @@ const sendPasswordResetEmail = async (user, resetUrl) => {
             
             <p>Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren und dein Passwort bleibt unverändert.</p>
             
-            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatische Nachricht von Padel Ranking.</p>
+            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatische Nachricht von Padelo Ranking.</p>
           </div>
         `
       };
@@ -160,7 +160,7 @@ const sendGameReportEmail = async (user, game, reason, details) => {
       
       // Email content
       const mailOptions = {
-        from: `"Padel Ranking" <${process.env.EMAIL_FROM}>`,
+        from: `"Padelo Ranking" <${process.env.EMAIL_FROM}>`,
         to: process.env.ADMIN_EMAIL,
         subject: `🚨 Problem-Meldung für Spiel #${game._id.toString().substr(-6)}`,
         html: `
@@ -190,7 +190,7 @@ const sendGameReportEmail = async (user, game, reason, details) => {
               </a>
             </div>
             
-            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatische Nachricht von Padel Ranking.</p>
+            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatische Nachricht von Padelo Ranking.</p>
           </div>
         `
       };
