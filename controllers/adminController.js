@@ -235,7 +235,7 @@ exports.deleteGame = async (req, res) => {
     const game = await Game.findById(id);
     
     if (!game) {
-      return res.redirect('/admin/games?error=Game not found');
+      return res.redirect('/admin/games?error=Spiel nicht gefunden');
     }
     
     // Reverse ELO changes for all players
@@ -255,8 +255,8 @@ exports.deleteGame = async (req, res) => {
     await Game.findByIdAndDelete(id);
     
     const redirectUrl = req.query.userId 
-      ? `/admin/games?userId=${req.query.userId}&success=Game deleted successfully` 
-      : '/admin/games?success=Game deleted successfully';
+      ? `/admin/games?userId=${req.query.userId}&success=Spiel erfolgreich gelöscht` 
+      : '/admin/games?success=Spiel erfolgreich gelöscht';
     
     res.redirect(redirectUrl);
   } catch (error) {
@@ -301,22 +301,22 @@ exports.approveRegistrationRequest = async (req, res) => {
       const request = await RegistrationRequest.findById(id).select('+password');
       
       if (!request) {
-        return res.redirect('/admin/registration-requests?error=Request not found');
+        return res.redirect('/admin/registration-requests?error=Anfrage nicht gefunden');
       }
       
       if (request.status !== 'pending') {
-        return res.redirect('/admin/registration-requests?error=Request already processed');
+        return res.redirect('/admin/registration-requests?error=Anfrage wurde bereits bearbeitet');
       }
       
       // Check for existing users
       const existingUsername = await User.findOne({ username: request.username });
       if (existingUsername) {
-        return res.redirect('/admin/registration-requests?error=Username already exists');
+        return res.redirect('/admin/registration-requests?error=Benutzername existiert bereits');
       }
       
       const existingEmail = await User.findOne({ email: request.email });
       if (existingEmail) {
-        return res.redirect('/admin/registration-requests?error=Email already exists');
+        return res.redirect('/admin/registration-requests?error=Email existiert bereits');
       }
       
  // Create user with direct DB operation to bypass Mongoose hooks
@@ -347,7 +347,7 @@ exports.approveRegistrationRequest = async (req, res) => {
     email: request.email
   });
   
-  res.redirect('/admin/registration-requests?success=Registration request approved');
+  res.redirect('/admin/registration-requests?success=Registrierungsanfrage genehmigt');
     } catch (error) {
       console.error('Approve registration request error:', error);
       res.redirect('/admin/registration-requests?error=Server error');
@@ -365,18 +365,18 @@ exports.rejectRegistrationRequest = async (req, res) => {
     const request = await RegistrationRequest.findById(id);
     
     if (!request) {
-      return res.redirect('/admin/registration-requests?error=Request not found');
+      return res.redirect('/admin/registration-requests?error=Anfrage nicht gefunden');
     }
     
     if (request.status !== 'pending') {
-      return res.redirect('/admin/registration-requests?error=Request already processed');
+      return res.redirect('/admin/registration-requests?error=Anfrage wurde bereits bearbeitet');
     }
     
     // Update request status
     request.status = 'rejected';
     await request.save();
     
-    res.redirect('/admin/registration-requests?success=Registration request rejected');
+    res.redirect('/admin/registration-requests?success=Registrierungsanfrage abgelehnt');
   } catch (error) {
     console.error('Reject registration request error:', error);
     res.redirect('/admin/registration-requests?error=Server error');

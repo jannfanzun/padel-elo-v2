@@ -167,7 +167,7 @@ const newRequest = await RegistrationRequest.create({
   // Send email notification to admin
   await sendRegistrationRequestEmail(newRequest);
   
-  res.redirect('/auth/register?success=Registration request submitted. Please wait for admin approval.');
+  res.redirect('/auth/register?success=Registrierungsanfrage eingereicht. Bitte warte auf die Genehmigung durch einen Administrator.');
   } catch (error) {
     console.error('Registration error:', error);
     res.redirect('/auth/register?error=Server error');
