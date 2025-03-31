@@ -1,3 +1,5 @@
+// Modified server.js file with cron jobs functionality
+
 const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
@@ -8,6 +10,7 @@ const MongoStore = require('connect-mongo');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const { generalLimiter } = require('./middleware/rateLimitMiddleware');
+const { initCronJobs } = require('./utils/cronJobs');
 
 // Load environment variables
 dotenv.config();
@@ -66,6 +69,9 @@ app.use(
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Initialize cron jobs
+initCronJobs(app);
+
 // Routes
 app.use('/', require('./routes/publicRoutes'));
 app.use('/auth', require('./routes/authRoutes'));
@@ -77,7 +83,7 @@ app.use('/admin', require('./routes/adminRoutes'));
 app.use((err, req, res, next) => {
   console.error(err.stack);
   
-  // Prüfen, ob der Fehler vom Rate-Limiter stammt
+  // Check if error is from rate-limiter
   if (err.statusCode === 429) {
     return res.status(429).render('error', {
       title: 'Zu viele Anfragen',

@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Game = require('../models/Game');
 const { calculateEloForMatch } = require('../utils/eloCalculator');
 const { sendGameReportEmail } = require('../config/email');
+const { getOrCreateQuarterlyELO } = require('../utils/quarterlyEloUtils');
 
 // @desc    Show add game page
 // @route   GET /game/add
@@ -92,6 +93,12 @@ exports.postAddGame = async (req, res) => {
     if (!player1 || !player2 || !player3 || !player4) {
       return res.redirect('/game/add?error=One or more players not found');
     }
+    
+    // Ensure all players have quarterly ELO records
+    await getOrCreateQuarterlyELO(player1._id);
+    await getOrCreateQuarterlyELO(player2._id);
+    await getOrCreateQuarterlyELO(player3._id);
+    await getOrCreateQuarterlyELO(player4._id);
     
     // Prepare teams
     const team1 = {
