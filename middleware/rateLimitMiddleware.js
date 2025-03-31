@@ -36,7 +36,7 @@ const createLimitHandler = (message, windowMs, redirectUrl) => {
 // Allgemeiner Limiter (kann für die meisten Routen verwendet werden)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minuten
-  max: 100, // 100 Anfragen pro Fenster
+  max: 200, // 100 Anfragen pro Fenster
   standardHeaders: true,
   legacyHeaders: false,
   handler: createLimitHandler(
