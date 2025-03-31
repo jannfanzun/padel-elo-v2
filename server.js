@@ -7,6 +7,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
+const { generalLimiter } = require('./middleware/rateLimitMiddleware');
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,9 @@ connectDB();
 
 // Initialize app
 const app = express();
+
+// Apply global rate limiter
+app.use(generalLimiter);
 
 // Security middleware
 app.use(helmet({
@@ -72,10 +76,19 @@ app.use('/admin', require('./routes/adminRoutes'));
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  
+  // Prüfen, ob der Fehler vom Rate-Limiter stammt
+  if (err.statusCode === 429) {
+    return res.status(429).render('error', {
+      title: 'Zu viele Anfragen',
+      message: err.message || 'Zu viele Anfragen. Bitte versuche es später erneut.'
+    });
+  }
+  
   res.status(500).render('error', { 
     title: 'Server Error',
     message: process.env.NODE_ENV === 'production' 
-      ? 'Something went wrong!' 
+      ? 'Etwas ist schiefgelaufen!' 
       : err.message
   });
 });
@@ -84,7 +97,7 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).render('error', { 
     title: '404 Not Found', 
-    message: 'The page you are looking for does not exist.' 
+    message: 'Die gesuchte Seite existiert nicht.' 
   });
 });
 

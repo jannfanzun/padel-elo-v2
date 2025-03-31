@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { adminLimiter } = require('../middleware/rateLimitMiddleware');
 const { 
   getDashboard,
   manageUsers,
@@ -21,15 +22,15 @@ router.get('/dashboard', getDashboard);
 
 // User management routes
 router.get('/users', manageUsers);
-router.post('/users/:id/delete', deleteUser);
+router.post('/users/:id/delete', adminLimiter, deleteUser);
 
 // Game management routes
 router.get('/games', manageGames);
-router.post('/games/:id/delete', deleteGame);
+router.post('/games/:id/delete', adminLimiter, deleteGame);
 
 // Registration request routes
 router.get('/registration-requests', getRegistrationRequests);
-router.post('/registration-requests/:id/approve', approveRegistrationRequest);
-router.post('/registration-requests/:id/reject', rejectRegistrationRequest);
+router.post('/registration-requests/:id/approve', adminLimiter, approveRegistrationRequest);
+router.post('/registration-requests/:id/reject', adminLimiter, rejectRegistrationRequest);
 
 module.exports = router;
