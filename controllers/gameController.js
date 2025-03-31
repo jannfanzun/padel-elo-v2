@@ -15,7 +15,7 @@ exports.getAddGame = async (req, res) => {
       .select('username eloRating');
     
     res.render('user/addGame', {
-      title: 'Add Game',
+      title: 'Spiel hinzufügen',
       users,
       error: req.query.error || null,
       success: req.query.success || null
@@ -205,7 +205,7 @@ exports.getUserGames = async (req, res) => {
     .populate('team1.player team2.player createdBy', 'username');
     
     res.render('user/games', {
-      title: 'My Games',
+      title: 'Meine Spiele',
       games
     });
   } catch (error) {

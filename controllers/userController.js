@@ -51,7 +51,7 @@ exports.getProfile = async (req, res) => {
     const isInactive = user.isInactive();
     
     res.render('user/profile', {
-      title: 'My Profile',
+      title: 'Mein Profil',
       user,
       rank,
       recentGames,

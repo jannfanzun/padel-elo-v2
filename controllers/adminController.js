@@ -71,7 +71,7 @@ exports.manageUsers = async (req, res) => {
       .sort({ username: 1 });
     
     res.render('admin/users', {
-      title: 'Manage Users',
+      title: 'Spieler verwalten',
       users,
       search,
       moment,
@@ -162,7 +162,7 @@ exports.manageGames = async (req, res) => {
           // If the search doesn't match the selected user, return no results
           if (!userIds.some(id => id.toString() === userId)) {
             return res.render('admin/games', {
-              title: 'Manage Games',
+              title: 'Spiele verwalten',
               games: [],
               users: await User.find({ isAdmin: false }).sort({ username: 1 }).select('username'),
               selectedUserId: userId,
@@ -183,7 +183,7 @@ exports.manageGames = async (req, res) => {
         } else {
           // No matching users found, return no results
           return res.render('admin/games', {
-            title: 'Manage Games',
+            title: 'Spiele verwalten',
             games: [],
             users: await User.find({ isAdmin: false }).sort({ username: 1 }).select('username'),
             selectedUserId: userId,
@@ -206,7 +206,7 @@ exports.manageGames = async (req, res) => {
         .select('username');
       
       res.render('admin/games', {
-        title: 'Manage Games',
+        title: 'Spiele verwalten',
         games,
         users,
         selectedUserId: userId,
@@ -275,7 +275,7 @@ exports.getRegistrationRequests = async (req, res) => {
       .sort({ createdAt: -1 });
     
     res.render('admin/registrationRequests', {
-      title: 'Registration Requests',
+      title: 'Registrierungsanfragen',
       requests,
       moment,
       success: req.query.success || null,
