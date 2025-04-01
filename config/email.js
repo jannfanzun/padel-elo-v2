@@ -32,7 +32,6 @@ const sendRegistrationRequestEmail = async (request) => {
               <p><strong>Benutzername:</strong> ${request.username}</p>
               <p><strong>E-Mail:</strong> ${request.email}</p>
               <p><strong>Datum:</strong> ${new Date(request.createdAt).toLocaleString()}</p>
-              <p><strong>IP-Adresse:</strong> ${request.ipAddress || 'N/A'}</p>
             </div>
             
             <p>Bitte melde dich im <a href="${process.env.SITE_URL}/admin/registration-requests" style="color: #0d6efd; text-decoration: none;">Admin-Dashboard</a> an, um diese Anfrage zu überprüfen.</p>

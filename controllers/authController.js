@@ -40,7 +40,7 @@ exports.postLogin = async (req, res) => {
       
       if (!user) {
         console.log(`Login failed: No user found with email ${email}`);
-        return res.redirect('/auth/login?error=Invalid credentials');
+        return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
       }
       
       console.log(`User found: ${user.username}, checking password now...`);
@@ -52,7 +52,7 @@ exports.postLogin = async (req, res) => {
       
       if (!isMatch) {
         console.log(`Login failed: Password mismatch for user ${email}`);
-        return res.redirect('/auth/login?error=Invalid credentials');
+        return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
       }
       
       console.log(`Login successful for user ${user.username}`);
