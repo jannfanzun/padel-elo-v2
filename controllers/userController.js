@@ -186,9 +186,13 @@ exports.getRankings = async (req, res) => {
       rank: index + 1
     }));
     
-    // Format quarter name for display
-    const months = ['Januar', 'April', 'Juli', 'Oktober'];
-    const quarterName = `${months[currentQuarter]} - ${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
+  // Format quarter name for display
+  // Korrekte Quartalsmonate zuweisen
+  const quarterStartMonths = ['Januar', 'April', 'Juli', 'Oktober'];
+  const quarterEndMonths = ['März', 'Juni', 'September', 'Dezember'];
+  const startMonth = quarterStartMonths[currentQuarter];
+  const endMonth = quarterEndMonths[currentQuarter];
+  const quarterName = `${startMonth} - ${endMonth} ${now.getFullYear()}`;
     
     res.render('user/rankings', {
       title: 'Rankings',
