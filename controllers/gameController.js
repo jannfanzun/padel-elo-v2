@@ -41,7 +41,7 @@ exports.postAddGame = async (req, res) => {
     
     // Validate input
     if (!teammate || !opponent1 || !opponent2 || team1Score === undefined || team2Score === undefined) {
-      return res.redirect('/game/add?error=Please fill in all fields');
+      return res.redirect('/game/add?error=Bitte alle Felder ausfüllen');
     }
     
     // Convert scores to numbers
@@ -54,34 +54,34 @@ exports.postAddGame = async (req, res) => {
     }
     
     if (scoreTeam1 < 0 || scoreTeam1 > 7 || scoreTeam2 < 0 || scoreTeam2 > 7) {
-      return res.redirect('/game/add?error=Scores must be between 0 and 7');
+      return res.redirect('/game/add?error=Punkte müssen zwischen 0 und 7 liegen');
     }
     
     if (scoreTeam1 === 0 && scoreTeam2 === 0) {
-      return res.redirect('/game/add?error=At least one team must score points');
+      return res.redirect('/game/add?error=Mindestens ein Team muss Punkte erzielen');
     }
     
     if (scoreTeam1 === scoreTeam2) {
-      return res.redirect('/game/add?error=The game cannot end in a tie');
+      return res.redirect('/game/add?error=Das Spiel kann nicht unentschieden enden');
     }
     
     if (scoreTeam1 === 7 && scoreTeam2 === 7) {
-      return res.redirect('/game/add?error=Both teams cannot have 7 points');
+      return res.redirect('/game/add?error=Beide Teams können nicht 7 Punkte haben');
     }
     
     // Check if players are unique
     const currentUserId = req.user._id.toString();
     
     if (teammate === currentUserId) {
-      return res.redirect('/game/add?error=You cannot select yourself as a teammate');
+      return res.redirect('/game/add?error=Du kannst dich nicht selbst als Mitspieler auswählen');
     }
     
     if (opponent1 === currentUserId || opponent1 === teammate) {
-      return res.redirect('/game/add?error=You cannot select the same player in multiple roles');
+      return res.redirect('/game/add?error=Du kannst denselben Spieler nicht mehrfach auswählen');
     }
     
     if (opponent2 === currentUserId || opponent2 === teammate || opponent2 === opponent1) {
-      return res.redirect('/game/add?error=You cannot select the same player in multiple roles');
+      return res.redirect('/game/add?error=Du kannst denselben Spieler nicht mehrfach auswählen');
     }
     
     // Get all players
@@ -91,7 +91,7 @@ exports.postAddGame = async (req, res) => {
     const player4 = await User.findById(opponent2);
     
     if (!player1 || !player2 || !player3 || !player4) {
-      return res.redirect('/game/add?error=One or more players not found');
+      return res.redirect('/game/add?error=Ein oder mehrere Spieler wurden nicht gefunden');
     }
     
     // Ensure all players have quarterly ELO records
@@ -151,7 +151,7 @@ exports.postAddGame = async (req, res) => {
       lastActivity: Date.now()
     });
     
-    res.redirect(`/game/${game._id}?success=Game added successfully`);
+    res.redirect(`/game/${game._id}?success=Spiel erfolgreich hinzugefügt`);
   } catch (error) {
     console.error('Add game error:', error);
     res.redirect('/game/add?error=Server error');
@@ -169,7 +169,7 @@ exports.getGameDetails = async (req, res) => {
     if (!game) {
       return res.status(404).render('error', { 
         title: 'Not Found',
-        message: 'Game not found'
+        message: 'Spiel nicht gefunden'
       });
     }
     
@@ -238,7 +238,7 @@ exports.reportGame = async (req, res) => {
       if (!game) {
         return res.status(404).render('error', { 
           title: 'Not Found',
-          message: 'Game not found'
+          message: 'Spiel nicht gefunden'
         });
       }
       

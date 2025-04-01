@@ -98,11 +98,11 @@ exports.deleteUser = async (req, res) => {
     const user = await User.findById(id);
     
     if (!user) {
-      return res.redirect('/admin/users?error=User not found');
+      return res.redirect('/admin/users?error=Benutzer nicht gefunden');
     }
     
     if (user.isAdmin) {
-      return res.redirect('/admin/users?error=Cannot delete admin user');
+      return res.redirect('/admin/users?error=Admin-Benutzer kann nicht gelöscht werden');
     }
     
     // Check if user has games
@@ -114,13 +114,13 @@ exports.deleteUser = async (req, res) => {
     });
     
     if (gamesCount > 0) {
-      return res.redirect('/admin/users?error=Cannot delete user with games. Delete their games first.');
+      return res.redirect('/admin/users?error=Benutzer mit Spielen kann nicht gelöscht werden. Lösche zuerst die Spiele.');
     }
     
     // Delete user
     await User.findByIdAndDelete(id);
     
-    res.redirect('/admin/users?success=User deleted successfully');
+    res.redirect('/admin/users?success=Benutzer erfolgreich gelöscht');
   } catch (error) {
     console.error('Delete user error:', error);
     res.redirect('/admin/users?error=Server error');

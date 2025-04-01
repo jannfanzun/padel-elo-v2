@@ -116,43 +116,43 @@ exports.postRegister = async (req, res) => {
     
     // Validate input
     if (!username || !email || !password) {
-      return res.redirect('/auth/register?error=Please fill in all fields');
+      return res.redirect('/auth/register?error=Bitte alle Felder ausfüllen');
     }
     
     if (password !== confirmPassword) {
       return res.redirect('/auth/register?error=Passwords do not match');
     }
     
-    // Check if username already exists in User collection
+    // Check if Benutzername existiert bereits in User collection
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
-      return res.redirect('/auth/register?error=Username already exists');
+      return res.redirect('/auth/register?error=Benutzername existiert bereits');
     }
     
-    // Check if email already exists in User collection
+    // Check if E-Mail existiert bereits in User collection
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
-      return res.redirect('/auth/register?error=Email already exists');
+      return res.redirect('/auth/register?error=E-Mail existiert bereits');
     }
     
-    // Check if username already exists in RegistrationRequest collection
+    // Check if Benutzername existiert bereits in RegistrationRequest collection
     const existingUsernameRequest = await RegistrationRequest.findOne({ 
       username, 
       status: 'pending' 
     });
     
     if (existingUsernameRequest) {
-      return res.redirect('/auth/register?error=A registration request with this username is already pending');
+      return res.redirect('/auth/register?error=Eine Registrierungsanfrage mit diesem Benutzernamen wartet bereits auf Bestätigung');
     }
     
-    // Check if email already exists in RegistrationRequest collection
+    // Check if E-Mail existiert bereits in RegistrationRequest collection
     const existingEmailRequest = await RegistrationRequest.findOne({ 
       email, 
       status: 'pending' 
     });
     
     if (existingEmailRequest) {
-      return res.redirect('/auth/register?error=A registration request with this email is already pending');
+      return res.redirect('/auth/register?error=Eine Registrierungsanfrage mit diesem Benutzernamen wartet bereits auf Bestätigung');
     }
     
 // Create registration request

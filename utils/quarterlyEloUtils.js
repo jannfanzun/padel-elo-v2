@@ -25,7 +25,7 @@ const getOrCreateQuarterlyELO = async (userId, date = new Date()) => {
   if (!quarterlyELO) {
     const user = await User.findById(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new Error('Benutzer nicht gefunden');
     }
     
     quarterlyELO = await QuarterlyELO.create({
