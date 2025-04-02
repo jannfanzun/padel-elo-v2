@@ -21,6 +21,7 @@ const {
 // Login routes - use redirectIfAuthenticated to check for active sessions
 router.get('/login', redirectIfAuthenticated, getLogin);
 router.post('/login', postLogin);
+// router.post('/login', authLimiter, postLogin); Beispiel von Limiter
 
 // Register routes - use redirectIfAuthenticated to check for active sessions
 router.get('/register', redirectIfAuthenticated, getRegister);
