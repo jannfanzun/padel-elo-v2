@@ -11,19 +11,19 @@ const {
     getResetPassword,
     postResetPassword
 } = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, redirectIfAuthenticated } = require('../middleware/authMiddleware');
 const { 
     authLimiter, 
     registerLimiter, 
     passwordResetLimiter 
 } = require('../middleware/rateLimitMiddleware');
 
-// Login routes
-router.get('/login', getLogin);
+// Login routes - use redirectIfAuthenticated to check for active sessions
+router.get('/login', redirectIfAuthenticated, getLogin);
 router.post('/login', authLimiter, postLogin);
 
-// Register routes
-router.get('/register', getRegister);
+// Register routes - use redirectIfAuthenticated to check for active sessions
+router.get('/register', redirectIfAuthenticated, getRegister);
 router.post('/register', registerLimiter, postRegister);
 
 // Logout route

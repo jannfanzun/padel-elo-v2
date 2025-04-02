@@ -8,13 +8,6 @@ const crypto = require('crypto');
 // @route   GET /auth/login
 // @access  Public
 exports.getLogin = (req, res) => {
-  if (req.user) {
-    if (req.user.isAdmin) {
-      return res.redirect('/admin/dashboard');
-    }
-    return res.redirect('/user/profile');
-  }
-  
   res.render('auth/login', {
     title: 'Login',
     error: req.query.error || null
@@ -93,13 +86,6 @@ exports.postLogin = async (req, res) => {
 // @route   GET /auth/register
 // @access  Public
 exports.getRegister = (req, res) => {
-  if (req.user) {
-    if (req.user.isAdmin) {
-      return res.redirect('/admin/dashboard');
-    }
-    return res.redirect('/user/profile');
-  }
-  
   res.render('auth/register', {
     title: 'Register',
     error: req.query.error || null,

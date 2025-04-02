@@ -49,6 +49,50 @@ exports.protect = async (req, res, next) => {
   }
 };
 
+// Middleware for auth routes - redirects if user is already logged in
+exports.redirectIfAuthenticated = async (req, res, next) => {
+  try {
+    let token;
+    
+    // Check for token in cookies or authorization header
+    if (req.cookies.token) {
+      token = req.cookies.token;
+    } else if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    // If no token, continue to login/register page
+    if (!token) {
+      return next();
+    }
+
+    // Verify token
+    const decoded = verifyToken(token);
+    
+    if (!decoded) {
+      return next();
+    }
+
+    // Check if user still exists
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return next();
+    }
+
+    // User is authenticated, redirect based on role
+    if (user.isAdmin) {
+      return res.redirect('/admin/dashboard');
+    }
+    return res.redirect('/user/profile');
+  } catch (error) {
+    console.error('Auth redirect middleware error:', error);
+    next();
+  }
+};
+
 // Grant access to specific roles
 exports.authorize = (...roles) => {
   return (req, res, next) => {
