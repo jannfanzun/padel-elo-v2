@@ -78,7 +78,7 @@ const sendRegistrationApprovedEmail = async (user) => {
               <p><strong>Start-ELO-Wertung:</strong> 500</p>
             </div>
             
-            <p>Wir freuen uns, dich in unserer Padel-Community begrüßen zu dürfen. Fange an, Spiele einzutragen und klettere in der Rangliste nach oben!</p>
+            <p>Wir freuen uns, dich in unserer Padel-Community begrüssen zu dürfen. Fange an, Spiele einzutragen und klettere in der Rangliste nach oben!</p>
             
             <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatisierte Nachricht des padELO Ranking Systems.</p>
           </div>
