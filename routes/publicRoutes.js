@@ -74,6 +74,18 @@ router.get('/', async (req, res) => {
       user: req.user || null
     });
   });
+
+      /**
+   * @desc    Show About padELO page
+   * @route   GET /about
+   * @access  Public
+   */
+      router.get('/about', (req, res) => {
+        res.render('about', {
+          title: 'Über padELO',
+          user: req.user || null
+        });
+      });
     
     // Count games for each player in this quarter
     quarterGames.forEach(game => {
