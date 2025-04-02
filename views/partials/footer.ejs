@@ -1,19 +1,49 @@
 </main>
   
-<footer class="mt-auto py-4">
+<!-- New Modern Footer -->
+<footer class="mt-auto py-5">
   <div class="container">
-    <div class="row align-items-center">
-      <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
-        <img src="/img/padelo-logo-black.png" alt="padELO Logo" height="60" class="mb-2">
-      </div>
-      <div class="col-md-4 text-center mb-3 mb-md-0">
-        <div class="social-icons">
-          <a target="_blank" href="https://www.instagram.com/padelcamp_mallorca.ch/" class="text-secondary me-2"><i class="fab fa-instagram"></i></a>
-          <a target="_blank" href="mailto:padelo@wmpadel.ch" class="text-secondary"><i class="fa fa-envelope"></i></a>
+    <!-- Main footer content -->
+    <div class="row mb-4">
+      <div class="col-lg-4 mb-4 mb-lg-0">
+        <div class="d-flex flex-column align-items-center align-items-lg-start">
+          <img src="/img/padelo-logo-black.png" alt="padELO Logo" height="60" class="mb-3">
         </div>
       </div>
-      <div class="col-md-4 text-center text-md-end">
-        <p class="text-muted mb-0">&copy; <%= new Date().getFullYear() %> padELO Ranking</p>
+      <div class="col-lg-4 mb-4 mb-lg-0">
+        <h5 class="text-dark mb-3">Navigation</h5>
+        <div class="d-flex justify-content-start justify-content-lg-start">
+          <ul class="list-unstyled me-5">
+            <li class="mb-2"><a href="/" class="text-decoration-none text-secondary">Rangliste</a></li>
+            <li class="mb-2"><a href="/auth/login" class="text-decoration-none text-secondary">Anmelden</a></li>
+          </ul>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="/about" class="text-decoration-none text-secondary">Über padELO</a></li>
+            <li class="mb-2"><a href="/agb" class="text-decoration-none text-secondary">AGB</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-lg-4 text-start text-lg-end">
+        <div class="social-icons mb-4">
+          <a target="_blank" href="https://www.instagram.com/padelcamp_mallorca.ch/" class="text-secondary me-2" aria-label="Instagram">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a target="_blank" href="mailto:padelo@wmpadel.ch" class="text-secondary" aria-label="Email">
+            <i class="fa fa-envelope"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer bottom -->
+    <div class="pt-4 border-top">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-start text-md-start mb-3 mb-md-0">
+          <p class="text-muted mb-0">&copy; <%= new Date().getFullYear() %> padELO Ranking</p>
+        </div>
+        <div class="col-md-6 text-start text-md-end">
+          <p class="text-muted mb-0">Made with <span class="text-danger">❤</span> by <a href="https://webtree.ch" target="_blank" class="text-decoration-none fw-bold text-primary">WebTree</a></p>
+        </div>
       </div>
     </div>
   </div>
