@@ -19,23 +19,23 @@
   <div class="row mb-4">
     <div class="col-md-12">
       <!-- Ranking Type Tabs -->
-      <ul class="nav nav-tabs">
+      <ul class="nav nav-tabs d-flex flex-column flex-md-row">
         <li class="nav-item">
-          <a class="nav-link <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo">
+          <a class="nav-link w-100 w-md-auto <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo">
             <i class="fas fa-trophy me-2"></i>ELO Rangliste
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement">
+          <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement">
             <i class="fas fa-chart-line me-2"></i>Quartal: ELO-Verbesserung
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link <%= rankingType === 'quarterly-games' ? 'active' : '' %>" href="?type=quarterly-games">
+          <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-games' ? 'active' : '' %>" href="?type=quarterly-games">
             <i class="fas fa-gamepad me-2"></i>Quartal: Spieleanzahl
           </a>
         </li>
-      </ul>
+      </ul>           
     </div>
   </div>
   
@@ -59,13 +59,13 @@
                   <th scope="col">#</th>
                   <th scope="col">Spieler</th>
                   <% if (rankingType === 'elo') { %>
-                    <th scope="col" class="text-end">ELO Punkte</th>
+                    <th scope="col" class="text-start">ELO Punkte</th>
                   <% } else if (rankingType === 'quarterly-improvement') { %>
-                    <th scope="col" class="text-end">ELO Verbesserung</th>
-                    <th scope="col" class="text-end">Start → Aktuelle ELO</th>
+                    <th scope="col" class="text-start">ELO Verbesserung</th>
+                    <th scope="col" class="text-start">Start → Aktuelle ELO</th>
                   <% } else if (rankingType === 'quarterly-games') { %>
-                    <th scope="col" class="text-end">Anzahl Spiele</th>
-                    <th scope="col" class="text-end">ELO Punkte</th>
+                    <th scope="col" class="text-start">Anzahl Spiele</th>
+                    <th scope="col" class="text-start">ELO Punkte</th>
                   <% } %>
                 </tr>
               </thead>
@@ -86,19 +86,19 @@
                       </td>
                       
                       <% if (rankingType === 'elo') { %>
-                        <td class="text-end"><strong><%= ranking.user.eloRating %></strong></td>
+                        <td class="text-start"><strong><%= ranking.user.eloRating %></strong></td>
                       <% } else if (rankingType === 'quarterly-improvement') { %>
-                        <td class="text-end">
+                        <td class="text-start">
                           <span class="<%= ranking.quarterlyEloChange > 0 ? 'text-success' : (ranking.quarterlyEloChange < 0 ? 'text-danger' : 'text-muted') %>">
                             <strong><%= ranking.quarterlyEloChange > 0 ? '+' : '' %><%= ranking.quarterlyEloChange %></strong>
                           </span>
                         </td>
-                        <td class="text-end">
+                        <td class="text-start">
                           <%= ranking.initialQuarterElo %> → <%= ranking.user.eloRating %>
                         </td>
                       <% } else if (rankingType === 'quarterly-games') { %>
-                        <td class="text-end"><strong><%= ranking.quarterlyGames %></strong></td>
-                        <td class="text-end"><%= ranking.user.eloRating %></td>
+                        <td class="text-start"><strong><%= ranking.quarterlyGames %></strong></td>
+                        <td class="text-start"><%= ranking.user.eloRating %></td>
                       <% } %>
                     </tr>
                   <% }) %>
@@ -109,7 +109,7 @@
         </div>
         <div class="card-footer bg-white">
           <small class="text-muted">
-            <span class="badge bg-warning text-dark ms-1">Inaktiv</span> Spieler haben in den letzten 7 Tagen nicht gespielt.
+            <span class="badge bg-warning text-dark">Inaktiv</span> Spieler haben in den letzten 7 Tagen nicht gespielt.
           </small>
         </div>
       </div>

@@ -11,19 +11,19 @@
 <div class="row mb-4">
   <div class="col-md-12">
     <!-- Ranking Type Tabs -->
-    <ul class="nav nav-tabs">
+    <ul class="nav nav-tabs d-flex flex-column flex-md-row">
       <li class="nav-item">
-        <a class="nav-link <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo">
           <i class="fas fa-trophy me-2"></i>ELO Rangliste
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement">
           <i class="fas fa-chart-line me-2"></i>Quartal: ELO-Verbesserung
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <%= rankingType === 'quarterly-games' ? 'active' : '' %>" href="?type=quarterly-games">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-games' ? 'active' : '' %>" href="?type=quarterly-games">
           <i class="fas fa-gamepad me-2"></i>Quartal: Spieleanzahl
         </a>
       </li>
