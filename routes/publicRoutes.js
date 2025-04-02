@@ -62,6 +62,18 @@ router.get('/', async (req, res) => {
         currentElo: user.eloRating
       };
     });
+
+    /**
+   * @desc    Show Terms and Conditions (AGB) page
+   * @route   GET /agb
+   * @access  Public
+   */
+  router.get('/agb', (req, res) => {
+    res.render('agb', {
+      title: 'Allgemeine Geschäftsbedingungen',
+      user: req.user || null
+    });
+  });
     
     // Count games for each player in this quarter
     quarterGames.forEach(game => {
