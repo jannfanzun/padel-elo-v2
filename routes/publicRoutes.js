@@ -155,7 +155,7 @@ router.get('/', async (req, res) => {
   const quarterName = `${startMonth} - ${endMonth} ${now.getFullYear()}`;
     
     res.render('index', {
-      title: 'padELO Rankings',
+      title: 'padELO Ranking',
       rankings,
       rankingType,
       quarterName,
