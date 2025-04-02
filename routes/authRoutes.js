@@ -20,11 +20,11 @@ const {
 
 // Login routes - use redirectIfAuthenticated to check for active sessions
 router.get('/login', redirectIfAuthenticated, getLogin);
-router.post('/login', authLimiter, postLogin);
+router.post('/login', postLogin);
 
 // Register routes - use redirectIfAuthenticated to check for active sessions
 router.get('/register', redirectIfAuthenticated, getRegister);
-router.post('/register', registerLimiter, postRegister);
+router.post('/register', postRegister);
 
 // Logout route
 router.get('/logout', protect, logout);
