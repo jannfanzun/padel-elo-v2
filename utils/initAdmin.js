@@ -20,7 +20,7 @@ const initAdmin = async () => {
     
     // Create admin user
     await User.create({
-      username: 'admin',
+      username: process.env.ADMIN_NAME,
       email: process.env.ADMIN_EMAIL,
       password: process.env.ADMIN_PASSWORD,
       isAdmin: true
