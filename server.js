@@ -22,7 +22,7 @@ connectDB();
 const app = express();
 
 // Apply global rate limiter
-app.use(generalLimiter);
+// app.use(generalLimiter);
 
 // Security middleware
 app.use(helmet({
