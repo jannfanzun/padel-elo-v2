@@ -36,15 +36,15 @@ exports.postLogin = async (req, res) => {
         return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
       }
       
-      console.log(`User found: ${user.username}, checking password now...`);
-      console.log(`Password from DB (hashed): ${user.password.substring(0, 10)}...`);
+      // console.log(`User found: ${user.username}, checking password now...`);
+      // console.log(`Password from DB (hashed): ${user.password.substring(0, 10)}...`);
       
       // Direct bcrypt comparison instead of using the model method
       const bcrypt = require('bcryptjs');
       const isMatch = await bcrypt.compare(password, user.password);
       
       if (!isMatch) {
-        console.log(`Login failed: Password mismatch for user ${email}`);
+        // console.log(`Login failed: Password mismatch for user ${email}`);
         return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
       }
       
