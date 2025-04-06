@@ -43,15 +43,20 @@ const calculateNewElo = (currentElo, winProbability, actualResult, scoreDifferen
   // Base ELO change
   let eloChange = K_FACTOR * (actualResult - winProbability);
   
-  // Bonus for significant win
-  if (actualResult === 1 && scoreDifference >= SIGNIFICANT_WIN_THRESHOLD) {
-    eloChange += BONUS_POINTS_FOR_SIGNIFICANT_WIN;
+  // Bonus for significant win / Penalty for significant loss
+  if (scoreDifference >= SIGNIFICANT_WIN_THRESHOLD) {
+    if (actualResult === 1) {
+      // Winner gets bonus
+      eloChange += BONUS_POINTS_FOR_SIGNIFICANT_WIN;
+    } else {
+      // Loser gets penalty
+      eloChange -= BONUS_POINTS_FOR_SIGNIFICANT_WIN;
+    }
   }
   
   // Round to nearest integer
   return Math.round(currentElo + eloChange);
 };
-
 /**
  * Calculate ELO changes for a match
  * @param {Object} team1 - Team 1 with player IDs and ELO ratings
