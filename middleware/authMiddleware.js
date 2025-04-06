@@ -6,9 +6,15 @@ const { verifyToken } = require('../config/jwt');
 exports.protect = async (req, res, next) => {
   try {
     let token;
+    let isSpecialToken = false;
     
+    // Check for token in URL query parameter (for email links)
+    if (req.query.token) {
+      token = req.query.token;
+      isSpecialToken = true;
+    }
     // Check for token in cookies or authorization header
-    if (req.cookies.token) {
+    else if (req.cookies.token) {
       token = req.cookies.token;
     } else if (
       req.headers.authorization &&
@@ -23,15 +29,48 @@ exports.protect = async (req, res, next) => {
       return res.redirect('/auth/login');
     }
 
-    // Verify token
-    const decoded = verifyToken(token);
-    
-    if (!decoded) {
-      req.session.returnTo = req.originalUrl;
-      return res.redirect('/auth/login');
+    // For special tokens from email links, verify directly with jwt
+    let decoded;
+    if (isSpecialToken) {
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Check if it's a special game-report access token
+        if (decoded.purpose === 'game-report-access') {
+          // For game report direct access, use admin account
+          const adminUser = await User.findById(decoded.id);
+          
+          if (!adminUser || !adminUser.isAdmin) {
+            throw new Error('Invalid admin token');
+          }
+          
+          // Only allow access to the specific game
+          const gameId = req.path.split('/').pop();
+          if (decoded.gameId !== gameId) {
+            throw new Error('Token is not valid for this game');
+          }
+          
+          // Set admin user and continue
+          req.user = adminUser;
+          res.locals.user = adminUser;
+          return next();
+        }
+      } catch (err) {
+        console.error('Special token verification error:', err);
+        req.session.returnTo = req.originalUrl;
+        return res.redirect('/auth/login');
+      }
+    } else {
+      // Regular token verification
+      decoded = verifyToken(token);
+      
+      if (!decoded) {
+        req.session.returnTo = req.originalUrl;
+        return res.redirect('/auth/login');
+      }
     }
 
-    // Check if user still exists
+    // Check if user still exists (for regular tokens)
     const user = await User.findById(decoded.id);
     if (!user) {
       req.session.returnTo = req.originalUrl;

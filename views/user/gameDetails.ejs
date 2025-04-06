@@ -6,7 +6,7 @@
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h2 class="h5 mb-0">Spieldetails</h2>
             <span class="badge bg-light text-primary">
-              <%= new Date(game.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+              <%= new Date(game.createdAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' }) %>
             </span>
           </div>
           <div class="card-body">
@@ -150,7 +150,7 @@
           <div class="text-center text-muted">
             <small>
               Spiel hinzugefügt von <strong><%= game.createdBy.username %></strong> am 
-              <%= new Date(game.createdAt).toLocaleDateString('en-US', { 
+              <%= new Date(game.createdAt).toLocaleDateString('de-DE', { 
                 day: 'numeric', 
                 month: 'short', 
                 year: 'numeric',
@@ -166,9 +166,19 @@
                   <i class="fas fa-arrow-left me-2"></i>Zurück
               </a>
               <div class="d-flex flex-column flex-md-row">
-                  <button class="btn btn-danger w-100 w-md-auto mb-2 mb-md-0 me-md-2 text-nowrap text-start" data-bs-toggle="modal" data-bs-target="#reportGameModal">
+                  <% if (user.isAdmin) { %>
+                    <!-- Only show delete button for admin users -->
+                    <form action="/admin/games/<%= game._id %>/delete" method="POST" class="me-md-2 mb-2 mb-md-0">
+                      <button type="submit" class="btn btn-danger w-100 w-md-auto mb-2 mb-md-0 me-md-2 text-nowrap text-start" onclick="return confirm('Bist du sicher, dass du dieses Spiel löschen möchtest? Alle ELO-Änderungen werden rückgängig gemacht.')">
+                        <i class="fas fa-trash me-2"></i>Spiel löschen
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <!-- Only show report button for regular users -->
+                    <button class="btn btn-danger w-100 w-md-auto mb-2 mb-md-0 me-md-2 text-nowrap text-start" data-bs-toggle="modal" data-bs-target="#reportGameModal">
                       <i class="fas fa-flag me-2"></i>Problem melden
-                  </button>
+                    </button>
+                  <% } %>
       
                   <a href="/game/add" class="btn btn-primary w-100 w-md-auto text-nowrap text-start">
                       <i class="fas fa-plus-circle me-2"></i>Neues Spiel
@@ -180,8 +190,8 @@
     </div>
   </div>  
 
-  <!-- Report Game Modal -->
-<div class="modal fade" id="reportGameModal" tabindex="-1" aria-hidden="true">
+  <% if (!user.isAdmin) { %>
+  <div class="modal fade" id="reportGameModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <form action="/game/<%= game._id %>/report" method="POST">
@@ -221,5 +231,6 @@
       </div>
     </div>
   </div>
+  <% } %>
 
 <%- include('../partials/footer') %>
