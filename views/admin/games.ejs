@@ -38,7 +38,7 @@
         <div class="card-header bg-white">
           <div class="d-flex justify-content-between align-items-center">
             <h3 class="h5 mb-0">Spiele</h3>
-            <span class="badge bg-primary"><%= games.length %> Spiele</span>
+            <span class="badge bg-primary"><%= total || 0 %> Spiele insgesamt</span>
           </div>
         </div>
         <div class="card-body p-0">
@@ -130,6 +130,77 @@
             </div>
           <% } %>
         </div>
+        <% if (totalPages > 0) { %>
+        <div class="card-footer bg-white">
+          <nav aria-label="Spiele Paginierung">
+            <ul class="pagination justify-content-center mb-0">
+              <% if (hasPrevPage) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/games?page=<%= currentPage - 1 %><%= search ? `&search=${search}` : '' %><%= selectedUserId ? `&userId=${selectedUserId}` : '' %>">
+                    <i class="fas fa-chevron-left"></i> Zurück
+                  </a>
+                </li>
+              <% } else { %>
+                <li class="page-item disabled">
+                  <span class="page-link"><i class="fas fa-chevron-left"></i> Zurück</span>
+                </li>
+              <% } %>
+              
+              <% 
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                if (endPage - startPage < 4 && totalPages > 4) {
+                  startPage = Math.max(1, endPage - 4);
+                }
+              %>
+              
+              <% if (startPage > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/games?page=1<%= search ? `&search=${search}` : '' %><%= selectedUserId ? `&userId=${selectedUserId}` : '' %>">1</a>
+                </li>
+                <% if (startPage > 2) { %>
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                <% } %>
+              <% } %>
+              
+              <% for (let i = startPage; i <= endPage; i++) { %>
+                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                  <a class="page-link" href="/admin/games?page=<%= i %><%= search ? `&search=${search}` : '' %><%= selectedUserId ? `&userId=${selectedUserId}` : '' %>">
+                    <%= i %>
+                  </a>
+                </li>
+              <% } %>
+              
+              <% if (endPage < totalPages) { %>
+                <% if (endPage < totalPages - 1) { %>
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                <% } %>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/games?page=<%= totalPages %><%= search ? `&search=${search}` : '' %><%= selectedUserId ? `&userId=${selectedUserId}` : '' %>">
+                    <%= totalPages %>
+                  </a>
+                </li>
+              <% } %>
+              
+              <% if (hasNextPage) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/games?page=<%= currentPage + 1 %><%= search ? `&search=${search}` : '' %><%= selectedUserId ? `&userId=${selectedUserId}` : '' %>">
+                    Weiter <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              <% } else { %>
+                <li class="page-item disabled">
+                  <span class="page-link">Weiter <i class="fas fa-chevron-right"></i></span>
+                </li>
+              <% } %>
+            </ul>
+          </nav>
+        </div>
+        <% } %>
       </div>
     </div>
   </div>

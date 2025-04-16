@@ -15,15 +15,14 @@ exports.getDashboard = async (req, res) => {
     const userCount = await User.countDocuments({ isAdmin: false });
     const gameCount = await Game.countDocuments();
     const pendingRequestsCount = await RegistrationRequest.countDocuments({ status: 'pending' });
-    const reportedGamesCount = await GameReport.countDocuments();
     
-    // Get Letzte Spiele
+    // Get Letzte Spiele - limit to 5
     const recentGames = await Game.find()
       .sort({ createdAt: -1 })
       .limit(5)
       .populate('team1.player team2.player createdBy', 'username');
     
-    // Get recently registered users
+    // Get recently registered users - limit to 5
     const recentUsers = await User.find({ isAdmin: false })
       .sort({ createdAt: -1 })
       .limit(5);
@@ -33,12 +32,10 @@ exports.getDashboard = async (req, res) => {
       stats: {
         userCount,
         gameCount,
-        pendingRequestsCount,
-        reportedGamesCount
+        pendingRequestsCount
       },
       recentGames,
       recentUsers,
-      pendingRequestsCount,
       moment
     });
   } catch (error) {
@@ -136,57 +133,41 @@ exports.deleteUser = async (req, res) => {
 // @route   GET /admin/games
 // @access  Private (Admin only)
 exports.manageGames = async (req, res) => {
-    try {
-      // Get query parameters
-      const { userId, search } = req.query;
+  try {
+    // Get query parameters
+    const { userId, search, page = 1, limit = 10 } = req.query;
+    
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Build query
+    let query = {};
+    
+    // Filter by user if provided
+    if (userId) {
+      query = {
+        $or: [
+          { 'team1.player': userId },
+          { 'team2.player': userId }
+        ]
+      };
+    }
+    
+    // If search term is provided, get user ids that match the search
+    if (search) {
+      const matchingUsers = await User.find({
+        username: { $regex: search, $options: 'i' },
+        isAdmin: false
+      }).select('_id');
       
-      // Build query
-      let query = {};
+      const userIds = matchingUsers.map(user => user._id);
       
-      // Filter by user if provided
+      // If we already have a userId filter, combine with search
       if (userId) {
-        query = {
-          $or: [
-            { 'team1.player': userId },
-            { 'team2.player': userId }
-          ]
-        };
-      }
-      
-      // If search term is provided, get user ids that match the search
-      if (search) {
-        const matchingUsers = await User.find({
-          username: { $regex: search, $options: 'i' },
-          isAdmin: false
-        }).select('_id');
-        
-        const userIds = matchingUsers.map(user => user._id);
-        
-        // If we already have a userId filter, combine with search
-        if (userId) {
-          // If the search doesn't match the selected user, return no results
-          if (!userIds.some(id => id.toString() === userId)) {
-            return res.render('admin/games', {
-              title: 'Spiele verwalten',
-              games: [],
-              users: await User.find({ isAdmin: false }).sort({ username: 1 }).select('username'),
-              selectedUserId: userId,
-              search,
-              moment,
-              success: req.query.success || null,
-              error: req.query.error || null
-            });
-          }
-        } else if (userIds.length > 0) {
-          // Add search filter
-          query = {
-            $or: [
-              { 'team1.player': { $in: userIds } },
-              { 'team2.player': { $in: userIds } }
-            ]
-          };
-        } else {
-          // No matching users found, return no results
+        // If the search doesn't match the selected user, return no results
+        if (!userIds.some(id => id.toString() === userId)) {
           return res.render('admin/games', {
             title: 'Spiele verwalten',
             games: [],
@@ -195,39 +176,81 @@ exports.manageGames = async (req, res) => {
             search,
             moment,
             success: req.query.success || null,
-            error: req.query.error || null
+            error: req.query.error || null,
+            currentPage: pageNum,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPrevPage: false
           });
         }
+      } else if (userIds.length > 0) {
+        // Add search filter
+        query = {
+          $or: [
+            { 'team1.player': { $in: userIds } },
+            { 'team2.player': { $in: userIds } }
+          ]
+        };
+      } else {
+        // No matching users found, return no results
+        return res.render('admin/games', {
+          title: 'Spiele verwalten',
+          games: [],
+          users: await User.find({ isAdmin: false }).sort({ username: 1 }).select('username'),
+          selectedUserId: userId,
+          search,
+          moment,
+          success: req.query.success || null,
+          error: req.query.error || null,
+          currentPage: pageNum,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false
+        });
       }
-      
-      // Get games
-      const games = await Game.find(query)
-        .sort({ createdAt: -1 })
-        .populate('team1.player team2.player createdBy', 'username');
-      
-      // Get all users for filter
-      const users = await User.find({ isAdmin: false })
-        .sort({ username: 1 })
-        .select('username');
-      
-      res.render('admin/games', {
-        title: 'Spiele verwalten',
-        games,
-        users,
-        selectedUserId: userId,
-        search,
-        moment,
-        success: req.query.success || null,
-        error: req.query.error || null
-      });
-    } catch (error) {
-      console.error('Manage games error:', error);
-      res.status(500).render('error', { 
-        title: 'Server Error',
-        message: 'An error occurred while loading the games'
-      });
     }
-  };
+    
+    // Count total documents for pagination
+    const total = await Game.countDocuments(query);
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limitNum);
+    
+    // Get games with pagination
+    const games = await Game.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .populate('team1.player team2.player createdBy', 'username');
+    
+    // Get all users for filter
+    const users = await User.find({ isAdmin: false })
+      .sort({ username: 1 })
+      .select('username');
+    
+    res.render('admin/games', {
+      title: 'Spiele verwalten',
+      games,
+      users,
+      selectedUserId: userId,
+      search,
+      moment,
+      success: req.query.success || null,
+      error: req.query.error || null,
+      currentPage: pageNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1,
+      total
+    });
+  } catch (error) {
+    console.error('Manage games error:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error',
+      message: 'An error occurred while loading the games'
+    });
+  }
+};
 
 // @desc    Delete game
 // @route   POST /admin/games/:id/delete
