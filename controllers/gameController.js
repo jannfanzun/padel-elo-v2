@@ -188,25 +188,50 @@ exports.getGameDetails = async (req, res) => {
 };
 
 // @desc    Get user games
-// @route   GET /game/user
+// @route   GET /game/user/history
 // @access  Private
 exports.getUserGames = async (req, res) => {
   try {
     const userId = req.user._id;
     
-    // Find games where the user participated
-    const games = await Game.find({
+    // Get query parameters
+    const { page = 1, limit = 10 } = req.query;
+    
+    // Parse to integers
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Build query - find games where the user participated
+    const query = {
       $or: [
         { 'team1.player': userId },
         { 'team2.player': userId }
       ]
-    })
-    .sort({ createdAt: -1 })
-    .populate('team1.player team2.player createdBy', 'username');
+    };
+    
+    // Count total games for pagination
+    const total = await Game.countDocuments(query);
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limitNum);
+    
+    // Find games with pagination
+    const games = await Game.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .populate('team1.player team2.player createdBy', 'username');
     
     res.render('user/games', {
       title: 'Meine Spiele',
-      games
+      games,
+      user: req.user,
+      currentPage: pageNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1,
+      total
     });
   } catch (error) {
     console.error('Get user games error:', error);
