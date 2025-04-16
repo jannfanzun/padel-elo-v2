@@ -53,7 +53,12 @@ exports.getDashboard = async (req, res) => {
 exports.manageUsers = async (req, res) => {
   try {
     // Get query parameters
-    const { search } = req.query;
+    const { search, page = 1, limit = 10 } = req.query;
+    
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
     
     // Build query
     let query = { isAdmin: false };
@@ -68,9 +73,17 @@ exports.manageUsers = async (req, res) => {
       };
     }
     
-    // Get users
+    // Count total documents for pagination
+    const total = await User.countDocuments(query);
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limitNum);
+    
+    // Get users with pagination
     const users = await User.find(query)
-      .sort({ username: 1 });
+      .sort({ username: 1 })
+      .skip(skip)
+      .limit(limitNum);
     
     res.render('admin/users', {
       title: 'Spieler verwalten',
@@ -78,7 +91,12 @@ exports.manageUsers = async (req, res) => {
       search,
       moment,
       success: req.query.success || null,
-      error: req.query.error || null
+      error: req.query.error || null,
+      currentPage: pageNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1,
+      total
     });
   } catch (error) {
     console.error('Manage users error:', error);
@@ -301,16 +319,37 @@ exports.deleteGame = async (req, res) => {
 // @access  Private (Admin only)
 exports.getRegistrationRequests = async (req, res) => {
   try {
-    // Get pending registration requests
+    // Get query parameters
+    const { page = 1, limit = 10 } = req.query;
+    
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Count total pending requests
+    const total = await RegistrationRequest.countDocuments({ status: 'pending' });
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limitNum);
+    
+    // Get pending registration requests with pagination
     const requests = await RegistrationRequest.find({ status: 'pending' })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
     
     res.render('admin/registrationRequests', {
       title: 'Registrierungsanfragen',
       requests,
       moment,
       success: req.query.success || null,
-      error: req.query.error || null
+      error: req.query.error || null,
+      currentPage: pageNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1,
+      total
     });
   } catch (error) {
     console.error('Get registration requests error:', error);
