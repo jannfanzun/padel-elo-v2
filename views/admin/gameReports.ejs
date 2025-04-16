@@ -1,0 +1,143 @@
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2>Gemeldete Spiele</h2>
+        <a href="/admin/dashboard" class="btn btn-secondary">
+          <i class="fas fa-arrow-left me-2"></i>Zum Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+      <i class="fas fa-check-circle me-2"></i><%= success %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+      <i class="fas fa-exclamation-circle me-2"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="h5 mb-0">Alle Meldungen</h3>
+          <span class="badge bg-primary"><%= reports.length %> Meldungen</span>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% if (reports.length === 0) { %>
+          <div class="p-4 text-center">
+            <p class="text-muted mb-0">Keine gemeldeten Spiele vorhanden.</p>
+          </div>
+        <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Spiel</th>
+                <th>Grund</th>
+                <th>Details</th>
+                <th>Gemeldet von</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% reports.forEach(report => { %>
+                <tr>
+                  <td><%= moment(report.createdAt).format('DD.MM.YYYY HH:mm') %></td>
+                  <td>
+                    <% if (report.game) { %>
+                      <div class="small">
+                        <%= report.game.team1[0].player.username %> & <%= report.game.team1[1].player.username %>
+                        <span class="text-muted">vs</span>
+                        <%= report.game.team2[0].player.username %> & <%= report.game.team2[1].player.username %>
+                        <div class="mt-1">
+                          <span class="<%= report.game.winner === 'team1' ? 'text-success' : 'text-muted' %>"><%= report.game.score.team1 %></span>
+                          -
+                          <span class="<%= report.game.winner === 'team2' ? 'text-success' : 'text-muted' %>"><%= report.game.score.team2 %></span>
+                        </div>
+                      </div>
+                    <% } else { %>
+                      <span class="text-muted">Spiel nicht verfügbar</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% 
+                      let reasonText = '';
+                      switch(report.reason) {
+                        case 'wrong_score':
+                          reasonText = 'Falsches Ergebnis';
+                          break;
+                        case 'wrong_players':
+                          reasonText = 'Falsche Spieler';
+                          break;
+                        case 'duplicate':
+                          reasonText = 'Duplikat';
+                          break;
+                        case 'other':
+                          reasonText = 'Anderes Problem';
+                          break;
+                        default:
+                          reasonText = report.reason;
+                      }
+                    %>
+                    <span class="badge bg-warning text-dark"><%= reasonText %></span>
+                  </td>
+                  <td>
+                    <% if (report.details && report.details.length > 30) { %>
+                      <%= report.details.substring(0, 30) %>...
+                      <button type="button" class="btn btn-sm btn-link p-0" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        title="<%= report.details %>">
+                        <i class="fas fa-info-circle"></i>
+                      </button>
+                    <% } else if (report.details) { %>
+                      <%= report.details %>
+                    <% } else { %>
+                      <span class="text-muted">Keine Details</span>
+                    <% } %>
+                  </td>
+                  <td><%= report.reportedBy ? report.reportedBy.username : 'Unbekannt' %></td>
+                  <<td class="d-flex gap-2">
+                    <a href="/game/<%= report.game ? report.game._id : '#' %>" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-eye"></i> Spiel ansehen
+                    </a>
+                    <form action="/admin/game-reports/<%= report._id %>/delete" method="POST" onsubmit="return confirm('Möchten Sie diese Meldung wirklich löschen?');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash"></i> Meldung löschen
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

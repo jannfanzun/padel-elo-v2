@@ -7,58 +7,75 @@
 </div>
 
 <div class="row mb-4">
-    <!-- Statistik-Karten -->
-    <div class="col-md-4 mb-3 mb-md-0">
-      <div class="card text-white bg-primary h-100">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="card-title mb-0">Gesamtanzahl Spieler</h5>
-              <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
-            </div>
-            <i class="fas fa-users fa-3x opacity-50"></i>
+  <!-- Statistik-Karten -->
+  <div class="col-md-3 mb-3 mb-md-0">
+    <div class="card text-white bg-primary h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-0">Gesamtanzahl Spieler</h5>
+            <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
           </div>
-          <a href="/admin/users" class="text-white text-decoration-none stretched-link">
-            <small>Spieler verwalten <i class="fas fa-arrow-right ms-1"></i></small>
-          </a>
+          <i class="fas fa-users fa-3x opacity-50"></i>
         </div>
+        <a href="/admin/users" class="text-white text-decoration-none stretched-link">
+          <small>Spieler verwalten <i class="fas fa-arrow-right ms-1"></i></small>
+        </a>
       </div>
     </div>
-    
-    <div class="col-md-4 mb-3 mb-md-0">
-      <div class="card text-white bg-success h-100">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="card-title mb-0">Gesamtanzahl Spiele</h5>
-              <p class="card-text display-4 fw-bold"><%= stats.gameCount %></p>
-            </div>
-            <i class="fas fa-table-tennis fa-3x opacity-50"></i>
+  </div>
+  
+  <div class="col-md-3 mb-3 mb-md-0">
+    <div class="card text-white bg-success h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-0">Gesamtanzahl Spiele</h5>
+            <p class="card-text display-4 fw-bold"><%= stats.gameCount %></p>
           </div>
-          <a href="/admin/games" class="text-white text-decoration-none stretched-link">
-            <small>Spiele verwalten <i class="fas fa-arrow-right ms-1"></i></small>
-          </a>
+          <i class="fas fa-table-tennis fa-3x opacity-50"></i>
         </div>
+        <a href="/admin/games" class="text-white text-decoration-none stretched-link">
+          <small>Spiele verwalten <i class="fas fa-arrow-right ms-1"></i></small>
+        </a>
       </div>
     </div>
-    
-    <div class="col-md-4">
-      <div class="card text-white bg-warning h-100">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="card-title mb-0">Ausstehende Anfragen</h5>
-              <p class="card-text display-4 fw-bold"><%= stats.pendingRequestsCount %></p>
-            </div>
-            <i class="fas fa-user-plus fa-3x opacity-50"></i>
+  </div>
+  
+  <div class="col-md-3 mb-3 mb-md-0">
+    <div class="card text-white bg-warning h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-0">Ausstehende Anfragen</h5>
+            <p class="card-text display-4 fw-bold"><%= stats.pendingRequestsCount %></p>
           </div>
-          <a href="/admin/registration-requests" class="text-white text-decoration-none stretched-link">
-            <small>Anfragen überprüfen <i class="fas fa-arrow-right ms-1"></i></small>
-          </a>
+          <i class="fas fa-user-plus fa-3x opacity-50"></i>
         </div>
+        <a href="/admin/registration-requests" class="text-white text-decoration-none stretched-link">
+          <small>Anfragen überprüfen <i class="fas fa-arrow-right ms-1"></i></small>
+        </a>
       </div>
     </div>
-  </div>  
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-white bg-danger h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-0">Gemeldete Spiele</h5>
+            <p class="card-text display-4 fw-bold"><%= stats.reportedGamesCount %></p>
+          </div>
+          <i class="fas fa-flag fa-3x opacity-50"></i>
+        </div>
+        <a href="/admin/game-reports" class="text-white text-decoration-none stretched-link">
+          <small>Meldungen prüfen <i class="fas fa-arrow-right ms-1"></i></small>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="row">
   <!-- Letzte Spiele -->

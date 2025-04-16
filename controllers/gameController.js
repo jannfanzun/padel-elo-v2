@@ -221,34 +221,45 @@ exports.getUserGames = async (req, res) => {
 // @route   POST /game/:id/report
 // @access  Private
 exports.reportGame = async (req, res) => {
-    try {
-      const gameId = req.params.id;
-      const { reason, details } = req.body;
-      const user = req.user;
-      
-      // Validate reason
-      if (!reason) {
-        return res.redirect(`/game/${gameId}?error=Bitte gib einen Grund für die Meldung an`);
-      }
-      
-      // Check if game exists
-      const game = await Game.findById(gameId)
-        .populate('team1.player team2.player createdBy', 'username');
-      
-      if (!game) {
-        return res.status(404).render('error', { 
-          title: 'Not Found',
-          message: 'Spiel nicht gefunden'
-        });
-      }
-      
-      // Send email to admin
-      await sendGameReportEmail(user, game, reason, details);
-      
-      // Redirect with success message
-      res.redirect(`/game/${gameId}?success=Vielen Dank für deine Meldung. Der Administrator wird das Spiel überprüfen.`);
-    } catch (error) {
-      console.error('Game report error:', error);
-      res.redirect(`/game/${req.params.id}?error=Bei der Meldung ist ein Fehler aufgetreten. Bitte versuche es später erneut.`);
+  try {
+    const gameId = req.params.id;
+    const { reason, details } = req.body;
+    const user = req.user;
+    
+    // Validate reason
+    if (!reason) {
+      return res.redirect(`/game/${gameId}?error=Bitte gib einen Grund für die Meldung an`);
     }
-  };
+    
+    // Check if game exists
+    const game = await Game.findById(gameId)
+      .populate('team1.player team2.player createdBy', 'username');
+    
+    if (!game) {
+      return res.status(404).render('error', { 
+        title: 'Not Found',
+        message: 'Spiel nicht gefunden'
+      });
+    }
+    
+    // Import GameReport model
+    const GameReport = require('../models/GameReport');
+    
+    // Create game report in database
+    await GameReport.create({
+      game: gameId,
+      reportedBy: user._id,
+      reason,
+      details
+    });
+    
+    // Send email to admin
+    await sendGameReportEmail(user, game, reason, details);
+    
+    // Redirect with success message
+    res.redirect(`/game/${gameId}?success=Vielen Dank für deine Meldung. Der Administrator wird das Spiel überprüfen.`);
+  } catch (error) {
+    console.error('Game report error:', error);
+    res.redirect(`/game/${req.params.id}?error=Bei der Meldung ist ein Fehler aufgetreten. Bitte versuche es später erneut.`);
+  }
+};

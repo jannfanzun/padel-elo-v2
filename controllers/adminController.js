@@ -3,6 +3,8 @@ const Game = require('../models/Game');
 const RegistrationRequest = require('../models/RegistrationRequest');
 const moment = require('moment');
 const { sendRegistrationApprovedEmail } = require('../config/email');
+const GameReport = require('../models/GameReport');
+
 
 // @desc    Admin dashboard
 // @route   GET /admin/dashboard
@@ -13,6 +15,7 @@ exports.getDashboard = async (req, res) => {
     const userCount = await User.countDocuments({ isAdmin: false });
     const gameCount = await Game.countDocuments();
     const pendingRequestsCount = await RegistrationRequest.countDocuments({ status: 'pending' });
+    const reportedGamesCount = await GameReport.countDocuments();
     
     // Get Letzte Spiele
     const recentGames = await Game.find()
@@ -30,10 +33,12 @@ exports.getDashboard = async (req, res) => {
       stats: {
         userCount,
         gameCount,
-        pendingRequestsCount
+        pendingRequestsCount,
+        reportedGamesCount
       },
       recentGames,
       recentUsers,
+      pendingRequestsCount,
       moment
     });
   } catch (error) {
@@ -251,6 +256,9 @@ exports.deleteGame = async (req, res) => {
       });
     }
     
+    // Delete any reports associated with this game
+    await GameReport.deleteMany({ game: id });
+    
     // Delete game
     await Game.findByIdAndDelete(id);
     
@@ -380,5 +388,55 @@ exports.rejectRegistrationRequest = async (req, res) => {
   } catch (error) {
     console.error('Reject registration request error:', error);
     res.redirect('/admin/registration-requests?error=Server error');
+  }
+};
+
+// @desc    Get all game reports
+// @route   GET /admin/game-reports
+// @access  Admin only
+exports.getGameReports = async (req, res) => {
+  try {
+    // Get all game reports, sort by newest first
+    const reports = await GameReport.find()
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'game',
+        populate: {
+          path: 'team1.player team2.player createdBy',
+          select: 'username'
+        }
+      })
+      .populate('reportedBy', 'username email');
+    
+    res.render('admin/gameReports', {
+      title: 'Gemeldete Spiele',
+      reports,
+      pendingRequestsCount: await RegistrationRequest.countDocuments({ status: 'pending' }),
+      moment
+    });
+  } catch (error) {
+    console.error('Get game reports error:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error',
+      message: 'An error occurred while loading the game reports'
+    });
+  }
+};
+
+// @desc    Delete a game report
+// @route   POST /admin/game-reports/:id/delete
+// @access  Admin only
+exports.deleteGameReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find and delete the report
+    await GameReport.findByIdAndDelete(id);
+    
+    // Redirect back to game reports page with success message
+    res.redirect('/admin/game-reports?success=Meldung erfolgreich gelöscht');
+  } catch (error) {
+    console.error('Delete game report error:', error);
+    res.redirect('/admin/game-reports?error=Fehler beim Löschen der Meldung');
   }
 };
