@@ -6,6 +6,7 @@ const GameReport = require('../models/GameReport');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const moment = require('moment');
 const { sendRegistrationApprovedEmail } = require('../config/email');
+const { recalculateQuarterlyELO } = require('../utils/cronJobs');
 
 
 // @desc    Admin dashboard
@@ -604,101 +605,13 @@ exports.resetSystem = async (req, res) => {
 // @access  Private (Admin only)
 exports.recalculateELO = async (req, res) => {
   try {
-    // Get current quarter start date
+    // Get current quarter information
     const now = new Date();
     const currentQuarter = Math.floor(now.getMonth() / 3);
     const currentYear = now.getFullYear();
-    const quarterStart = new Date(now.getFullYear(), currentQuarter * 3, 1);
     
-    console.log(`Starting ELO recalculation for quarter ${currentQuarter + 1}/${currentYear}`);
-    
-    // Get all games in this quarter, sorted by creation date (oldest first)
-    const games = await Game.find({
-      createdAt: { $gte: quarterStart }
-    })
-    .sort({ createdAt: 1 })
-    .populate('team1.player team2.player', 'username eloRating');
-    
-    if (games.length === 0) {
-      return res.redirect('/admin/dashboard?info=Keine Spiele im aktuellen Quartal gefunden');
-    }
-    
-    console.log(`Found ${games.length} games to recalculate`);
-    
-    // Get all players who participated in games this quarter
-    const playerIds = new Set();
-    games.forEach(game => {
-      game.team1.forEach(player => playerIds.add(player.player._id.toString()));
-      game.team2.forEach(player => playerIds.add(player.player._id.toString()));
-    });
-    
-    // Get quarterly ELO records for all players
-    const quarterlyRecords = await QuarterlyELO.find({
-      user: { $in: Array.from(playerIds) },
-      year: currentYear,
-      quarter: currentQuarter
-    });
-    
-    // Create map for quick access to quarterly starting ELO
-    const quarterlyELOMap = new Map();
-    quarterlyRecords.forEach(record => {
-      quarterlyELOMap.set(record.user.toString(), record.startELO);
-    });
-    
-    // Reset all player ELO ratings to their quarterly starting values
-    for (const playerId of playerIds) {
-      const startELO = quarterlyELOMap.get(playerId) || 500; // Fallback to default ELO
-      await User.findByIdAndUpdate(playerId, { eloRating: startELO });
-      console.log(`Reset player ${playerId} to ${startELO} ELO`);
-    }
-    
-    // Process each game in chronological order
-    for (const game of games) {
-      // Get updated player information after previous game calculations
-      const playersInfo = await getPlayersInfo(game);
-      
-      // Calculate new ELO changes
-      const eloResults = recalculateGameELO(playersInfo, game.score);
-      
-      // Update game record with new calculations
-      game.team1.forEach((player, index) => {
-        player.eloBeforeGame = eloResults.team1[index].eloBeforeGame;
-        player.eloAfterGame = eloResults.team1[index].eloAfterGame;
-        player.eloChange = eloResults.team1[index].eloChange;
-      });
-      
-      game.team2.forEach((player, index) => {
-        player.eloBeforeGame = eloResults.team2[index].eloBeforeGame;
-        player.eloAfterGame = eloResults.team2[index].eloAfterGame;
-        player.eloChange = eloResults.team2[index].eloChange;
-      });
-      
-      game.teamElo = eloResults.teamElo;
-      
-      // Save updated game record
-      await game.save();
-      
-      // Update all players' ELO ratings
-      await User.findByIdAndUpdate(game.team1[0].player._id, { 
-        eloRating: eloResults.team1[0].eloAfterGame
-      });
-      
-      await User.findByIdAndUpdate(game.team1[1].player._id, { 
-        eloRating: eloResults.team1[1].eloAfterGame
-      });
-      
-      await User.findByIdAndUpdate(game.team2[0].player._id, { 
-        eloRating: eloResults.team2[0].eloAfterGame
-      });
-      
-      await User.findByIdAndUpdate(game.team2[1].player._id, { 
-        eloRating: eloResults.team2[1].eloAfterGame
-      });
-      
-      console.log(`Recalculated ELO for game ${game._id}`);
-    }
-    
-    console.log('ELO recalculation completed successfully');
+    // Use the same function that the cron job uses
+    await recalculateQuarterlyELO({ year: currentYear, quarter: currentQuarter });
     
     res.redirect('/admin/dashboard?success=ELO-Werte für alle Spiele wurden erfolgreich neu berechnet');
   } catch (error) {
