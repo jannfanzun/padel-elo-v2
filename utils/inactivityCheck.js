@@ -1,5 +1,5 @@
 const User = require('../models/User');
-// const { sendInactivityPenaltyEmail } = require('../config/email');
+const { sendInactivityPenaltyEmail } = require('../config/email');
 
 /**
  * Überprüft alle Benutzer auf Inaktivität und wendet Strafen an
@@ -47,7 +47,7 @@ const checkInactiveUsers = async () => {
       
       // Sende eine E-Mail-Benachrichtigung
       try {
-        // await sendInactivityPenaltyEmail(user, oldElo, user.eloRating);
+        await sendInactivityPenaltyEmail(user, oldElo, user.eloRating);
         console.log(`Sent inactivity penalty email to ${user.email}`);
       } catch (emailError) {
         console.error(`Failed to send inactivity penalty email to ${user.email}:`, emailError);
