@@ -78,16 +78,51 @@
 </div>
 <div class="row mb-4 mt-4">
   <div class="col-md-12">
-    <div class="card border-danger shadow">
-      <div class="card-header bg-danger text-white">
-        <h3 class="h5 mb-0">System zurücksetzen</h3>
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h3 class="h5 mb-0">Systemaktionen</h3>
       </div>
       <div class="card-body">
-        <div class="text-end">
+        <div class="d-flex justify-content-end gap-2 flex-wrap">
           <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetSystemModal">
             <i class="fas fa-sync-alt me-2"></i>System zurücksetzen
           </button>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recalculateELOModal">
+            <i class="fas fa-sync-alt me-2"></i>ELO-Wertungen neu berechnen
+          </button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="recalculateELOModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">ELO-Neuberechnung bestätigen</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Möchtest du die ELO-Werte für das aktuelle Quartal neu berechnen?</strong></p>
+        <p>Dies wird:</p>
+        <ul>
+          <li>Alle Spieler-ELO-Werte auf ihren Quartalsstartpunkt zurücksetzen</li>
+          <li>Alle Spiele in chronologischer Reihenfolge neu berechnen</li>
+          <li>Die aktuellen ELO-Werte entsprechend aktualisieren</li>
+        </ul>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          Diese Aktion ist nützlich, wenn Spiele gelöscht wurden, die die Berechnung nachfolgender Spiele beeinflusst haben.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <form id="recalculateELOForm" method="POST" action="/admin/recalculate-elo">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-sync-alt me-2"></i>ELO-Werte neu berechnen
+          </button>
+        </form>
       </div>
     </div>
   </div>
