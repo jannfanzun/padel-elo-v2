@@ -231,7 +231,7 @@ exports.updateProfile = async (req, res) => {
     // Prüfe, ob der Benutzername bereits von jemand anderem verwendet wird
     const existingUser = await User.findOne({ 
       username: username,
-      _id: { $ne: userId } // Schließe den aktuellen Benutzer aus
+      _id: { $ne: userId } // Schliesse den aktuellen Benutzer aus
     });
     
     if (existingUser) {

@@ -1,6 +1,5 @@
-// Create a new file: utils/cronJobs.js
-
 const { ensureAllUsersHaveQuarterlyRecords } = require('./quarterlyEloUtils');
+const { checkInactiveUsers } = require('./inactivityCheck'); // Neue Datei, die wir erstellen werden
 
 /**
  * Initialize all cron jobs
@@ -27,12 +26,16 @@ const scheduleDailyJobs = () => {
   // Run at midnight every day
   const dailyJob = async () => {
     const now = new Date();
+    console.log(`Running daily job at ${now.toISOString()}`);
     
     // Check if today is the first day of a new quarter
     if (isFirstDayOfQuarter(now)) {
       console.log('First day of a new quarter detected, initializing quarterly ELO records');
       await updateQuarterlyELORecords();
     }
+    
+    // Check for inactive users and apply penalties
+    await checkInactiveUsers();
     
     // We can add more daily tasks here in the future
   };

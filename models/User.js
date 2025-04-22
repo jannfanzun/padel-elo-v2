@@ -40,6 +40,10 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  lastInactivityPenalty: {
+    type: Date,
+    default: null
+  },
   resetPasswordToken: {
     type: String,
     select: false
