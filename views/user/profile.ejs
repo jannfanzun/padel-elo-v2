@@ -7,6 +7,11 @@
           <h2 class="h5 mb-0">Spielerprofil</h2>
         </div>
         <div class="card-body text-center">
+          <div class="mb-3 text-center">
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+              <i class="fas fa-edit me-1"></i>Profil bearbeiten
+            </button>
+          </div>
           <div class="mb-3">
             <span class="display-1 text-primary mb-0">
               <i class="fas fa-user-circle"></i>
@@ -144,6 +149,39 @@
         </div>
       </div>
     </div>
-  </div>  
+  </div>
+  <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" action="/user/profile/update">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">Profil bearbeiten</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="username" class="form-label">Benutzername</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <input type="text" class="form-control" id="username" name="username" value="<%= user.username %>" required>
+              </div>
+              <div class="form-text">Dein Name wird öffentlich in der Rangliste angezeigt.</div>
+            </div>
+            
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              Deine E-Mail-Adresse kann nicht geändert werden. Falls du deine E-Mail-Adresse ändern möchtest, kontaktiere bitte den Administrator.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-2"></i>Änderungen speichern
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
 <%- include('../partials/footer') %>

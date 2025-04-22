@@ -210,3 +210,40 @@ exports.getRankings = async (req, res) => {
     });
   }
 };
+
+// @desc    Benutzerprofil aktualisieren
+// @route   POST /user/profile/update
+// @access  Private
+exports.updateProfile = async (req, res) => {
+  try {
+    const { username } = req.body;
+    const userId = req.user._id;
+    
+    // Validiere die Eingabe
+    if (!username || username.trim() === '') {
+      return res.redirect('/user/profile?error=Benutzername darf nicht leer sein');
+    }
+    
+    if (username.length > 30) {
+      return res.redirect('/user/profile?error=Benutzername darf nicht länger als 30 Zeichen sein');
+    }
+    
+    // Prüfe, ob der Benutzername bereits von jemand anderem verwendet wird
+    const existingUser = await User.findOne({ 
+      username: username,
+      _id: { $ne: userId } // Schließe den aktuellen Benutzer aus
+    });
+    
+    if (existingUser) {
+      return res.redirect('/user/profile?error=Benutzername wird bereits verwendet');
+    }
+    
+    // Aktualisiere den Benutzernamen
+    await User.findByIdAndUpdate(userId, { username: username.trim() });
+    
+    res.redirect('/user/profile?success=Dein Profil wurde erfolgreich aktualisiert');
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.redirect('/user/profile?error=Bei der Aktualisierung deines Profils ist ein Fehler aufgetreten');
+  }
+};
