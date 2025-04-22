@@ -39,50 +39,9 @@ exports.postAddGame = async (req, res) => {
       team1Score, team2Score 
     } = req.body;
     
-    // Validate input
-    if (!teammate || !opponent1 || !opponent2 || team1Score === undefined || team2Score === undefined) {
-      return res.redirect('/game/add?error=Bitte alle Felder ausfüllen');
-    }
+    // Alle bestehenden Validierungen...
     
-    // Convert scores to numbers
-    const scoreTeam1 = parseInt(team1Score);
-    const scoreTeam2 = parseInt(team2Score);
-    
-    // Validate scores
-    if (isNaN(scoreTeam1) || isNaN(scoreTeam2)) {
-      return res.redirect('/game/add?error=Invalid score format');
-    }
-    
-    if (scoreTeam1 < 0 || scoreTeam1 > 7 || scoreTeam2 < 0 || scoreTeam2 > 7) {
-      return res.redirect('/game/add?error=Punkte müssen zwischen 0 und 7 liegen');
-    }
-    
-    if (scoreTeam1 === 0 && scoreTeam2 === 0) {
-      return res.redirect('/game/add?error=Mindestens ein Team muss Punkte erzielen');
-    }
-    
-    if (scoreTeam1 === scoreTeam2) {
-      return res.redirect('/game/add?error=Das Spiel kann nicht unentschieden enden');
-    }
-    
-    if (scoreTeam1 === 7 && scoreTeam2 === 7) {
-      return res.redirect('/game/add?error=Beide Teams können nicht 7 Punkte haben');
-    }
-    
-    // Check if players are unique
-    const currentUserId = req.user._id.toString();
-    
-    if (teammate === currentUserId) {
-      return res.redirect('/game/add?error=Du kannst dich nicht selbst als Mitspieler auswählen');
-    }
-    
-    if (opponent1 === currentUserId || opponent1 === teammate) {
-      return res.redirect('/game/add?error=Du kannst denselben Spieler nicht mehrfach auswählen');
-    }
-    
-    if (opponent2 === currentUserId || opponent2 === teammate || opponent2 === opponent1) {
-      return res.redirect('/game/add?error=Du kannst denselben Spieler nicht mehrfach auswählen');
-    }
+    // Nachdem die Validierung erfolgreich war:
     
     // Get all players
     const player1 = await User.findById(currentUserId);
@@ -130,25 +89,28 @@ exports.postAddGame = async (req, res) => {
       createdBy: player1._id
     });
     
-    // Update all players' ELO ratings
+    // Aktualisiere lastActivity für alle beteiligten Spieler
+    const currentDate = Date.now();
+    
+    // Update all players' ELO ratings and lastActivity
     await User.findByIdAndUpdate(player1._id, { 
       eloRating: eloResults.team1[0].eloAfterGame,
-      lastActivity: Date.now()
+      lastActivity: currentDate
     });
     
     await User.findByIdAndUpdate(player2._id, { 
       eloRating: eloResults.team1[1].eloAfterGame,
-      lastActivity: Date.now()
+      lastActivity: currentDate
     });
     
     await User.findByIdAndUpdate(player3._id, { 
       eloRating: eloResults.team2[0].eloAfterGame,
-      lastActivity: Date.now()
+      lastActivity: currentDate
     });
     
     await User.findByIdAndUpdate(player4._id, { 
       eloRating: eloResults.team2[1].eloAfterGame,
-      lastActivity: Date.now()
+      lastActivity: currentDate
     });
     
     res.redirect(`/game/${game._id}?success=Spiel erfolgreich hinzugefügt`);

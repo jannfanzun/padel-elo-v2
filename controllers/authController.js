@@ -18,69 +18,64 @@ exports.getLogin = (req, res) => {
 // @route   POST /auth/login
 // @access  Public
 exports.postLogin = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      console.log(`Login attempt for email: ${email}`);
-      
-      // Check if email and password are provided
-      if (!email || !password) {
-        return res.redirect('/auth/login?error=Please provide email and password');
-      }
-      
-      // Find the user WITH password field included
-      const user = await User.findOne({ email }).select('+password');
-      
-      if (!user) {
-        console.log(`Login failed: No user found with email ${email}`);
-        return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
-      }
-      
-      // console.log(`User found: ${user.username}, checking password now...`);
-      // console.log(`Password from DB (hashed): ${user.password.substring(0, 10)}...`);
-      
-      // Direct bcrypt comparison instead of using the model method
-      const bcrypt = require('bcryptjs');
-      const isMatch = await bcrypt.compare(password, user.password);
-      
-      if (!isMatch) {
-        // console.log(`Login failed: Password mismatch for user ${email}`);
-        return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
-      }
-      
-      console.log(`Login successful for user ${user.username}`);
-      
-      // Update last activity
-      user.lastActivity = Date.now();
-      await User.findByIdAndUpdate(user._id, { lastActivity: Date.now() });
-      
-      // Generate token
-      const token = generateToken(user._id, user.isAdmin);
-      
-      // Save token in cookie
-      const options = {
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
-      };
-      
-      res.cookie('token', token, options);
-      
-      // Redirect to appropriate dashboard
-      if (user.isAdmin) {
-        return res.redirect('/admin/dashboard');
-      }
-      
-      const returnTo = req.session.returnTo || '/user/profile';
-      delete req.session.returnTo;
-      
-      res.redirect(returnTo);
-    } catch (error) {
-      console.error('Login error:', error);
-      res.redirect('/auth/login?error=Server error');
+  try {
+    const { email, password } = req.body;
+    
+    console.log(`Login attempt for email: ${email}`);
+    
+    // Check if email and password are provided
+    if (!email || !password) {
+      return res.redirect('/auth/login?error=Please provide email and password');
     }
-  };
+    
+    // Find the user WITH password field included
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user) {
+      console.log(`Login failed: No user found with email ${email}`);
+      return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
+    }
+    
+    // Direct bcrypt comparison instead of using the model method
+    const bcrypt = require('bcryptjs');
+    const isMatch = await bcrypt.compare(password, user.password);
+    
+    if (!isMatch) {
+      return res.redirect('/auth/login?error=Ungültige Anmeldeinformationen');
+    }
+    
+    console.log(`Login successful for user ${user.username}`);
+    
+    // Entferne den updateActivity-Aufruf!
+    // Wir aktualisieren lastActivity NUR, wenn ein Spiel eingetragen wird
+    
+    // Generate token
+    const token = generateToken(user._id, user.isAdmin);
+    
+    // Save token in cookie
+    const options = {
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    };
+    
+    res.cookie('token', token, options);
+    
+    // Redirect to appropriate dashboard
+    if (user.isAdmin) {
+      return res.redirect('/admin/dashboard');
+    }
+    
+    const returnTo = req.session.returnTo || '/user/profile';
+    delete req.session.returnTo;
+    
+    res.redirect(returnTo);
+  } catch (error) {
+    console.error('Login error:', error);
+    res.redirect('/auth/login?error=Server error');
+  }
+};
 
 // @desc    Show registration page
 // @route   GET /auth/register

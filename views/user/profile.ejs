@@ -7,11 +7,6 @@
           <h2 class="h5 mb-0">Spielerprofil</h2>
         </div>
         <div class="card-body text-center">
-          <div class="mb-3 text-center">
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-              <i class="fas fa-edit me-1"></i>Profil bearbeiten
-            </button>
-          </div>
           <div class="mb-3">
             <span class="display-1 text-primary mb-0">
               <i class="fas fa-user-circle"></i>
@@ -20,6 +15,12 @@
           
           <h3 class="mb-0"><%= user.username %></h3>
           <p class="text-muted"><%= user.email %></p>
+          
+          <div class="mb-3">
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+              <i class="fas fa-edit me-1"></i>Profil bearbeiten
+            </button>
+          </div>
           
           <div class="d-flex justify-content-center mb-3">
             <div class="me-4 text-center">
@@ -33,41 +34,41 @@
           </div>
           
           <% 
-          // Berechne, wann die nächste Inaktivitätsstrafe fällig wäre
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          
-          const daysSinceLastActivity = Math.floor((new Date() - user.lastActivity) / (1000 * 60 * 60 * 24));
-          const daysUntilPenalty = 7 - daysSinceLastActivity;
-          
-          // Prüfe, ob der Benutzer inaktiv ist oder bald inaktiv wird
-          const isInactive = user.lastActivity < sevenDaysAgo;
-          const soonInactive = daysUntilPenalty > 0 && daysUntilPenalty <= 3; // Warnung 3 Tage vorher
-        %>
-        
-        <% if (isInactive) { %>
-          <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>Inaktivität erkannt!</strong> Du hast in den letzten 7 Tagen kein Spiel gespielt. 
-            Dein ELO-Rating wird aufgrund der Inaktivität um 10 Punkte reduziert.
-            <div class="mt-2">
-              <a href="/game/add" class="btn btn-outline-danger btn-sm">
-                <i class="fas fa-gamepad me-1"></i>Jetzt Spiel hinzufügen
-              </a>
+            // Berechne, wann die nächste Inaktivitätsstrafe fällig wäre
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            const daysSinceLastActivity = Math.floor((new Date() - user.lastActivity) / (1000 * 60 * 60 * 24));
+            const daysUntilPenalty = 7 - daysSinceLastActivity;
+            
+            // Prüfe, ob der Benutzer inaktiv ist oder bald inaktiv wird
+            const isInactive = user.lastActivity < sevenDaysAgo;
+            const soonInactive = daysSinceLastActivity >= 4 && daysSinceLastActivity < 7; // Warnung 3 Tage vorher
+          %>
+
+          <% if (isInactive) { %>
+            <div class="alert alert-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Inaktivität erkannt!</strong> Du hast in den letzten 7 Tagen kein Spiel gespielt. 
+              Dein ELO-Rating wird aufgrund der Inaktivität um 10 Punkte reduziert.
+              <div class="mt-2">
+                <a href="/game/add" class="btn btn-outline-danger btn-sm">
+                  <i class="fas fa-gamepad me-1"></i>Jetzt Spiel hinzufügen
+                </a>
+              </div>
             </div>
-          </div>
-        <% } else if (soonInactive) { %>
-          <div class="alert alert-warning">
-            <i class="fas fa-clock me-2"></i>
-            <strong>Inaktivitätswarnung!</strong> Du hast seit <%= daysSinceLastActivity %> Tagen kein Spiel eingetragen. 
-            In <%= daysUntilPenalty %> <%= daysUntilPenalty === 1 ? 'Tag' : 'Tagen' %> wird dein ELO-Rating um 10 Punkte reduziert.
-            <div class="mt-2">
-              <a href="/game/add" class="btn btn-outline-warning btn-sm">
-                <i class="fas fa-gamepad me-1"></i>Jetzt Spiel hinzufügen
-              </a>
+          <% } else if (soonInactive) { %>
+            <div class="alert alert-warning">
+              <i class="fas fa-clock me-2"></i>
+              <strong>Inaktivitätswarnung!</strong> Du hast seit <%= daysSinceLastActivity %> Tagen kein Spiel eingetragen. 
+              In <%= daysUntilPenalty %> <%= daysUntilPenalty === 1 ? 'Tag' : 'Tagen' %> wird dein ELO-Rating um 10 Punkte reduziert.
+              <div class="mt-2">
+                <a href="/game/add" class="btn btn-outline-warning btn-sm">
+                  <i class="fas fa-gamepad me-1"></i>Jetzt Spiel hinzufügen
+                </a>
+              </div>
             </div>
-          </div>
-        <% } %>
+          <% } %>
         </div>
       </div>
     </div>
@@ -180,13 +181,15 @@
       </div>
     </div>
   </div>
+  
+  <!-- Profil bearbeiten Modal -->
   <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <form method="POST" action="/user/profile/update">
           <div class="modal-header bg-primary text-white">
             <h5 class="modal-title">Profil bearbeiten</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Schließen"></button>
           </div>
           <div class="modal-body">
             <div class="mb-3">
