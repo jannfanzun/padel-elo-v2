@@ -512,19 +512,28 @@ exports.resetSystem = async (req, res) => {
   let session = null;
   
   try {
+    // Aktuelles Datum für den Reset der Aktivität
+    const currentDate = new Date();
+    
     // Try to use a transaction if available
     try {
       session = await mongoose.startSession();
       session.startTransaction();
       console.log('Using transaction for system reset');
       
-      // 1. Reset all user ELO ratings to 500
+      // 1. Reset all user ELO ratings to 500 and set lastActivity to current date
       const usersResult = await User.updateMany(
         { isAdmin: false }, // Only reset players, not admins
-        { $set: { eloRating: 500 } },
+        { 
+          $set: { 
+            eloRating: 500,
+            lastActivity: currentDate, // Setze lastActivity auf aktuelles Datum
+            lastInactivityPenalty: null // Setze lastInactivityPenalty zurück
+          } 
+        },
         { session }
       );
-      console.log(`Reset ELO ratings for ${usersResult.modifiedCount} users`);
+      console.log(`Reset ELO ratings and activity for ${usersResult.modifiedCount} users`);
       
       // 2. Delete all games
       const gamesResult = await Game.deleteMany({}, { session });
@@ -549,12 +558,18 @@ exports.resetSystem = async (req, res) => {
       // If transaction failed, fallback to non-transactional approach
       console.log('Transaction not supported or failed, falling back to regular operations:', transactionError.message);
       
-      // 1. Reset all user ELO ratings to 500
+      // 1. Reset all user ELO ratings to 500 and lastActivity to current date
       const usersResult = await User.updateMany(
         { isAdmin: false },
-        { $set: { eloRating: 500 } }
+        { 
+          $set: { 
+            eloRating: 500,
+            lastActivity: currentDate, // Setze lastActivity auf aktuelles Datum
+            lastInactivityPenalty: null // Setze lastInactivityPenalty zurück
+          } 
+        }
       );
-      console.log(`Reset ELO ratings for ${usersResult.modifiedCount} users`);
+      console.log(`Reset ELO ratings and activity for ${usersResult.modifiedCount} users`);
       
       // 2. Delete all games
       const gamesResult = await Game.deleteMany({});
@@ -577,7 +592,7 @@ exports.resetSystem = async (req, res) => {
     console.log('System successfully reset by admin:', req.user.username);
     
     // Redirect with success message
-    res.redirect('/admin/dashboard?success=System wurde erfolgreich zurückgesetzt. Alle Spieler haben nun 500 ELO-Punkte und alle Spiele wurden gelöscht.');
+    res.redirect('/admin/dashboard?success=System wurde erfolgreich zurückgesetzt. Alle Spieler haben nun 500 ELO-Punkte, alle Spiele wurden gelöscht und alle Spieler sind wieder aktiv.');
   } catch (error) {
     console.error('System reset error:', error);
     res.redirect('/admin/dashboard?error=Beim Zurücksetzen des Systems ist ein Fehler aufgetreten: ' + error.message);
