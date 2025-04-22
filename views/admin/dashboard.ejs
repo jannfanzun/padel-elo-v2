@@ -76,6 +76,54 @@
     </div>
   </div>
 </div>
+<div class="row mb-4 mt-4">
+  <div class="col-md-12">
+    <div class="card border-danger shadow">
+      <div class="card-header bg-danger text-white">
+        <h3 class="h5 mb-0">System zurücksetzen</h3>
+      </div>
+      <div class="card-body">
+        <div class="text-end">
+          <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetSystemModal">
+            <i class="fas fa-sync-alt me-2"></i>System zurücksetzen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reset System Modal -->
+<div class="modal fade" id="resetSystemModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">System zurücksetzen bestätigen</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Bist du wirklich sicher?</strong> Diese Aktion wird:</p>
+        <ul>
+          <li>Alle ELO-Wertungen auf 500 zurücksetzen</li>
+          <li>Alle Spiele unwiderruflich löschen</li>
+          <li>Alle spielbezogenen Statistiken zurücksetzen</li>
+        </ul>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          Diese Aktion kann nicht rückgängig gemacht werden!
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <form id="resetSystemForm" method="POST" action="/admin/reset-system">
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>System zurücksetzen
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="row">
   <!-- Letzte Spiele -->

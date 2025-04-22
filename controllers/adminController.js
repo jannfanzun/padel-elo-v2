@@ -1,9 +1,11 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Game = require('../models/Game');
 const RegistrationRequest = require('../models/RegistrationRequest');
+const GameReport = require('../models/GameReport');
+const QuarterlyELO = require('../models/QuarterlyELO');
 const moment = require('moment');
 const { sendRegistrationApprovedEmail } = require('../config/email');
-const GameReport = require('../models/GameReport');
 
 
 // @desc    Admin dashboard
@@ -500,5 +502,84 @@ exports.deleteGameReport = async (req, res) => {
   } catch (error) {
     console.error('Delete game report error:', error);
     res.redirect('/admin/game-reports?error=Fehler beim Löschen der Meldung');
+  }
+};
+
+// @desc    Reset all ELO ratings and delete all games
+// @route   POST /admin/reset-system
+// @access  Private (Admin only)
+exports.resetSystem = async (req, res) => {
+  let session = null;
+  
+  try {
+    // Try to use a transaction if available
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+      console.log('Using transaction for system reset');
+      
+      // 1. Reset all user ELO ratings to 500
+      const usersResult = await User.updateMany(
+        { isAdmin: false }, // Only reset players, not admins
+        { $set: { eloRating: 500 } },
+        { session }
+      );
+      console.log(`Reset ELO ratings for ${usersResult.modifiedCount} users`);
+      
+      // 2. Delete all games
+      const gamesResult = await Game.deleteMany({}, { session });
+      console.log(`Deleted ${gamesResult.deletedCount} games`);
+      
+      // 3. Delete all game reports
+      const reportsResult = await GameReport.deleteMany({}, { session });
+      console.log(`Deleted ${reportsResult.deletedCount} game reports`);
+      
+      // 4. Delete all quarterly ELO records
+      const quarterlyResult = await QuarterlyELO.deleteMany({}, { session });
+      console.log(`Deleted ${quarterlyResult.deletedCount} quarterly ELO records`);
+      
+      // Commit the transaction
+      await session.commitTransaction();
+      console.log('Transaction committed successfully');
+    } catch (transactionError) {
+      if (session) {
+        await session.abortTransaction();
+      }
+      
+      // If transaction failed, fallback to non-transactional approach
+      console.log('Transaction not supported or failed, falling back to regular operations:', transactionError.message);
+      
+      // 1. Reset all user ELO ratings to 500
+      const usersResult = await User.updateMany(
+        { isAdmin: false },
+        { $set: { eloRating: 500 } }
+      );
+      console.log(`Reset ELO ratings for ${usersResult.modifiedCount} users`);
+      
+      // 2. Delete all games
+      const gamesResult = await Game.deleteMany({});
+      console.log(`Deleted ${gamesResult.deletedCount} games`);
+      
+      // 3. Delete all game reports
+      const reportsResult = await GameReport.deleteMany({});
+      console.log(`Deleted ${reportsResult.deletedCount} game reports`);
+      
+      // 4. Delete all quarterly ELO records
+      const quarterlyResult = await QuarterlyELO.deleteMany({});
+      console.log(`Deleted ${quarterlyResult.deletedCount} quarterly ELO records`);
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+    
+    // Log the successful reset
+    console.log('System successfully reset by admin:', req.user.username);
+    
+    // Redirect with success message
+    res.redirect('/admin/dashboard?success=System wurde erfolgreich zurückgesetzt. Alle Spieler haben nun 500 ELO-Punkte und alle Spiele wurden gelöscht.');
+  } catch (error) {
+    console.error('System reset error:', error);
+    res.redirect('/admin/dashboard?error=Beim Zurücksetzen des Systems ist ein Fehler aufgetreten: ' + error.message);
   }
 };

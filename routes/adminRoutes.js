@@ -12,7 +12,8 @@ const {
   approveRegistrationRequest,
   rejectRegistrationRequest,
   getGameReports,
-  deleteGameReport
+  deleteGameReport,
+  resetSystem
 } = require('../controllers/adminController');
 
 // Apply admin protection to all routes
@@ -37,5 +38,7 @@ router.post('/registration-requests/:id/reject', rejectRegistrationRequest);
 
 router.get('/game-reports', getGameReports);
 router.post('/game-reports/:id/delete', deleteGameReport);
+
+router.post('/reset-system', adminLimiter, resetSystem);
 
 module.exports = router;
