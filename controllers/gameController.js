@@ -39,9 +39,10 @@ exports.postAddGame = async (req, res) => {
       team1Score, team2Score 
     } = req.body;
     
-    // Alle bestehenden Validierungen...
+    // Add this line to define currentUserId from the logged-in user
+    const currentUserId = req.user._id;
     
-    // Nachdem die Validierung erfolgreich war:
+    // All existing validation code...
     
     // Get all players
     const player1 = await User.findById(currentUserId);
@@ -70,10 +71,10 @@ exports.postAddGame = async (req, res) => {
       player2: player4
     };
     
-    // Prepare score
+    // Prepare score - make sure to parse the values as integers
     const score = {
-      team1: scoreTeam1,
-      team2: scoreTeam2
+      team1: parseInt(team1Score),
+      team2: parseInt(team2Score)
     };
     
     // Calculate ELO changes
