@@ -82,7 +82,7 @@ exports.postLogin = async (req, res) => {
 // @access  Public
 exports.getRegister = (req, res) => {
   res.render('auth/register', {
-    title: 'Register',
+    title: 'Registrieren',
     error: req.query.error || null,
     success: req.query.success || null
   });
