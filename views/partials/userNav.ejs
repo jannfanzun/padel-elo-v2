@@ -1,24 +1,29 @@
 <ul class="navbar-nav">
-    <li class="nav-item">
-      <a class="nav-link" href="/user/rankings">Rangliste</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="/game/user/history">Meine Spiele</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="/game/add">Spiel hinzufügen</a>
-    </li>
-  </ul>
-  <ul class="navbar-nav ms-auto">
-    <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="fas fa-user me-1"></i> <%= user.username %>
-        <span class="badge bg-light text-primary ms-1"><%= user.eloRating %> ELO</span>
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-        <li><a class="dropdown-item" href="/user/profile">Mein Profil</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="/auth/logout">Abmelden</a></li>
-      </ul>
-    </li>
-  </ul>
+  <li class="nav-item">
+    <a class="nav-link" href="/user/rankings">Rangliste</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/game/user/history">Meine Spiele</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/game/add">Spiel hinzufügen</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link nav-booking" href="/user/booking">
+      <i class="fas fa-calendar-check me-1"></i>Platz buchen
+    </a>
+  </li>
+</ul>
+<ul class="navbar-nav ms-auto">
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="fas fa-user me-1"></i> <%= user.username %>
+      <span class="badge bg-light text-primary ms-1"><%= user.eloRating %> ELO</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+      <li><a class="dropdown-item" href="/user/profile">Mein Profil</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item" href="/auth/logout">Abmelden</a></li>
+    </ul>
+  </li>
+</ul>

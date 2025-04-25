@@ -4,7 +4,8 @@ const { protect } = require('../middleware/authMiddleware');
 const { 
   getProfile,
   getRankings,
-  updateProfile
+  updateProfile,
+  getBookingPage // Neue Controller-Funktion
 } = require('../controllers/userController');
 
 // Profile routes
@@ -13,5 +14,8 @@ router.post('/profile/update', protect, updateProfile);
 
 // Rankings route
 router.get('/rankings', protect, getRankings);
+
+// Neue Buchungsroute
+router.get('/booking', protect, getBookingPage);
 
 module.exports = router;

@@ -247,3 +247,27 @@ exports.updateProfile = async (req, res) => {
     res.redirect('/user/profile?error=Bei der Aktualisierung deines Profils ist ein Fehler aufgetreten');
   }
 };
+
+// @desc    Zeigt die Buchungsseite mit Eversports-Widget
+// @route   GET /user/booking
+// @access  Private
+exports.getBookingPage = async (req, res) => {
+  try {
+    // Hole aktuelle Benutzerinformationen für personalisierte Anzeige
+    const user = req.user;
+    
+    // Rendere die Buchungsansicht
+    res.render('user/booking', {
+      title: 'Spielzeit buchen',
+      user,
+      eversportsWidgetId: 'd89ac8c4-286b-4f50-a259-b5f3980bb6c7',
+      eversportsVenueId: '726b961f-73a5-4437-8e51-c579d087c0d9'
+    });
+  } catch (error) {
+    console.error('Fehler beim Laden der Buchungsseite:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error',
+      message: 'Beim Laden der Buchungsseite ist ein Fehler aufgetreten'
+    });
+  }
+};
