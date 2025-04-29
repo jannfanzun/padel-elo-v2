@@ -268,10 +268,107 @@ const sendInactivityPenaltyEmail = async (user, oldElo, newElo) => {
   }
 };
   
-  module.exports = {
-    sendRegistrationRequestEmail,
-    sendRegistrationApprovedEmail,
-    sendPasswordResetEmail,
-    sendGameReportEmail,
-    sendInactivityPenaltyEmail 
-  };
+/**
+ * Send game notification email to all players involved in a game
+ * @param {Object} game - Fully populated game object with player details
+ */
+const sendGameNotificationEmail = async (game) => {
+  try {
+    const transporter = createTransporter();
+    
+    // For each player in both teams, send a notification email
+    const allPlayers = [...game.team1, ...game.team2];
+    
+    for (const playerData of allPlayers) {
+      const player = playerData.player;
+      
+      // Determine if player won or lost
+      const playerTeam = game.team1.some(p => p.player._id.toString() === player._id.toString()) ? 'team1' : 'team2';
+      const isWinner = playerTeam === game.winner;
+      const outcomeClass = isWinner ? 'success' : 'danger';
+      const outcomeText = isWinner ? 'gewonnen' : 'verloren';
+      const outcomeIcon = isWinner ? '🏆' : '📉';
+      
+      // Get opponent team names
+      const opponentTeam = playerTeam === 'team1' ? game.team2 : game.team1;
+      const teammateData = game.team1.some(p => p.player._id.toString() === player._id.toString()) 
+        ? game.team1.find(p => p.player._id.toString() !== player._id.toString())
+        : game.team2.find(p => p.player._id.toString() !== player._id.toString());
+      
+      // Format score based on player's team
+      const playerScore = playerTeam === 'team1' ? game.score.team1 : game.score.team2;
+      const opponentScore = playerTeam === 'team1' ? game.score.team2 : game.score.team1;
+      
+      // Email content
+      const mailOptions = {
+        from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
+        to: player.email,
+        subject: `${outcomeIcon} Spiel eingetragen: ${playerScore}-${opponentScore} ${isWinner ? 'Gewonnen!' : 'Verloren'}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+            <h2 style="color: ${isWinner ? '#198754' : '#dc3545'};">Spiel ${outcomeText}: ${playerScore}-${opponentScore}</h2>
+            
+            <div style="text-align: center; margin: 20px 0; padding: 15px; background-color: ${isWinner ? '#d1e7dd' : '#f8d7da'}; color: ${isWinner ? '#0f5132' : '#842029'}; border-radius: 5px;">
+              <h3 style="margin-top: 0;">${isWinner ? 'Glückwunsch!' : 'Nächstes Mal klappt es besser!'}</h3>
+              <p style="font-size: 18px; margin-bottom: 0;">
+                Deine ELO-Änderung: <strong>${playerData.eloChange >= 0 ? '+' : ''}${playerData.eloChange}</strong> 
+                (${playerData.eloBeforeGame} → ${playerData.eloAfterGame})
+              </p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              <h3 style="border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;">Spieldetails</h3>
+              
+              <div style="display: flex; margin-bottom: 15px;">
+                <div style="flex: 1; text-align: center; padding: 10px; background-color: #f8f9fa; border-radius: 5px; margin-right: 5px;">
+                  <h4 style="margin-top: 0;">Dein Team</h4>
+                  <p><strong>Du:</strong> ${player.username} (${playerData.eloBeforeGame} → ${playerData.eloAfterGame})</p>
+                  <p><strong>Teamkollege:</strong> ${teammateData.player.username} (${teammateData.eloBeforeGame} → ${teammateData.eloAfterGame})</p>
+                </div>
+                <div style="flex: 1; text-align: center; padding: 10px; background-color: #f8f9fa; border-radius: 5px; margin-left: 5px;">
+                  <h4 style="margin-top: 0;">Gegnerteam</h4>
+                  <p><strong>${opponentTeam[0].player.username}</strong> (${opponentTeam[0].eloBeforeGame} → ${opponentTeam[0].eloAfterGame})</p>
+                  <p><strong>${opponentTeam[1].player.username}</strong> (${opponentTeam[1].eloBeforeGame} → ${opponentTeam[1].eloAfterGame})</p>
+                </div>
+              </div>
+              
+              <p><strong>Datum:</strong> ${new Date(game.createdAt).toLocaleDateString('de-DE', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}</p>
+              <p><strong>Eingetragen von:</strong> ${game.createdBy.username}</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.SITE_URL}/game/${game._id}" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Spieldetails ansehen
+              </a>
+            </div>
+            
+            <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px; text-align: center;">
+              Dies ist eine automatische Nachricht von padELO Ranking.
+            </p>
+          </div>
+        `
+      };
+      
+      // Send email
+      await transporter.sendMail(mailOptions);
+      console.log(`Game notification email sent to ${player.email}`);
+    }
+  } catch (error) {
+    console.error('Error sending game notification emails:', error);
+  }
+};
+
+module.exports = {
+  sendRegistrationRequestEmail,
+  sendRegistrationApprovedEmail,
+  sendPasswordResetEmail,
+  sendGameReportEmail,
+  sendInactivityPenaltyEmail,
+  sendGameNotificationEmail // Export the new function
+};

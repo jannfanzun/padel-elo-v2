@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const Game = require('../models/Game');
 const { calculateEloForMatch } = require('../utils/eloCalculator');
-const { sendGameReportEmail } = require('../config/email');
+const { sendGameReportEmail, sendGameNotificationEmail } = require('../config/email');
 const { getOrCreateQuarterlyELO } = require('../utils/quarterlyEloUtils');
 
 // @desc    Show add game page
@@ -42,7 +42,43 @@ exports.postAddGame = async (req, res) => {
     // Add this line to define currentUserId from the logged-in user
     const currentUserId = req.user._id;
     
-    // All existing validation code...
+    // Validate input
+    if (!teammate || !opponent1 || !opponent2 || !team1Score || !team2Score) {
+      return res.redirect('/game/add?error=Bitte alle Felder ausfüllen');
+    }
+    
+    // Make sure all players are different
+    if (
+      currentUserId.toString() === teammate ||
+      currentUserId.toString() === opponent1 ||
+      currentUserId.toString() === opponent2 ||
+      teammate === opponent1 ||
+      teammate === opponent2 ||
+      opponent1 === opponent2
+    ) {
+      return res.redirect('/game/add?error=Jeder Spieler kann nur einmal ausgewählt werden');
+    }
+    
+    // Validate scores
+    const score1 = parseInt(team1Score);
+    const score2 = parseInt(team2Score);
+    
+    if (isNaN(score1) || isNaN(score2)) {
+      return res.redirect('/game/add?error=Ungültige Punktzahl');
+    }
+    
+    if (score1 === score2) {
+      return res.redirect('/game/add?error=Die Punktzahlen dürfen nicht gleich sein');
+    }
+    
+    if (
+      score1 < 0 || score1 > 7 || 
+      score2 < 0 || score2 > 7 || 
+      (score1 === 0 && score2 === 0) ||
+      (score1 === 7 && score2 === 7)
+    ) {
+      return res.redirect('/game/add?error=Ungültige Punktzahl. Die Punkte müssen zwischen 0 und 7 liegen und dürfen nicht 0-0 oder 7-7 sein');
+    }
     
     // Get all players
     const player1 = await User.findById(currentUserId);
@@ -71,10 +107,10 @@ exports.postAddGame = async (req, res) => {
       player2: player4
     };
     
-    // Prepare score - make sure to parse the values as integers
+    // Prepare score
     const score = {
-      team1: parseInt(team1Score),
-      team2: parseInt(team2Score)
+      team1: score1,
+      team2: score2
     };
     
     // Calculate ELO changes
@@ -90,7 +126,7 @@ exports.postAddGame = async (req, res) => {
       createdBy: player1._id
     });
     
-    // Aktualisiere lastActivity für alle beteiligten Spieler
+    // Update lastActivity for all players
     const currentDate = Date.now();
     
     // Update all players' ELO ratings and lastActivity
@@ -114,7 +150,14 @@ exports.postAddGame = async (req, res) => {
       lastActivity: currentDate
     });
     
-    res.redirect(`/game/${game._id}?success=Spiel erfolgreich hinzugefügt`);
+    // Fetch the fully populated game for the email notification
+    const populatedGame = await Game.findById(game._id)
+      .populate('team1.player team2.player createdBy', 'username email');
+      
+    // Send email notifications to all players
+    await sendGameNotificationEmail(populatedGame);
+    
+    res.redirect(`/game/${game._id}?success=Spiel erfolgreich hinzugefügt und alle Spieler wurden benachrichtigt`);
   } catch (error) {
     console.error('Add game error:', error);
     res.redirect('/game/add?error=Server error');

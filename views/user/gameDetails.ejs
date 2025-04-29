@@ -23,6 +23,13 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>
             <% } %>
+
+            <% if (typeof success !== 'undefined' && success && success.includes('benachrichtigt')) { %>
+              <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-envelope me-2"></i><%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>
           <div class="row mb-4">
             <div class="col-md-6 text-center <%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>">
               <h3 class="h5 mb-3">
