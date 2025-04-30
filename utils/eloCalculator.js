@@ -7,7 +7,7 @@
 const K_FACTOR = 32;
 const SIGNIFICANT_WIN_THRESHOLD = 5; // Score difference for "high win"
 const BONUS_POINTS_FOR_SIGNIFICANT_WIN = 3; // Extra points for high win
-const INACTIVE_DAYS = 7; // Days of inactivity
+const INACTIVE_DAYS = 20; // Days of inactivity
 const INACTIVE_PENALTY = 10; // Points deducted for inactivity
 
 /**
