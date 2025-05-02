@@ -42,8 +42,8 @@ const scheduleDailyJobs = () => {
       await recalculateQuarterlyELO(getPreviousQuarter(now));
     }
     
-    // Check for inactive users and apply penalties
-    await checkInactiveUsers();
+    // Comment out the inactive users check
+    // await checkInactiveUsers();
     
     // We can add more daily tasks here in the future
   };

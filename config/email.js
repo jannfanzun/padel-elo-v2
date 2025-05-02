@@ -224,6 +224,10 @@ const sendGameReportEmail = async (user, game, reason, details) => {
 };
 
 const sendInactivityPenaltyEmail = async (user, oldElo, newElo) => {
+  console.log(`Inactivity penalty email DISABLED for: ${user.email}`);
+  return; // Early return to prevent sending the email
+  
+  /*
   try {
     const transporter = createTransporter();
     
@@ -266,6 +270,7 @@ const sendInactivityPenaltyEmail = async (user, oldElo, newElo) => {
     console.error('Error sending inactivity penalty email:', error);
     throw error; // Re-throw to be handled by the caller
   }
+  */
 };
   
 /**
