@@ -8,8 +8,10 @@ const { sendInactivityPenaltyEmail } = require('../config/email');
  */
 const checkInactiveUsers = async () => {
   try {
-    console.log('Starting inactivity check...');
+    console.log('Starting inactivity check... (DISABLED)');
     
+    // Commenting out the inactivity penalty code
+    /*
     // Berechne das Datum vor 7 Tagen
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -53,8 +55,9 @@ const checkInactiveUsers = async () => {
         console.error(`Failed to send inactivity penalty email to ${user.email}:`, emailError);
       }
     }
+    */
     
-    console.log('Inactivity check completed.');
+    console.log('Inactivity check completed. (DISABLED - No penalties applied)');
   } catch (error) {
     console.error('Error during inactivity check:', error);
   }
