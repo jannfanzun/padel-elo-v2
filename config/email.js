@@ -75,31 +75,31 @@ const mailOptions = {
         
         <div style="text-align: center; margin: 30px 0;">
           <a href="${process.env.SITE_URL}/auth/login" style="background-color: #0d6efd; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-bottom: 10px;">
-            🎯 Jetzt anmelden
+            Jetzt anmelden
           </a>
         </div>
         
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
           <h3 style="color: #0d6efd; margin-top: 0;">So geht's weiter:</h3>
           
-          <p><strong>1. Platz buchen:</strong></p>
-          <div style="text-align: center; margin: 15px 0;">
-            <a href="https://www.eversports.ch/org/activity/bb89b350-52c1-4372-a95b-9457fa0063ca" 
-               target="_blank" 
-               style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-              📅 Platz buchen bei Eversports
-            </a>
-          </div>
-          
-          <p><strong>2. Community beitreten:</strong></p>
+          <p><strong>1. Community beitreten:</strong></p>
           <p style="margin-bottom: 15px;">In der WhatsApp Gruppe bleibst du über Termine informiert und kannst dich mit anderen Spielern vernetzen.</p>
           <div style="text-align: center; margin: 15px 0;">
             <a href="https://chat.whatsapp.com/D5I7K6NR3anGu5iU7Huf7w?mode=ac_t" 
                target="_blank" 
                style="background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-              💬 WhatsApp Gruppe beitreten
+              WhatsApp Gruppe beitreten
             </a>
           </div>
+          <p><strong>2. Platz buchen:</strong></p>
+          <div style="text-align: center; margin: 15px 0;">
+            <a href="https://www.eversports.ch/org/activity/bb89b350-52c1-4372-a95b-9457fa0063ca" 
+               target="_blank" 
+               style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+              Platz buchen bei Eversports
+            </a>
+          </div>
+        
         </div>
         
         <p><strong>Wichtig:</strong> Nach jedem Spiel trägst du das Ergebnis im padELO System ein. So wird dein Ranking berechnet!</p>
