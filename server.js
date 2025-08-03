@@ -72,11 +72,11 @@ app.set('views', path.join(__dirname, 'views'));
 // Initialize cron jobs
 initCronJobs(app);
 
-// Routes
 app.use('/', require('./routes/publicRoutes'));
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/user', require('./routes/userRoutes'));
 app.use('/game', require('./routes/gameRoutes'));
+app.use('/tournament', require('./routes/tournamentRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 
 // Error handler
