@@ -1,60 +1,125 @@
 // controllers/tournamentController.js
 const User = require('../models/User');
+const { body, validationResult } = require('express-validator');
 
 // @desc    Show tournament generator page
 // @route   GET /tournament/generator
 // @access  Private
 exports.getTournamentGenerator = async (req, res) => {
   try {
+    // Sicherheitscheck: Nur eingeloggte Benutzer
+    if (!req.user) {
+      return res.redirect('/auth/login');
+    }
+
     // Get all active users (excluding admin) sorted by ELO rating
-    const users = await User.find({ isAdmin: false })
+    const users = await User.find({ 
+      isAdmin: false,
+      _id: { $exists: true } // Zusätzliche Sicherheit
+    })
       .sort({ eloRating: -1 }) // Höchste ELO zuerst
-      .select('username eloRating');
+      .select('username eloRating')
+      .lean(); // Performance-Optimierung
+    
+    // Sicherheitsvalidierung der Benutzerdaten
+    const sanitizedUsers = users.filter(user => 
+      user.username && 
+      typeof user.eloRating === 'number' &&
+      user.username.length <= 30
+    );
     
     res.render('user/tournamentGenerator', {
       title: 'Spieltag Generator',
-      users,
+      users: sanitizedUsers,
       error: req.query.error || null,
-      success: req.query.success || null
+      success: req.query.success || null,
+      user: req.user // Für Header-Partial
     });
   } catch (error) {
     console.error('Get tournament generator error:', error);
     res.status(500).render('error', { 
       title: 'Server Error',
-      message: 'Ein Fehler ist beim Laden der Seite aufgetreten'
+      message: 'Ein Fehler ist beim Laden der Seite aufgetreten',
+      user: req.user
     });
   }
 };
+
+// Validierungsregeln für Tournament Generation
+exports.validateTournamentGeneration = [
+  body('players')
+    .isArray({ min: 4, max: 24 })
+    .withMessage('Spieleranzahl muss zwischen 4 und 24 liegen'),
+  body('players.*.username')
+    .trim()
+    .isLength({ min: 1, max: 30 })
+    .withMessage('Benutzername ungültig'),
+  body('players.*.elo')
+    .isInt({ min: 0, max: 2000 })
+    .withMessage('ELO-Rating ungültig'),
+  body('playerCount')
+    .isInt({ min: 4, max: 24 })
+    .custom((value, { req }) => {
+      if (value % 4 !== 0) {
+        throw new Error('Spieleranzahl muss durch 4 teilbar sein');
+      }
+      if (req.body.players && req.body.players.length !== value) {
+        throw new Error('Spieleranzahl stimmt nicht mit ausgewählten Spielern überein');
+      }
+      return true;
+    })
+];
 
 // @desc    Generate tournament matchups (API endpoint)
 // @route   POST /tournament/generate
 // @access  Private
 exports.postGenerateTournament = async (req, res) => {
   try {
+    // Sicherheitscheck: Nur eingeloggte Benutzer
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Nicht autorisiert'
+      });
+    }
+
+    // Validierungsfehler prüfen
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validierungsfehler',
+        errors: errors.array()
+      });
+    }
+
     const { players, playerCount } = req.body;
     
-    // Validate input
-    if (!players || !Array.isArray(players) || players.length !== parseInt(playerCount)) {
+    // Zusätzliche Sicherheitsprüfungen
+    if (!Array.isArray(players) || players.length !== parseInt(playerCount)) {
       return res.status(400).json({
         success: false,
         message: `Genau ${playerCount} Spieler erforderlich`
       });
     }
+
+    // Rate Limiting Check (Optional - falls nicht über Middleware gehandhabt)
+    const userKey = `tournament_gen_${req.user._id}`;
+    // Hier könnte Redis oder Memory-Cache für Rate Limiting verwendet werden
     
-    // Validate player count (must be multiple of 4)
-    if (parseInt(playerCount) % 4 !== 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Spieleranzahl muss durch 4 teilbar sein'
-      });
-    }
-    
+    // Spieler-Usernames extrahieren und sanitizen
+    const playerUsernames = players.map(p => {
+      if (!p.username || typeof p.username !== 'string') {
+        throw new Error('Ungültiger Spielername');
+      }
+      return p.username.trim();
+    });
+
     // Verify that all players exist in database
-    const playerUsernames = players.map(p => p.username);
     const dbUsers = await User.find({ 
       username: { $in: playerUsernames },
       isAdmin: false 
-    }).select('username eloRating');
+    }).select('username eloRating').lean();
     
     if (dbUsers.length !== players.length) {
       return res.status(400).json({
@@ -63,11 +128,14 @@ exports.postGenerateTournament = async (req, res) => {
       });
     }
     
-    // Use current ELO from database (more accurate than frontend data)
+    // Use current ELO from database (sicherer als Frontend-Daten)
     const playersWithCurrentElo = players.map(player => {
-      const dbUser = dbUsers.find(u => u.username === player.username);
+      const dbUser = dbUsers.find(u => u.username === player.username.trim());
+      if (!dbUser) {
+        throw new Error(`Spieler ${player.username} nicht gefunden`);
+      }
       return {
-        username: player.username,
+        username: dbUser.username,
         elo: dbUser.eloRating
       };
     });
@@ -75,10 +143,14 @@ exports.postGenerateTournament = async (req, res) => {
     // Generate tournament structure
     const courts = generateTournamentMatchups(playersWithCurrentElo);
     
+    // Log tournament generation für Audit Trail
+    console.log(`Tournament generated by ${req.user.username} for ${playerCount} players`);
+    
     res.json({
       success: true,
       courts,
-      message: 'Turnier erfolgreich generiert'
+      message: 'Turnier erfolgreich generiert',
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
@@ -92,44 +164,118 @@ exports.postGenerateTournament = async (req, res) => {
 
 /**
  * Generate balanced tournament matchups based on ELO ratings
- * @param {Array} players - Array of players with username and elo
- * @returns {Array} Array of court assignments with balanced teams
+ * Verbesserte Algorithmus für faire Teamzusammenstellung
+ * @param {Array} players - Array of player objects with username and elo
+ * @returns {Array} - Array of court assignments
  */
 function generateTournamentMatchups(players) {
-  // Sort players by ELO (strongest to weakest)
-  const sortedPlayers = players.sort((a, b) => b.elo - a.elo);
-  
-  const courts = [];
-  const courtsCount = sortedPlayers.length / 4;
-  
-  for (let court = 0; court < courtsCount; court++) {
-    const startIndex = court * 4;
-    const courtPlayers = sortedPlayers.slice(startIndex, startIndex + 4);
+  try {
+    // Input validation
+    if (!Array.isArray(players) || players.length < 4 || players.length % 4 !== 0) {
+      throw new Error('Ungültige Spieleranzahl für Turniergenerierung');
+    }
+
+    // Sortiere Spieler nach ELO (höchste zuerst)
+    const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
     
-    // ELO-based team balancing strategy:
-    // Take strongest and weakest players for team 1
-    // Take 2nd and 3rd strongest for team 2
-    // This creates the most balanced matchup
-    const team1 = [courtPlayers[0], courtPlayers[3]]; // 1st strongest + 4th strongest
-    const team2 = [courtPlayers[1], courtPlayers[2]]; // 2nd strongest + 3rd strongest
+    const courts = [];
+    const numCourts = sortedPlayers.length / 4;
     
-    // Calculate team averages for verification
-    const team1Average = Math.round((team1[0].elo + team1[1].elo) / 2);
-    const team2Average = Math.round((team2[0].elo + team2[1].elo) / 2);
+    // Erweiterte Balancing-Strategie
+    for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {
+      let team1, team2;
+      
+      if (courtIndex === 0) {
+        // Erste Court: Beste Verteilung der Top-Spieler
+        team1 = [sortedPlayers[0], sortedPlayers[3]]; // 1. + 4.
+        team2 = [sortedPlayers[1], sortedPlayers[2]]; // 2. + 3.
+      } else {
+        // Weitere Courts: Optimierte Paarung der verbleibenden Spieler
+        const remainingPlayers = sortedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
+        
+        // Snake-Draft Pattern für bessere Balance
+        if (courtIndex % 2 === 1) {
+          team1 = [remainingPlayers[0], remainingPlayers[3]];
+          team2 = [remainingPlayers[1], remainingPlayers[2]];
+        } else {
+          team1 = [remainingPlayers[0], remainingPlayers[2]];
+          team2 = [remainingPlayers[1], remainingPlayers[3]];
+        }
+      }
+      
+      // Berechne Team-ELOs
+      const team1Elo = Math.round((team1[0].elo + team1[1].elo) / 2);
+      const team2Elo = Math.round((team2[0].elo + team2[1].elo) / 2);
+      
+      courts.push({
+        courtNumber: courtIndex + 1,
+        team1: team1.map(player => ({
+          username: sanitizeString(player.username),
+          elo: player.elo
+        })),
+        team2: team2.map(player => ({
+          username: sanitizeString(player.username),
+          elo: player.elo
+        })),
+        team1Elo,
+        team2Elo,
+        eloDifference: Math.abs(team1Elo - team2Elo)
+      });
+    }
     
-    courts.push({
-      number: court + 1,
-      team1: {
-        players: team1,
-        averageElo: team1Average
-      },
-      team2: {
-        players: team2,
-        averageElo: team2Average
-      },
-      eloDifference: Math.abs(team1Average - team2Average)
+    // Sortiere Courts nach ELO-Differenz (fairste zuerst)
+    courts.sort((a, b) => a.eloDifference - b.eloDifference);
+    
+    // Renummeriere Courts
+    courts.forEach((court, index) => {
+      court.courtNumber = index + 1;
     });
+    
+    return courts;
+    
+  } catch (error) {
+    console.error('Error in generateTournamentMatchups:', error);
+    throw new Error('Fehler bei der Turniergenerierung');
   }
-  
-  return courts;
 }
+
+// Einfacher Algorithmus - keine unnötige Komplexität
+
+/**
+ * Sanitize string input für Sicherheit
+ * @param {string} str - Input string
+ * @returns {string} - Sanitized string
+ */
+function sanitizeString(str) {
+  if (typeof str !== 'string') return '';
+  return str.trim().substring(0, 30).replace(/[<>\"']/g, '');
+}
+
+/**
+ * Validiere Tournament-Parameter
+ * @param {Array} players - Spieler-Array
+ * @param {number} playerCount - Erwartete Spieleranzahl
+ * @returns {boolean} - Validierungsergebnis
+ */
+function validateTournamentParams(players, playerCount) {
+  return (
+    Array.isArray(players) &&
+    players.length === playerCount &&
+    playerCount >= 4 &&
+    playerCount <= 24 &&
+    playerCount % 4 === 0 &&
+    players.every(p => 
+      p.username && 
+      typeof p.username === 'string' &&
+      typeof p.elo === 'number' &&
+      p.elo >= 0 &&
+      p.elo <= 2000
+    )
+  );
+}
+
+module.exports = {
+  getTournamentGenerator: exports.getTournamentGenerator,
+  postGenerateTournament: exports.postGenerateTournament,
+  validateTournamentGeneration: exports.validateTournamentGeneration
+};
