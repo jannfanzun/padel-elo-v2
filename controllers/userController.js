@@ -51,6 +51,60 @@ exports.getProfile = async (req, res) => {
     // Check if inactive
     const isInactive = user.isInactive();
     
+    // Bestimme Shirt-Farbe und Level basierend auf All Time Spielen
+    let shirtColor = 'white';
+    let shirtLevel = 'Rookie';
+    
+    if (gamesPlayed >= 1000) {
+      shirtColor = 'black';
+      shirtLevel = 'Legend';
+    } else if (gamesPlayed >= 750) {
+      shirtColor = 'purple';
+      shirtLevel = 'Master';
+    } else if (gamesPlayed >= 500) {
+      shirtColor = 'blue';
+      shirtLevel = 'Expert';
+    } else if (gamesPlayed >= 300) {
+      shirtColor = 'green';
+      shirtLevel = 'Advanced';
+    } else if (gamesPlayed >= 150) {
+      shirtColor = 'orange';
+      shirtLevel = 'Experienced';
+    } else if (gamesPlayed >= 90) {
+      shirtColor = 'yellow';
+      shirtLevel = 'Intermediate';
+    } else if (gamesPlayed >= 30) {
+      shirtColor = 'white';
+      shirtLevel = 'Beginner';
+    }
+    
+    // Berechne Spiele bis zum nächsten Level
+    let nextLevelGames = 0;
+    let nextLevelName = '';
+    
+    if (gamesPlayed < 30) {
+      nextLevelGames = 30 - gamesPlayed;
+      nextLevelName = 'Beginner';
+    } else if (gamesPlayed < 90) {
+      nextLevelGames = 90 - gamesPlayed;
+      nextLevelName = 'Intermediate';
+    } else if (gamesPlayed < 150) {
+      nextLevelGames = 150 - gamesPlayed;
+      nextLevelName = 'Experienced';
+    } else if (gamesPlayed < 300) {
+      nextLevelGames = 300 - gamesPlayed;
+      nextLevelName = 'Advanced';
+    } else if (gamesPlayed < 500) {
+      nextLevelGames = 500 - gamesPlayed;
+      nextLevelName = 'Expert';
+    } else if (gamesPlayed < 750) {
+      nextLevelGames = 750 - gamesPlayed;
+      nextLevelName = 'Master';
+    } else if (gamesPlayed < 1000) {
+      nextLevelGames = 1000 - gamesPlayed;
+      nextLevelName = 'Legend';
+    }
+    
     res.render('user/profile', {
       title: 'Mein Profil',
       user,
@@ -60,7 +114,11 @@ exports.getProfile = async (req, res) => {
         gamesPlayed,
         gamesWon,
         winRate,
-        isInactive
+        isInactive,
+        shirtColor,
+        shirtLevel,
+        nextLevelGames,
+        nextLevelName
       },
       moment
     });

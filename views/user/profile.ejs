@@ -1,182 +1,278 @@
 <%- include('../partials/header') %>
 
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="mb-0">Mein Profil</h2>
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+        <i class="fas fa-edit me-2"></i>Profil bearbeiten
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Messages -->
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fas fa-check-circle me-2"></i><%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% } %>
+
+<% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fas fa-exclamation-circle me-2"></i><%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% } %>
+
 <div class="row">
-    <div class="col-md-4 mb-4">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <h2 class="h5 mb-0">Spielerprofil</h2>
-        </div>
-        <div class="card-body text-center">
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h2 class="h5 mb-0">Profilinformationen</h2>
+      </div>
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+          <h3 class="h4"><%= user.username %></h3>
+          <p class="text-muted mb-2"><%= user.email %></p>
           <div class="mb-3">
-            <span class="display-1 text-primary mb-0">
-              <i class="fas fa-user-circle"></i>
+            <span class="badge bg-primary fs-6">Rang #<%= rank %></span>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <h4 class="h5 mb-2">ELO Rating</h4>
+          <span class="display-6 fw-bold text-primary"><%= user.eloRating %></span>
+        </div>
+        
+        <!-- Shirt Status Sektion -->
+        <div class="mb-3">
+          <h4 class="h5 mb-2">Shirt Level</h4>
+          <div class="mb-2">
+            <span class="badge fs-6" style="background-color: <%= 
+              stats.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
+              stats.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
+              stats.shirtColor === 'orange' ? '#fd7e14; color: white' :
+              stats.shirtColor === 'green' ? '#198754; color: white' :
+              stats.shirtColor === 'blue' ? '#0d6efd; color: white' :
+              stats.shirtColor === 'purple' ? '#6f42c1; color: white' :
+              '#212529; color: white'
+            %>">
+              <i class="fas fa-tshirt me-1"></i><%= stats.shirtLevel %>
             </span>
           </div>
           
-          <h3 class="mb-0"><%= user.username %></h3>
-          <p class="text-muted"><%= user.email %></p>
-          
-          <div class="mb-3">
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-              <i class="fas fa-edit me-1"></i>Profil bearbeiten
-            </button>
+          <% if (stats.nextLevelGames > 0) { %>
+            <div class="small text-muted">
+              <strong><%= stats.nextLevelGames %></strong> Spiele bis <strong><%= stats.nextLevelName %></strong>
+            </div>
+            <div class="progress mt-2" style="height: 8px;">
+              <% 
+                let totalForNext = 0;
+                let currentProgress = 0;
+                
+                if (stats.nextLevelName === 'Beginner') {
+                  totalForNext = 30;
+                  currentProgress = stats.gamesPlayed;
+                } else if (stats.nextLevelName === 'Intermediate') {
+                  totalForNext = 90 - 30;
+                  currentProgress = stats.gamesPlayed - 30;
+                } else if (stats.nextLevelName === 'Experienced') {
+                  totalForNext = 150 - 90;
+                  currentProgress = stats.gamesPlayed - 90;
+                } else if (stats.nextLevelName === 'Advanced') {
+                  totalForNext = 300 - 150;
+                  currentProgress = stats.gamesPlayed - 150;
+                } else if (stats.nextLevelName === 'Expert') {
+                  totalForNext = 500 - 300;
+                  currentProgress = stats.gamesPlayed - 300;
+                } else if (stats.nextLevelName === 'Master') {
+                  totalForNext = 750 - 500;
+                  currentProgress = stats.gamesPlayed - 500;
+                } else if (stats.nextLevelName === 'Legend') {
+                  totalForNext = 1000 - 750;
+                  currentProgress = stats.gamesPlayed - 750;
+                }
+                
+                let progressPercent = Math.round((currentProgress / totalForNext) * 100);
+              %>
+              <div class="progress-bar" role="progressbar" style="width: <%= progressPercent %>%" aria-valuenow="<%= progressPercent %>" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          <% } else { %>
+            <div class="small text-success">
+              <i class="fas fa-crown me-1"></i><strong>Maximales Level erreicht!</strong>
+            </div>
+          <% } %>
+        </div>
+        
+        <div class="small text-muted">
+          Mitglied seit <%= moment(user.createdAt).format('MMMM YYYY') %>
+        </div>
+        
+        <% if (stats.isInactive) { %>
+          <div class="alert alert-warning mt-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Inaktiv</strong><br>
+            Du hast in den letzten 7 Tagen nicht gespielt.
+            <div class="mt-2">
+              <a href="/game/add" class="btn btn-outline-warning btn-sm">
+                <i class="fas fa-gamepad me-1"></i>Jetzt Spiel hinzufügen
+              </a>
+            </div>
           </div>
-          
-          <div class="d-flex justify-content-center mb-3">
-            <div class="me-4 text-center">
-              <h4 class="mb-0 text-primary"><%= user.eloRating %></h4>
-              <small class="text-muted">ELO-Rating</small>
-            </div>
-            <div class="text-center">
-              <h4 class="mb-0 text-primary">#<%= rank %></h4>
-              <small class="text-muted">Rang</small>
-            </div>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Shirt Level Erklärung -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h2 class="h6 mb-0">Shirt Levels</h2>
+      </div>
+      <div class="card-body">
+        <div class="small">
+          <div class="d-flex align-items-center mb-1">
+            <span class="badge me-2" style="background-color: #f8f9fa; color: #212529; border: 1px solid #dee2e6; min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Rookie</span>
+            <span class="text-muted">0-29</span>
           </div>
-          
-          <% 
-            // Berechne, wann die nächste Inaktivitätsstrafe fällig wäre
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            
-            const daysSinceLastActivity = Math.floor((new Date() - user.lastActivity) / (1000 * 60 * 60 * 24));
-            const daysUntilPenalty = 7 - daysSinceLastActivity;
-            
-            // Prüfe, ob der Benutzer inaktiv ist oder bald inaktiv wird
-            const isInactive = user.lastActivity < sevenDaysAgo;
-            const soonInactive = daysSinceLastActivity >= 4 && daysSinceLastActivity < 7; // Warnung 3 Tage vorher
-          %>
-
-          <!-- <% if (isInactive) { %>
-            <div class="alert alert-danger">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              <strong>Inaktivität erkannt!</strong> Du hast in den letzten 7 Tagen kein Spiel gespielt. 
-              Dein ELO-Rating wird aufgrund der Inaktivität um 10 Punkte reduziert.
-              <div class="mt-2">
-                <a href="/game/add" class="btn btn-outline-danger btn-sm">
-                  <i class="fas fa-gamepad me-1"></i>Jetzt Spiel hinzufügen
-                </a>
-              </div>
-            </div>
-          <% } else if (soonInactive) { %>
-            <div class="alert alert-warning">
-              <i class="fas fa-clock me-2"></i>
-              <strong>Inaktivitätswarnung!</strong> Du hast seit <%= daysSinceLastActivity %> Tagen kein Spiel eingetragen. 
-              In <%= daysUntilPenalty %> <%= daysUntilPenalty === 1 ? 'Tag' : 'Tagen' %> wird dein ELO-Rating um 10 Punkte reduziert.
-              <div class="mt-2">
-                <a href="/game/add" class="btn btn-outline-warning btn-sm">
-                  <i class="fas fa-gamepad me-1"></i>Jetzt Spiel hinzufügen
-                </a>
-              </div>
-            </div>
-          <% } %> -->
+          <div class="d-flex align-items-center mb-1">
+            <span class="badge bg-light text-dark me-2" style="min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Beginner</span>
+            <span class="text-muted">30-89</span>
+          </div>
+          <div class="d-flex align-items-center mb-1">
+            <span class="badge me-2" style="background-color: #ffc107; color: #212529; min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Intermediate</span>
+            <span class="text-muted">90-149</span>
+          </div>
+          <div class="d-flex align-items-center mb-1">
+            <span class="badge me-2" style="background-color: #fd7e14; color: white; min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Experienced</span>
+            <span class="text-muted">150-299</span>
+          </div>
+          <div class="d-flex align-items-center mb-1">
+            <span class="badge me-2" style="background-color: #198754; color: white; min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Advanced</span>
+            <span class="text-muted">300-499</span>
+          </div>
+          <div class="d-flex align-items-center mb-1">
+            <span class="badge me-2" style="background-color: #0d6efd; color: white; min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Expert</span>
+            <span class="text-muted">500-749</span>
+          </div>
+          <div class="d-flex align-items-center mb-1">
+            <span class="badge me-2" style="background-color: #6f42c1; color: white; min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Master</span>
+            <span class="text-muted">750-999</span>
+          </div>
+          <div class="d-flex align-items-center">
+            <span class="badge bg-dark me-2" style="min-width: 60px;"><i class="fas fa-tshirt me-1"></i>Legend</span>
+            <span class="text-muted">1000+</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h2 class="h5 mb-0">Statistiken</h2>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-4 mb-3 mb-md-0">
+            <h3 class="text-primary mb-0"><%= stats.gamesPlayed %></h3>
+            <p class="text-muted mb-0">Gespielte Spiele</p>
+          </div>
+          <div class="col-md-4 mb-3 mb-md-0">
+            <h3 class="text-primary mb-0"><%= stats.gamesWon %></h3>
+            <p class="text-muted mb-0">Gewonnene Spiele</p>
+          </div>
+          <div class="col-md-4">
+            <h3 class="text-primary mb-0"><%= stats.winRate %>%</h3>
+            <p class="text-muted mb-0">Gewinnrate</p>
+          </div>
         </div>
       </div>
     </div>
     
-    <div class="col-md-8">
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white">
-          <h2 class="h5 mb-0">Statistiken</h2>
-        </div>
-        <div class="card-body">
-          <div class="row text-center">
-            <div class="col-md-4 mb-3 mb-md-0">
-              <h3 class="text-primary mb-0"><%= stats.gamesPlayed %></h3>
-              <p class="text-muted mb-0">Gespielte Spiele</p>
-            </div>
-            <div class="col-md-4 mb-3 mb-md-0">
-              <h3 class="text-primary mb-0"><%= stats.gamesWon %></h3>
-              <p class="text-muted mb-0">Gewonnene Spiele</p>
-            </div>
-            <div class="col-md-4">
-              <h3 class="text-primary mb-0"><%= stats.winRate %>%</h3>
-              <p class="text-muted mb-0">Gewinnrate</p>
-            </div>
-          </div>
-        </div>
+    <div class="card shadow-sm">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Letzte Spiele</h2>
+        <a href="/game/user/history" class="btn btn-sm btn-outline-primary">
+          Alle ansehen
+        </a>
       </div>
-      
-      <div class="card shadow-sm">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <h2 class="h5 mb-0">Letzte Spiele</h2>
-          <a href="/game/user/history" class="btn btn-sm btn-outline-primary">
-            Alle ansehen
-          </a>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Teams</th>
+                <th>Ergebnis</th>
+                <th>ELO-Änderung</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentGames.length === 0) { %>
                 <tr>
-                  <th>Datum</th>
-                  <th>Teams</th>
-                  <th>Ergebnis</th>
-                  <th>ELO-Änderung</th>
+                  <td colspan="4" class="text-center py-3">Noch keine Spiele gespielt</td>
                 </tr>
-              </thead>
-              <tbody>
-                <% if (recentGames.length === 0) { %>
+              <% } else { %>
+                <% recentGames.forEach(game => { %>
                   <tr>
-                    <td colspan="4" class="text-center py-3">Noch keine Spiele gespielt</td>
-                  </tr>
-                <% } else { %>
-                  <% recentGames.forEach(game => { %>
-                    <tr>
-                      <td>
-                        <a href="/game/<%= game._id %>" class="text-decoration-none">
-                          <%= moment(game.createdAt).format('D. MMM YYYY') %>
-                        </a>
-                      </td>
-                      <td>
-                        <div class="small">
-                          <strong><%= game.team1[0].player.username %></strong> & 
-                          <strong><%= game.team1[1].player.username %></strong>
-                          <span class="text-muted">vs</span> 
-                          <strong><%= game.team2[0].player.username %></strong> & 
-                          <strong><%= game.team2[1].player.username %></strong>
-                        </div>
-                      </td>
-                      <td>
-                        <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-danger' %>">
-                          <%= game.score.team1 %>-<%= game.score.team2 %>
-                        </span>
-                      </td>
-                      <td>
-                        <% 
-                          // Finde die ELO-Änderung des Benutzers
-                          let eloChange = 0;
-                          let playerTeam = '';
-                          
-                          // Überprüfe Team 1
-                          game.team1.forEach(player => {
-                            if (player.player._id.toString() === user._id.toString()) {
-                              eloChange = player.eloChange;
-                              playerTeam = 'team1';
-                            }
-                          });
-                          
-                          // Überprüfe Team 2
-                          game.team2.forEach(player => {
-                            if (player.player._id.toString() === user._id.toString()) {
-                              eloChange = player.eloChange;
-                              playerTeam = 'team2';
-                            }
-                          });
-                          
-                          const winner = game.winner;
-                          const isWinner = playerTeam === winner;
-                        %>
+                    <td>
+                      <a href="/game/<%= game._id %>" class="text-decoration-none">
+                        <%= moment(game.createdAt).format('D. MMM YYYY') %>
+                      </a>
+                    </td>
+                    <td>
+                      <div class="small">
+                        <strong><%= game.team1[0].player.username %></strong> & 
+                        <strong><%= game.team1[1].player.username %></strong>
+                        <span class="text-muted">vs</span> 
+                        <strong><%= game.team2[0].player.username %></strong> & 
+                        <strong><%= game.team2[1].player.username %></strong>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="<%= game.winner === 'team1' ? 'text-success' : 'text-danger' %>">
+                        <%= game.score.team1 %>-<%= game.score.team2 %>
+                      </span>
+                    </td>
+                    <td>
+                      <% 
+                        // Finde die ELO-Änderung des Benutzers
+                        let eloChange = 0;
+                        let playerTeam = '';
                         
-                        <span class="<%= eloChange >= 0 ? 'text-success' : 'text-danger' %>">
-                          <%= eloChange >= 0 ? '+' : '' %><%= eloChange %>
-                        </span>
-                      </td>
-                    </tr>
-                  <% }) %>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
+                        // Überprüfe Team 1
+                        game.team1.forEach(player => {
+                          if (player.player._id.toString() === user._id.toString()) {
+                            eloChange = player.eloChange;
+                            playerTeam = 'team1';
+                          }
+                        });
+                        
+                        // Überprüfe Team 2
+                        game.team2.forEach(player => {
+                          if (player.player._id.toString() === user._id.toString()) {
+                            eloChange = player.eloChange;
+                            playerTeam = 'team2';
+                          }
+                        });
+                        
+                        const winner = game.winner;
+                        const isWinner = playerTeam === winner;
+                      %>
+                      
+                      <span class="<%= eloChange >= 0 ? 'text-success' : 'text-danger' %>">
+                        <%= eloChange >= 0 ? '+' : '' %><%= eloChange %>
+                      </span>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -216,5 +312,6 @@
       </div>
     </div>
   </div>
+</div>
 
 <%- include('../partials/footer') %>
