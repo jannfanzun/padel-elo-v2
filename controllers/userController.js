@@ -15,7 +15,7 @@ exports.getProfile = async (req, res) => {
     const user = req.user;
     const rank = await user.getRank();
     
-    // Get Letzte Spiele
+    // Get recent games
     const recentGames = await Game.find({
       $or: [
         { 'team1.player': userId },
@@ -45,7 +45,8 @@ exports.getProfile = async (req, res) => {
     });
     
     const gamesWon = gamesWonTeam1 + gamesWonTeam2;
-    const winRate = gamesPlayed > 0 ? ((gamesWon / gamesPlayed) * 100).toFixed(1) : 0;
+    const winRate = gamesPlayed > 0 ? 
+      ((gamesWon / gamesPlayed) * 100).toFixed(1) : 0;
     
     // Check if inactive
     const isInactive = user.isInactive();
@@ -119,13 +120,15 @@ exports.getRankings = async (req, res) => {
     // Initialize stats for all users
     users.forEach(user => {
       const userId = user._id.toString();
-      const startELO = quarterlyELOMap.has(userId) ? quarterlyELOMap.get(userId) : user.eloRating;
+      const startELO = quarterlyELOMap.has(userId) ? 
+        quarterlyELOMap.get(userId) : user.eloRating;
       
       userStats[userId] = {
         quarterlyGames: 0,
         quarterlyEloChange: user.eloRating - startELO,
         initialQuarterElo: startELO,
-        currentElo: user.eloRating
+        currentElo: user.eloRating,
+        alltimeGames: 0 // Neu für All Time Spiele
       };
     });
     
@@ -148,6 +151,29 @@ exports.getRankings = async (req, res) => {
       });
     });
     
+    // Für All Time Spiele: Zähle alle Spiele
+    if (rankingType === 'alltime-games') {
+      const allGames = await Game.find({}).populate('team1.player team2.player', 'username');
+      
+      allGames.forEach(game => {
+        // Process Team 1 players
+        game.team1.forEach(playerData => {
+          const playerId = playerData.player._id.toString();
+          if (userStats[playerId]) {
+            userStats[playerId].alltimeGames++;
+          }
+        });
+        
+        // Process Team 2 players
+        game.team2.forEach(playerData => {
+          const playerId = playerData.player._id.toString();
+          if (userStats[playerId]) {
+            userStats[playerId].alltimeGames++;
+          }
+        });
+      });
+    }
+    
     // Create rankings array with different sorting based on ranking type
     let rankings = [];
     
@@ -157,17 +183,50 @@ exports.getRankings = async (req, res) => {
         quarterlyGames: 0, 
         quarterlyEloChange: 0,
         initialQuarterElo: user.eloRating,
-        currentElo: user.eloRating
+        currentElo: user.eloRating,
+        alltimeGames: 0
       };
       
       const isInactive = user.isInactive();
+      
+      // Bestimme Shirt-Farbe und Level für All Time Spiele
+      let shirtColor = 'white';
+      let shirtLevel = 'Rookie';
+      
+      if (rankingType === 'alltime-games') {
+        if (stats.alltimeGames >= 1000) {
+          shirtColor = 'black';
+          shirtLevel = 'Legend';
+        } else if (stats.alltimeGames >= 750) {
+          shirtColor = 'purple';
+          shirtLevel = 'Master';
+        } else if (stats.alltimeGames >= 500) {
+          shirtColor = 'blue';
+          shirtLevel = 'Expert';
+        } else if (stats.alltimeGames >= 300) {
+          shirtColor = 'green';
+          shirtLevel = 'Advanced';
+        } else if (stats.alltimeGames >= 150) {
+          shirtColor = 'orange';
+          shirtLevel = 'Experienced';
+        } else if (stats.alltimeGames >= 90) {
+          shirtColor = 'yellow';
+          shirtLevel = 'Intermediate';
+        } else if (stats.alltimeGames >= 30) {
+          shirtColor = 'white';
+          shirtLevel = 'Beginner';
+        }
+      }
       
       rankings.push({
         user,
         isInactive,
         quarterlyGames: stats.quarterlyGames,
         quarterlyEloChange: stats.quarterlyEloChange,
-        initialQuarterElo: stats.initialQuarterElo
+        initialQuarterElo: stats.initialQuarterElo,
+        alltimeGames: stats.alltimeGames,
+        shirtColor: shirtColor,
+        shirtLevel: shirtLevel
       });
     });
     
@@ -176,6 +235,8 @@ exports.getRankings = async (req, res) => {
       rankings.sort((a, b) => b.quarterlyEloChange - a.quarterlyEloChange);
     } else if (rankingType === 'quarterly-games') {
       rankings.sort((a, b) => b.quarterlyGames - a.quarterlyGames);
+    } else if (rankingType === 'alltime-games') {
+      rankings.sort((a, b) => b.alltimeGames - a.alltimeGames);
     } else {
       // Default 'elo' sorting - already sorted by the database query
     }
@@ -186,21 +247,19 @@ exports.getRankings = async (req, res) => {
       rank: index + 1
     }));
     
-  // Format quarter name for display
-  // Korrekte Quartalsmonate zuweisen
-  const quarterStartMonths = ['Januar', 'April', 'Juli', 'Oktober'];
-  const quarterEndMonths = ['März', 'Juni', 'September', 'Dezember'];
-  const startMonth = quarterStartMonths[currentQuarter];
-  const endMonth = quarterEndMonths[currentQuarter];
-  const quarterName = `${startMonth} - ${endMonth} ${now.getFullYear()}`;
+    // Format quarter name for display
+    const quarterStartMonths = ['Januar', 'April', 'Juli', 'Oktober'];
+    const quarterEndMonths = ['März', 'Juni', 'September', 'Dezember'];
+    const startMonth = quarterStartMonths[currentQuarter];
+    const endMonth = quarterEndMonths[currentQuarter];
+    const quarterName = `${startMonth} - ${endMonth} ${now.getFullYear()}`;
     
     res.render('user/rankings', {
-      title: 'Rankings',
+      title: 'Spieler Rankings',
       rankings,
       rankingType,
       quarterName,
-      quarterStart,
-      moment
+      user: req.user
     });
   } catch (error) {
     console.error('Get rankings error:', error);
@@ -211,27 +270,27 @@ exports.getRankings = async (req, res) => {
   }
 };
 
-// @desc    Benutzerprofil aktualisieren
+// @desc    Update user profile
 // @route   POST /user/profile/update
 // @access  Private
 exports.updateProfile = async (req, res) => {
   try {
-    const { username } = req.body;
     const userId = req.user._id;
+    const { username } = req.body;
     
-    // Validiere die Eingabe
-    if (!username || username.trim() === '') {
-      return res.redirect('/user/profile?error=Benutzername darf nicht leer sein');
+    // Validierung
+    if (!username || username.trim().length === 0) {
+      return res.redirect('/user/profile?error=Benutzername ist erforderlich');
     }
     
-    if (username.length > 30) {
+    if (username.trim().length > 30) {
       return res.redirect('/user/profile?error=Benutzername darf nicht länger als 30 Zeichen sein');
     }
     
     // Prüfe, ob der Benutzername bereits von jemand anderem verwendet wird
     const existingUser = await User.findOne({ 
       username: username,
-      _id: { $ne: userId } // Schliesse den aktuellen Benutzer aus
+      _id: { $ne: userId } // Schließe den aktuellen Benutzer aus
     });
     
     if (existingUser) {

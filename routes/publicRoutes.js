@@ -53,39 +53,17 @@ router.get('/', async (req, res) => {
     // Initialize stats for all users
     users.forEach(user => {
       const userId = user._id.toString();
-      const startELO = quarterlyELOMap.has(userId) ? quarterlyELOMap.get(userId) : user.eloRating;
+      const startELO = quarterlyELOMap.has(userId) ? 
+        quarterlyELOMap.get(userId) : user.eloRating;
       
       userStats[userId] = {
         quarterlyGames: 0,
         quarterlyEloChange: user.eloRating - startELO,
         initialQuarterElo: startELO,
-        currentElo: user.eloRating
+        currentElo: user.eloRating,
+        alltimeGames: 0 // Neu für All Time Spiele
       };
     });
-
-    /**
-   * @desc    Show Terms and Conditions (AGB) page
-   * @route   GET /agb
-   * @access  Public
-   */
-  router.get('/agb', (req, res) => {
-    res.render('agb', {
-      title: 'Allgemeine Geschäftsbedingungen',
-      user: req.user || null
-    });
-  });
-
-      /**
-   * @desc    Show About padELO page
-   * @route   GET /about
-   * @access  Public
-   */
-      router.get('/about', (req, res) => {
-        res.render('about', {
-          title: 'Über padELO',
-          user: req.user || null
-        });
-      });
     
     // Count games for each player in this quarter
     quarterGames.forEach(game => {
@@ -106,6 +84,29 @@ router.get('/', async (req, res) => {
       });
     });
     
+    // Für All Time Spiele: Zähle alle Spiele
+    if (rankingType === 'alltime-games') {
+      const allGames = await Game.find({}).populate('team1.player team2.player', 'username');
+      
+      allGames.forEach(game => {
+        // Process Team 1 players
+        game.team1.forEach(playerData => {
+          const playerId = playerData.player._id.toString();
+          if (userStats[playerId]) {
+            userStats[playerId].alltimeGames++;
+          }
+        });
+        
+        // Process Team 2 players
+        game.team2.forEach(playerData => {
+          const playerId = playerData.player._id.toString();
+          if (userStats[playerId]) {
+            userStats[playerId].alltimeGames++;
+          }
+        });
+      });
+    }
+    
     // Create rankings array with different sorting based on ranking type
     let rankings = [];
     
@@ -115,19 +116,52 @@ router.get('/', async (req, res) => {
         quarterlyGames: 0, 
         quarterlyEloChange: 0,
         initialQuarterElo: user.eloRating,
-        currentElo: user.eloRating
+        currentElo: user.eloRating,
+        alltimeGames: 0
       };
       
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const isInactive = user.lastActivity < sevenDaysAgo;
       
+      // Bestimme Shirt-Farbe und Level für All Time Spiele
+      let shirtColor = 'white';
+      let shirtLevel = 'Rookie';
+      
+      if (rankingType === 'alltime-games') {
+        if (stats.alltimeGames >= 1000) {
+          shirtColor = 'black';
+          shirtLevel = 'Legend';
+        } else if (stats.alltimeGames >= 750) {
+          shirtColor = 'purple';
+          shirtLevel = 'Master';
+        } else if (stats.alltimeGames >= 500) {
+          shirtColor = 'blue';
+          shirtLevel = 'Expert';
+        } else if (stats.alltimeGames >= 300) {
+          shirtColor = 'green';
+          shirtLevel = 'Advanced';
+        } else if (stats.alltimeGames >= 150) {
+          shirtColor = 'orange';
+          shirtLevel = 'Experienced';
+        } else if (stats.alltimeGames >= 90) {
+          shirtColor = 'yellow';
+          shirtLevel = 'Intermediate';
+        } else if (stats.alltimeGames >= 30) {
+          shirtColor = 'white';
+          shirtLevel = 'Beginner';
+        }
+      }
+      
       rankings.push({
         user,
         isInactive,
         quarterlyGames: stats.quarterlyGames,
         quarterlyEloChange: stats.quarterlyEloChange,
-        initialQuarterElo: stats.initialQuarterElo
+        initialQuarterElo: stats.initialQuarterElo,
+        alltimeGames: stats.alltimeGames,
+        shirtColor: shirtColor,
+        shirtLevel: shirtLevel
       });
     });
     
@@ -136,6 +170,8 @@ router.get('/', async (req, res) => {
       rankings.sort((a, b) => b.quarterlyEloChange - a.quarterlyEloChange);
     } else if (rankingType === 'quarterly-games') {
       rankings.sort((a, b) => b.quarterlyGames - a.quarterlyGames);
+    } else if (rankingType === 'alltime-games') {
+      rankings.sort((a, b) => b.alltimeGames - a.alltimeGames);
     } else {
       // Default 'elo' sorting - already sorted by the database query
     }
@@ -146,13 +182,12 @@ router.get('/', async (req, res) => {
       rank: index + 1
     }));
     
-  // Format quarter name for display
-  // Korrekte Quartalsmonate zuweisen
-  const quarterStartMonths = ['Januar', 'April', 'Juli', 'Oktober'];
-  const quarterEndMonths = ['März', 'Juni', 'September', 'Dezember'];
-  const startMonth = quarterStartMonths[currentQuarter];
-  const endMonth = quarterEndMonths[currentQuarter];
-  const quarterName = `${startMonth} - ${endMonth} ${now.getFullYear()}`;
+    // Format quarter name for display
+    const quarterStartMonths = ['Januar', 'April', 'Juli', 'Oktober'];
+    const quarterEndMonths = ['März', 'Juni', 'September', 'Dezember'];
+    const startMonth = quarterStartMonths[currentQuarter];
+    const endMonth = quarterEndMonths[currentQuarter];
+    const quarterName = `${startMonth} - ${endMonth} ${now.getFullYear()}`;
     
     res.render('index', {
       title: 'padELO Ranking',
@@ -168,6 +203,30 @@ router.get('/', async (req, res) => {
       message: 'An error occurred while loading the rankings'
     });
   }
+});
+
+/**
+ * @desc    Show Terms and Conditions (AGB) page
+ * @route   GET /agb
+ * @access  Public
+ */
+router.get('/agb', (req, res) => {
+  res.render('agb', {
+    title: 'Allgemeine Geschäftsbedingungen',
+    user: req.user || null
+  });
+});
+
+/**
+ * @desc    Show About padELO page
+ * @route   GET /about
+ * @access  Public
+ */
+router.get('/about', (req, res) => {
+  res.render('about', {
+    title: 'Über padELO',
+    user: req.user || null
+  });
 });
 
 module.exports = router;

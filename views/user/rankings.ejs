@@ -1,3 +1,4 @@
+<!-- views/user/rankings.ejs - Komplette Aktualisierung -->
 <%- include('../partials/header') %>
 
 <div class="row mb-4">
@@ -27,6 +28,11 @@
           <i class="fas fa-gamepad me-2"></i>Quartal: Spieleanzahl
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'alltime-games' ? 'active' : '' %>" href="?type=alltime-games">
+          <i class="fas fa-tshirt me-2"></i>All Time padELO Spiele
+        </a>
+      </li>
     </ul>
   </div>
 </div>
@@ -42,6 +48,8 @@
             <h3 class="h5 mb-0">ELO-Verbesserung (<%= quarterName %>)</h3>
           <% } else if (rankingType === 'quarterly-games') { %>
             <h3 class="h5 mb-0">Anzahl Spiele (<%= quarterName %>)</h3>
+          <% } else if (rankingType === 'alltime-games') { %>
+            <h3 class="h5 mb-0">All Time padELO Spiele - Shirt Ranking</h3>
           <% } %>
           <small class="text-muted"><%= rankings.length %> Spieler</small>
         </div>
@@ -67,6 +75,10 @@
                   <% } else if (rankingType === 'quarterly-games') { %>
                     <th>Anzahl Spiele</th>
                     <th>ELO Punkte</th>
+                  <% } else if (rankingType === 'alltime-games') { %>
+                    <th>Gesamt Spiele</th>
+                    <th>Shirt Level</th>
+                    <th>ELO Punkte</th>
                   <% } %>
                   <th>Status</th>
                 </tr>
@@ -90,6 +102,22 @@
                     <% } else if (rankingType === 'quarterly-games') { %>
                       <td><%= ranking.quarterlyGames %></td>
                       <td><%= ranking.user.eloRating %></td>
+                    <% } else if (rankingType === 'alltime-games') { %>
+                      <td><strong><%= ranking.alltimeGames %></strong></td>
+                      <td>
+                        <span class="badge" style="background-color: <%= 
+                          ranking.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
+                          ranking.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
+                          ranking.shirtColor === 'orange' ? '#fd7e14; color: white' :
+                          ranking.shirtColor === 'green' ? '#198754; color: white' :
+                          ranking.shirtColor === 'blue' ? '#0d6efd; color: white' :
+                          ranking.shirtColor === 'purple' ? '#6f42c1; color: white' :
+                          '#212529; color: white'
+                        %>">
+                          <i class="fas fa-tshirt me-1"></i><%= ranking.shirtLevel %>
+                        </span>
+                      </td>
+                      <td><%= ranking.user.eloRating %></td>
                     <% } %>
                     
                     <td>
@@ -107,11 +135,32 @@
         <% } %>
       </div>
       <div class="card-footer bg-white">
-        <div class="d-flex justify-content-between">
-          <small class="text-muted">
-            <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
-          </small>
-        </div>
+        <% if (rankingType === 'alltime-games') { %>
+          <div class="row">
+            <div class="col-12">
+              <small class="text-muted d-block mb-2">
+                <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
+              </small>
+              <small class="text-muted">
+                <strong>Shirt Levels:</strong>
+                <span class="badge ms-1" style="background-color: #f8f9fa; color: #212529; border: 1px solid #dee2e6">Rookie (0-29)</span>
+                <span class="badge bg-light text-dark ms-1">Beginner (30-89)</span>
+                <span class="badge ms-1" style="background-color: #ffc107; color: #212529">Intermediate (90-149)</span>
+                <span class="badge ms-1" style="background-color: #fd7e14; color: white">Experienced (150-299)</span>
+                <span class="badge ms-1" style="background-color: #198754; color: white">Advanced (300-499)</span>
+                <span class="badge ms-1" style="background-color: #0d6efd; color: white">Expert (500-749)</span>
+                <span class="badge ms-1" style="background-color: #6f42c1; color: white">Master (750-999)</span>
+                <span class="badge bg-dark ms-1">Legend (1000+)</span>
+              </small>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">
+              <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
+            </small>
+          </div>
+        <% } %>
       </div>
     </div>
   </div>
