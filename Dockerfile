@@ -1,4 +1,4 @@
-FROM ghcr.io/library/node:22-alpine
+FROM public.ecr.aws/docker/library/node:22-alpine
 
 WORKDIR /app
 
