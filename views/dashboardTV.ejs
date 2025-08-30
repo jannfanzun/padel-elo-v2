@@ -10,6 +10,10 @@
   
   <!-- Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lobster&display=swap" rel="stylesheet">
   
   <!-- Custom CSS -->
   <link href="/css/style.css" rel="stylesheet">
@@ -30,6 +34,10 @@
       overflow-y: hidden;
     }
 
+    .font-family-lobster {
+      font-family: 'Lobster', cursive;
+    }
+
     .qr-code {
       width: 100%;
       border-radius: 20px;
@@ -37,15 +45,15 @@
     
     .tv-header {
       background: linear-gradient(to bottom, #0d6efd, transparent) !important;
-      padding: 1rem 0;
-      margin-bottom: 1rem;
+      padding: 0.5rem 0;
+      margin-bottom: 0.5rem;
     }
     
     .tv-brand {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 1.5rem;
+      gap: 1rem;
     }
     
     .tv-logo {
@@ -55,7 +63,7 @@
     
     .tv-title {
       font-size: 2.2rem;
-      font-weight: 800;
+      /* font-weight: 800; */
       color: white;
       margin: 0;
       line-height: 1;
@@ -66,11 +74,11 @@
       font-weight: 500;
       color: rgba(255,255,255,0.9);
       margin: 0;
-      margin-top: 0.3rem;
+      margin-top: 0.2rem;
     }
     
     .section-card {
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
       border: none;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -83,7 +91,7 @@
       background: #0d6efd !important;
       color: white;
       border: none;
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 0.5rem;
       border-bottom: 1px solid rgba(255,255,255,0.2);
     }
     
@@ -99,6 +107,10 @@
       border: none;
       padding: 0.5rem;
       border-bottom: 2px solid #e9ecef;
+    }
+
+    .table>:not(caption)>*>* {
+      padding: 0.2rem 0.5rem;
     }
     
     .ranking-table tbody tr {
@@ -158,7 +170,7 @@
       color: #0d6efd;
       font-weight: 700;
       font-size: 0.9rem;
-      padding: 0.2rem 0.4rem;
+      padding: 0.2rem 0.5rem;
       border-radius: 4px;
       text-align: center;
       min-width: 50px;
@@ -218,7 +230,7 @@
     .website-link {
       background: #0d6efd;
       color: white;
-      padding: 0.2rem 0.4rem;
+      padding: 0.2rem 0.5rem;
       border-radius: 6px;
       text-decoration: none;
       font-weight: 600;
@@ -269,7 +281,7 @@
       <div class="tv-brand">
         <img src="/img/psc-logo-white.png" alt="Padel Sports Club Logo" class="tv-logo">
         <div>
-          <h1 class="tv-title">padELO</h1>
+          <h1 class="tv-title font-family-lobster">padElO</h1>
           <p class="tv-subtitle">Live Ranking Dashboard</p>
         </div>
       </div>
@@ -294,7 +306,7 @@
                     <th scope="col">#</th>
                     <th scope="col">Spieler</th>
                     <th scope="col" class="text-start">Games</th>
-                    <th scope="col" class="text-start">Shirt <br> Level</th>
+                    <th scope="col" class="text-start">Shirt</th>
                     <th scope="col" class="text-start">ELO Punkte</th>
                   </tr>
                 </thead>
@@ -429,7 +441,7 @@
       </div>
         <div class="divider-line"></div>
 <div class="card section-card animate-slide-in animate-delay-3" style="background: rgb(39, 39, 39); border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.3);">
-  <div class="card-body pt-5 pb-5">
+  <div class="card-body pt-3 pb-2">
     <div class="row align-items-center">
       
       <!-- Logo & Text -->
@@ -443,32 +455,10 @@
           Verkaufsstarke Websites für Google mit Schweizer Hosting – in max. <span class="text-success fw-bold">4 Wochen</span>
         </p>
 
-        <div class="mb-4">
-          <div class="d-flex flex-column gap-2">
-            <div class="d-flex align-items-center">
-              <i class="fas fa-rocket text-success me-2"></i>
-              <span class="text-white fw-semibold">Moderne, responsive Websites</span>
-            </div>
-            <div class="d-flex align-items-center">
-              <i class="fas fa-chart-line text-success me-2"></i>
-              <span class="text-white fw-semibold">SEO-optimiert für Google</span>
-            </div>
-            <div class="d-flex align-items-center">
-              <i class="fas fa-clock text-success me-2"></i>
-              <span class="text-white fw-semibold">30 Minuten kostenlose Beratung</span>
-            </div>
-          </div>
-        </div>
-
         <div class="d-flex align-items-center justify-content-between flex-wrap">
           <div class="mb-2">
             <span class="text-white fw-bold" style="font-size: 1rem;">webtree.ch</span>
             <div class="text-success" style="font-size: 0.75rem;">⭐⭐⭐⭐⭐ 24+ zufriedene Kunden</div>
-          </div>
-
-          <div class="text-end">
-            <div class="text-success fw-bold" style="font-size: 1rem;">Jetzt Beratung buchen</div>
-            <div class="text-white-50" style="font-size: 0.85rem;">Unverbindlich & persönlich</div>
           </div>
         </div>
       </div>
