@@ -254,44 +254,60 @@
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-hover mb-0 ranking-table">
-              <thead>
-                <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Spieler</th>
-                  <th scope="col" class="text-start">Games</th>
-                  <th scope="col" class="text-start">Shirt</th>
-                  <th scope="col" class="text-start">Punkte</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (rankings && rankings.length > 0) { %>
-                  <% rankings.slice(0, 10).forEach((ranking, index) => { %>
-                    <tr>
-                      <td><span class="rank-number"><%= index + 1 %></span></td>
-                      <td><strong><%= ranking.user.username %></strong></td>
-                      <td class="text-start"><strong><%= ranking.alltimeGames %></strong></td>
-                      <td class="text-start">
-                        <span class="badge" style="background-color: <%= 
-                          ranking.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
-                          ranking.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
-                          ranking.shirtColor === 'orange' ? '#fd7e14; color: white' :
-                          ranking.shirtColor === 'green' ? '#198754; color: white' :
-                          ranking.shirtColor === 'blue' ? '#0d6efd; color: white' :
-                          ranking.shirtColor === 'purple' ? '#6f42c1; color: white' :
-                          '#212529; color: white'
-                        %>"><%= ranking.shirtLevel %></span>
-                      </td>
-                      <td class="text-start"><strong class="text-success"><%= ranking.user.eloRating %></strong></td>
-                    </tr>
-                  <% }) %>
+<table class="table table-hover mb-0 ranking-table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Spieler</th>
+      <th scope="col" class="text-start">Gesamt Spiele</th>
+      <th scope="col" class="text-start">Shirt Level</th>
+      <th scope="col" class="text-start">ELO Punkte</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (rankings && rankings.length > 0) { %>
+      <% rankings.slice(0, 10).forEach((ranking, index) => { %>
+        <tr>
+          <td><span class="rank-number"><%= index + 1 %></span></td>
+          <td>
+            <div class="d-flex align-items-center">
+              <!-- Profile Image -->
+              <div class="me-2">
+                <% if (ranking.user.profileImage) { %>
+                  <img src="<%= ranking.user.profileImage %>" 
+                       alt="<%= ranking.user.username %>" 
+                       class="rounded-circle"
+                       style="width: 40px; height: 40px; object-fit: cover;">
                 <% } else { %>
-                  <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">Noch keine Spieler verfügbar</td>
-                  </tr>
+                  <i class="fas fa-user-circle text-primary" style="font-size: 40px;"></i>
                 <% } %>
-              </tbody>
-            </table>
+              </div>
+              <!-- Username -->
+              <strong><%= ranking.user.username %></strong>
+            </div>
+          </td>
+          <td class="text-start"><strong><%= ranking.alltimeGames %></strong></td>
+          <td class="text-start">
+            <span class="badge" style="background-color: <%= 
+              ranking.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
+              ranking.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
+              ranking.shirtColor === 'orange' ? '#fd7e14; color: white' :
+              ranking.shirtColor === 'green' ? '#198754; color: white' :
+              ranking.shirtColor === 'blue' ? '#0d6efd; color: white' :
+              ranking.shirtColor === 'purple' ? '#6f42c1; color: white' :
+              '#212529; color: white'
+            %>"><%= ranking.shirtLevel %></span>
+          </td>
+          <td class="text-start"><strong class="text-success"><%= ranking.user.eloRating %></strong></td>
+        </tr>
+      <% }) %>
+    <% } else { %>
+      <tr>
+        <td colspan="5" class="text-center py-4 text-muted">Noch keine Spieler verfügbar</td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
           </div>
           <div class="card-footer bg-white">
             <small class="text-muted">

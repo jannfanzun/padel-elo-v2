@@ -153,7 +153,7 @@ exports.getRankings = async (req, res) => {
     // Get all users (excluding admin)
     const users = await User.find({ isAdmin: false })
       .sort({ eloRating: -1 })
-      .select('username eloRating lastActivity');
+      .select('username eloRating lastActivity profileImage');
     
     // Get all quarterly ELO records for current quarter
     const quarterlyELORecords = await QuarterlyELO.find({
@@ -359,6 +359,69 @@ exports.updateProfile = async (req, res) => {
     await User.findByIdAndUpdate(userId, { username: username.trim() });
     
     res.redirect('/user/profile?success=Dein Profil wurde erfolgreich aktualisiert');
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.redirect('/user/profile?error=Bei der Aktualisierung deines Profils ist ein Fehler aufgetreten');
+  }
+};
+
+exports.updateProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Check if image was processed
+    if (!req.processedImage) {
+      return res.redirect('/user/profile?error=Kein gültiges Bild hochgeladen');
+    }
+
+    // Update user profile image path in database
+    await User.findByIdAndUpdate(userId, { 
+      profileImage: req.processedImage.path 
+    });
+    
+    res.redirect('/user/profile?success=Profilbild erfolgreich aktualisiert');
+  } catch (error) {
+    console.error('Update profile image error:', error);
+    res.redirect('/user/profile?error=Fehler beim Aktualisieren des Profilbildes');
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { username } = req.body;
+    
+    // Validierung
+    if (!username || username.trim().length === 0) {
+      return res.redirect('/user/profile?error=Benutzername ist erforderlich');
+    }
+    
+    if (username.trim().length > 30) {
+      return res.redirect('/user/profile?error=Benutzername darf nicht länger als 30 Zeichen sein');
+    }
+    
+    // Prüfe, ob der Benutzername bereits von jemand anderem verwendet wird
+    const existingUser = await User.findOne({ 
+      username: username,
+      _id: { $ne: userId }
+    });
+    
+    if (existingUser) {
+      return res.redirect('/user/profile?error=Benutzername wird bereits verwendet');
+    }
+    
+    // Update object for user
+    const updateData = { username: username.trim() };
+    
+    // Add profile image if processed
+    if (req.processedImage) {
+      updateData.profileImage = req.processedImage.path;
+    }
+    
+    // Aktualisiere den Benutzer
+    await User.findByIdAndUpdate(userId, updateData);
+    
+    res.redirect('/user/profile?success=Profil erfolgreich aktualisiert');
   } catch (error) {
     console.error('Update profile error:', error);
     res.redirect('/user/profile?error=Bei der Aktualisierung deines Profils ist ein Fehler aufgetreten');

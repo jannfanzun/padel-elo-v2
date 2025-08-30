@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
     // Get all users (excluding admin)
     const users = await User.find({ isAdmin: false })
       .sort({ eloRating: -1 })
-      .select('username eloRating lastActivity');
+      .select('username eloRating lastActivity profileImage');
     
     // Get all quarterly ELO records for current quarter
     const quarterlyELORecords = await QuarterlyELO.find({

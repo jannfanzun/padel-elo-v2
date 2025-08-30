@@ -89,10 +89,25 @@
                     <tr<%= ranking.isInactive ? ' class="table-warning"' : '' %>>
                       <td><%= ranking.rank %></td>
                       <td>
-                        <%= ranking.user.username %>
-                        <% if (ranking.isInactive) { %>
-                          <span class="badge bg-warning text-dark ms-1">Inaktiv</span>
-                        <% } %>
+                        <div class="d-flex align-items-center">
+                          <!-- Profile Image -->
+                          <div class="me-2">
+                            <% if (ranking.user.profileImage) { %>
+                              <img src="<%= ranking.user.profileImage %>" 
+                                  alt="<%= ranking.user.username %>" 
+                                  class="rounded-circle"
+                                  style="width: 32px; height: 32px; object-fit: cover;">
+                            <% } else { %>
+                              <i class="fas fa-user-circle text-primary" style="font-size: 32px;"></i>
+                            <% } %>
+                          </div>
+                          <!-- Username and Badges -->
+                          <div>
+                            <strong><%= ranking.user.username %></strong>
+                            <% if (ranking.isInactive) { %>
+                              <span class="badge bg-warning text-dark ms-1 small">Inaktiv</span>
+                            <% } %>
+                        </div>
                       </td>
                       
                       <% if (rankingType === 'elo') { %>

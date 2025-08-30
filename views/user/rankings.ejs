@@ -61,76 +61,100 @@
           </div>
         <% } else { %>
           <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Spieler</th>
-                  <% if (rankingType === 'elo') { %>
-                    <th>ELO Punkte</th>
-                  <% } else if (rankingType === 'quarterly-improvement') { %>
-                    <th>ELO Verbesserung</th>
-                    <th>Start ELO</th>
-                    <th>Aktuell ELO</th>
-                  <% } else if (rankingType === 'quarterly-games') { %>
-                    <th>Anzahl Spiele</th>
-                    <th>ELO Punkte</th>
-                  <% } else if (rankingType === 'alltime-games') { %>
-                    <th>Gesamt Spiele</th>
-                    <th>Shirt Level</th>
-                    <th>ELO Punkte</th>
-                  <% } %>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% rankings.forEach(ranking => { %>
-                  <tr class="<%= ranking.user._id.toString() === user._id.toString() ? 'table-primary' : '' %>">
-                    <td><%= ranking.rank %></td>
-                    <td><strong><%= ranking.user.username %></strong></td>
-                    
-                    <% if (rankingType === 'elo') { %>
-                      <td><%= ranking.user.eloRating %></td>
-                    <% } else if (rankingType === 'quarterly-improvement') { %>
-                      <td>
-                        <span class="<%= ranking.quarterlyEloChange > 0 ? 'text-success' : (ranking.quarterlyEloChange < 0 ? 'text-danger' : 'text-muted') %>">
-                          <%= ranking.quarterlyEloChange > 0 ? '+' : '' %><%= ranking.quarterlyEloChange %>
-                        </span>
-                      </td>
-                      <td><%= ranking.initialQuarterElo %></td>
-                      <td><%= ranking.user.eloRating %></td>
-                    <% } else if (rankingType === 'quarterly-games') { %>
-                      <td><%= ranking.quarterlyGames %></td>
-                      <td><%= ranking.user.eloRating %></td>
-                    <% } else if (rankingType === 'alltime-games') { %>
-                      <td><strong><%= ranking.alltimeGames %></strong></td>
-                      <td>
-                        <span class="badge" style="background-color: <%= 
-                          ranking.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
-                          ranking.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
-                          ranking.shirtColor === 'orange' ? '#fd7e14; color: white' :
-                          ranking.shirtColor === 'green' ? '#198754; color: white' :
-                          ranking.shirtColor === 'blue' ? '#0d6efd; color: white' :
-                          ranking.shirtColor === 'purple' ? '#6f42c1; color: white' :
-                          '#212529; color: white'
-                        %>">
-                          <i class="fas fa-tshirt me-1"></i><%= ranking.shirtLevel %>
-                        </span>
-                      </td>
-                      <td><%= ranking.user.eloRating %></td>
-                    <% } %>
-                    
-                    <td>
-                      <% if (ranking.isInactive) { %>
-                        <span class="badge bg-warning text-dark">Inaktiv</span>
-                      <% } else { %>
-                        <span class="badge bg-success">Aktiv</span>
-                      <% } %>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
+<table class="table table-hover mb-0">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Spieler</th>
+      <% if (rankingType === 'elo') { %>
+        <th>ELO Punkte</th>
+      <% } else if (rankingType === 'quarterly-improvement') { %>
+        <th>ELO Verbesserung</th>
+        <th>Start ELO</th>
+        <th>Aktuell ELO</th>
+      <% } else if (rankingType === 'quarterly-games') { %>
+        <th>Anzahl Spiele</th>
+        <th>ELO Punkte</th>
+      <% } else if (rankingType === 'alltime-games') { %>
+        <th>Gesamt Spiele</th>
+        <th>Shirt Level</th>
+        <th>ELO Punkte</th>
+      <% } %>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% rankings.forEach(ranking => { %>
+      <tr class="<%= ranking.user._id.toString() === user._id.toString() ? 'table-primary' : '' %>">
+        <td><%= ranking.rank %></td>
+<td>
+  <div class="d-flex align-items-center">
+    <!-- Profile Image -->
+    <div class="me-2">
+      <% if (ranking.user.profileImage) { %>
+        <img src="<%= ranking.user.profileImage %>" 
+             alt="<%= ranking.user.username %>" 
+             class="rounded-circle"
+             style="width: 32px; height: 32px; object-fit: cover;">
+      <% } else { %>
+        <i class="fas fa-user-circle text-primary" style="font-size: 32px;"></i>
+      <% } %>
+    </div>
+    <!-- Username and Badges -->
+    <div>
+      <strong><%= ranking.user.username %></strong>
+      <% if (ranking.isInactive) { %>
+        <span class="badge bg-warning text-dark ms-1 small">Inaktiv</span>
+      <% } %>
+      <% if (ranking.user._id.toString() === user._id.toString()) { %>
+        <small class="text-primary d-block">(Du)</small>
+      <% } %>
+    </div>
+  </div>
+</td>
+        
+        <% if (rankingType === 'elo') { %>
+          <td><%= ranking.user.eloRating %></td>
+        <% } else if (rankingType === 'quarterly-improvement') { %>
+          <td>
+            <span class="<%= ranking.quarterlyEloChange > 0 ? 'text-success' : (ranking.quarterlyEloChange < 0 ? 'text-danger' : 'text-muted') %>">
+              <strong><%= ranking.quarterlyEloChange > 0 ? '+' : '' %><%= ranking.quarterlyEloChange %></strong>
+            </span>
+          </td>
+          <td><%= ranking.initialQuarterElo %></td>
+          <td><%= ranking.user.eloRating %></td>
+        <% } else if (rankingType === 'quarterly-games') { %>
+          <td><%= ranking.quarterlyGames %></td>
+          <td><%= ranking.user.eloRating %></td>
+        <% } else if (rankingType === 'alltime-games') { %>
+          <td><%= ranking.alltimeGames %></td>
+          <td>
+            <span class="badge" style="background-color: <%= 
+              ranking.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
+              ranking.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
+              ranking.shirtColor === 'orange' ? '#fd7e14; color: white' :
+              ranking.shirtColor === 'green' ? '#198754; color: white' :
+              ranking.shirtColor === 'blue' ? '#0d6efd; color: white' :
+              ranking.shirtColor === 'purple' ? '#6f42c1; color: white' :
+              '#212529; color: white'
+            %>">
+              <i class="fas fa-tshirt me-1"></i><%= ranking.shirtLevel %>
+            </span>
+          </td>
+          <td><%= ranking.user.eloRating %></td>
+        <% } %>
+        
+        <td>
+          <% if (ranking.isInactive) { %>
+            <span class="badge bg-warning text-dark">Inaktiv</span>
+          <% } else { %>
+            <span class="badge bg-success">Aktiv</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
           </div>
         <% } %>
       </div>
