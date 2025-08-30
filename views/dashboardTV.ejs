@@ -37,8 +37,8 @@
     
     .tv-header {
       background: linear-gradient(to bottom, #0d6efd, transparent) !important;
-      padding: 2rem 0;
-      margin-bottom: 2rem;
+      padding: 1rem 0;
+      margin-bottom: 1rem;
     }
     
     .tv-brand {
@@ -49,12 +49,12 @@
     }
     
     .tv-logo {
-      height: 90px;
+      height: 50px;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
     }
     
     .tv-title {
-      font-size: 3.2rem;
+      font-size: 2.2rem;
       font-weight: 800;
       color: white;
       margin: 0;
@@ -70,7 +70,7 @@
     }
     
     .section-card {
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       border: none;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -83,12 +83,12 @@
       background: #0d6efd !important;
       color: white;
       border: none;
-      padding: 1rem 1.5rem;
+      padding: 0.5rem 1rem;
       border-bottom: 1px solid rgba(255,255,255,0.2);
     }
     
     .section-header {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 600;
       margin: 0;
     }
@@ -97,18 +97,13 @@
       font-weight: 600;
       color: #495057;
       border: none;
-      padding: 0.9rem;
+      padding: 0.5rem;
       border-bottom: 2px solid #e9ecef;
     }
     
     .ranking-table tbody tr {
       transition: all 0.2s ease;
       border-bottom: 1px solid #e9ecef;
-    }
-    
-    .ranking-table tbody tr:hover {
-      background-color: rgba(13, 110, 253, 0.05);
-      border-left: 3px solid #0d6efd;
     }
     
     .rank-number {
@@ -122,22 +117,15 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.75rem;
-      padding: 1rem;
+      padding: 0.5rem;
     }
     
     .game-card {
       border: 1px solid #e9ecef;
       border-radius: 6px;
-      padding: 0.75rem;
+      padding: 0.5rem;
       transition: all 0.2s ease;
       font-size: 0.85rem;
-    }
-    
-    .game-card:hover {
-      background-color: rgba(13, 110, 253, 0.03);
-      border-color: #0d6efd;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .game-header {
@@ -170,7 +158,7 @@
       color: #0d6efd;
       font-weight: 700;
       font-size: 0.9rem;
-      padding: 0.3rem 0.6rem;
+      padding: 0.2rem 0.4rem;
       border-radius: 4px;
       text-align: center;
       min-width: 50px;
@@ -202,11 +190,6 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
-    .qr-placeholder:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(13, 110, 253, 0.2);
-    }
-    
     .feature-list {
       list-style: none;
       padding: 0;
@@ -216,7 +199,7 @@
     .feature-item {
       display: flex;
       align-items: center;
-      padding: 0.6rem 0;
+      padding: 0.3rem 0;
       border-bottom: 1px solid #e9ecef;
       transition: all 0.2s ease;
     }
@@ -224,13 +207,7 @@
     .feature-item:last-child {
       border-bottom: none;
     }
-    
-    .feature-item:hover {
-      background: rgba(13, 110, 253, 0.05);
-      border-left: 3px solid #0d6efd;
-      padding-left: 0.5rem;
-    }
-    
+
     .feature-icon {
       width: 20px;
       text-align: center;
@@ -241,7 +218,7 @@
     .website-link {
       background: #0d6efd;
       color: white;
-      padding: 0.6rem 1.2rem;
+      padding: 0.2rem 0.4rem;
       border-radius: 6px;
       text-decoration: none;
       font-weight: 600;
@@ -250,13 +227,7 @@
       transition: all 0.3s ease;
       border: 2px solid #0d6efd;
     }
-    
-    .website-link:hover {
-      background: white;
-      color: #0d6efd;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
-    }
+
     
     .divider-line {
       height: 1px;
@@ -322,8 +293,8 @@
                   <tr>
                     <th scope="col">#</th>
                     <th scope="col">Spieler</th>
-                    <th scope="col" class="text-start">Gesamt Spiele</th>
-                    <th scope="col" class="text-start">Shirt Level</th>
+                    <th scope="col" class="text-start">Games</th>
+                    <th scope="col" class="text-start">Shirt <br> Level</th>
                     <th scope="col" class="text-start">ELO Punkte</th>
                   </tr>
                 </thead>
