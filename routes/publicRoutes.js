@@ -229,4 +229,102 @@ router.get('/about', (req, res) => {
   });
 });
 
+/**
+ * @desc    Show Dashboard TV (for Fire TV display in landscape mode)
+ * @route   GET /dashboardTV
+ * @access  Public
+ */
+router.get('/dashboardTV', async (req, res) => {
+  try {
+    // Get all users sorted by ELO rating (descending)
+    const users = await User.find({ isAdmin: false }).sort({ eloRating: -1 });
+    
+    // Get current quarter information for stats calculation
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentQuarter = Math.floor(now.getMonth() / 3);
+    const quarterStart = new Date(currentYear, currentQuarter * 3, 1);
+    const quarterEnd = new Date(currentYear, currentQuarter * 3 + 3, 0, 23, 59, 59, 999);
+    
+    // Calculate ranking with all time games focus (like the existing alltime-games ranking)
+    let rankings = [];
+    
+    for (const user of users) {
+      // Check if user is inactive (no activity in last 7 days)
+      const isInactive = user.isInactive();
+      
+      // Get all time games count
+      const alltimeGames = await Game.countDocuments({
+        $or: [
+          { 'team1.player': user._id },
+          { 'team2.player': user._id }
+        ]
+      });
+      
+      // Determine shirt color and level based on all time games
+      let shirtColor = 'white';
+      let shirtLevel = 'Rookie';
+      
+      if (alltimeGames >= 1000) {
+        shirtColor = 'black';
+        shirtLevel = 'Legend';
+      } else if (alltimeGames >= 750) {
+        shirtColor = 'purple';
+        shirtLevel = 'Master';
+      } else if (alltimeGames >= 500) {
+        shirtColor = 'blue';
+        shirtLevel = 'Expert';
+      } else if (alltimeGames >= 300) {
+        shirtColor = 'green';
+        shirtLevel = 'Advanced';
+      } else if (alltimeGames >= 150) {
+        shirtColor = 'orange';
+        shirtLevel = 'Experienced';
+      } else if (alltimeGames >= 90) {
+        shirtColor = 'yellow';
+        shirtLevel = 'Intermediate';
+      } else if (alltimeGames >= 30) {
+        shirtColor = 'white';
+        shirtLevel = 'Beginner';
+      }
+      
+      rankings.push({
+        user,
+        isInactive,
+        alltimeGames,
+        shirtColor,
+        shirtLevel
+      });
+    }
+    
+    // Sort by all time games (descending), then by ELO if games are equal
+    rankings.sort((a, b) => {
+      if (b.alltimeGames !== a.alltimeGames) {
+        return b.alltimeGames - a.alltimeGames;
+      }
+      return b.user.eloRating - a.user.eloRating;
+    });
+    
+    // Get recent games for display
+    const recentGames = await Game.find()
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .populate('team1.player team2.player', 'username');
+    
+    // Render the dashboardTV view
+    res.render('dashboardTV', {
+      title: 'padELO TV Dashboard',
+      rankings,
+      recentGames,
+      user: null // Always null for public access
+    });
+  } catch (error) {
+    console.error('Dashboard TV error:', error);
+    res.status(500).render('error', { 
+      title: 'Server Error',
+      message: 'An error occurred while loading the TV dashboard'
+    });
+  }
+});
+
 module.exports = router;
