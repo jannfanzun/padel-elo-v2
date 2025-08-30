@@ -107,70 +107,71 @@
       font-size: 1.1rem;
     }
     
-    .game-item {
-      padding: 1.2rem;
-      border-bottom: 1px solid #e9ecef;
-      transition: all 0.2s ease;
-      position: relative;
+    /* Game Items - 2 per row - Compact */
+    .games-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      padding: 1rem;
     }
     
-    .game-item:hover {
-      background-color: rgba(13, 110, 253, 0.03);
-      border-left: 3px solid #0d6efd;
-    }
-    
-    .game-item:last-child {
-      border-bottom: none;
-    }
-    
-    .game-teams {
-      background: #f8f9fa;
+    .game-card {
+      border: 1px solid #e9ecef;
       border-radius: 6px;
-      padding: 0.8rem;
-      border-left: 3px solid #0d6efd;
+      padding: 0.75rem;
+      transition: all 0.2s ease;
+      font-size: 0.85rem;
+    }
+    
+    .game-card:hover {
+      background-color: rgba(13, 110, 253, 0.03);
+      border-color: #0d6efd;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 0.5rem;
     }
     
-    .team-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.3rem;
-    }
-    
-    .team-row:last-child {
-      margin-bottom: 0;
+    .game-teams {
+      flex-grow: 1;
     }
     
     .team-names {
       font-weight: 600;
       color: #212529;
-      font-size: 0.95rem;
+      font-size: 0.8rem;
+      line-height: 1.2;
     }
     
     .vs-divider {
-      text-align: center;
       color: #6c757d;
-      font-weight: 500;
-      margin: 0.2rem 0;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
+      margin: 0.1rem 0;
     }
     
     .game-score {
       background: white;
-      border: 2px solid #0d6efd;
+      border: 1px solid #0d6efd;
       color: #0d6efd;
       font-weight: 700;
-      font-size: 1.2rem;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
+      font-size: 0.9rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
       text-align: center;
-      min-width: 80px;
+      min-width: 50px;
     }
     
     .game-date {
       color: #6c757d;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       font-weight: 500;
+      text-align: center;
+      margin-top: 0.3rem;
     }
     
     .padelo-info {
@@ -345,6 +346,21 @@
                 </tbody>
               </table>
             </div>
+            
+            <!-- T-Shirt Levels Erklärung - Kompakt wie index.ejs -->
+            <div class="card-footer bg-white">
+              <small class="text-muted">
+                <strong>Shirt Levels:</strong>
+                <span class="badge ms-1" style="background-color: #f8f9fa; color: #212529; border: 1px solid #dee2e6">Rookie (0-29)</span>
+                <span class="badge bg-light text-dark ms-1">Beginner (30-89)</span>
+                <span class="badge ms-1" style="background-color: #ffc107; color: #212529">Intermediate (90-149)</span>
+                <span class="badge ms-1" style="background-color: #fd7e14; color: white">Experienced (150-299)</span>
+                <span class="badge ms-1" style="background-color: #198754; color: white">Advanced (300-499)</span>
+                <span class="badge ms-1" style="background-color: #0d6efd; color: white">Expert (500-749)</span>
+                <span class="badge ms-1" style="background-color: #6f42c1; color: white">Master (750-999)</span>
+                <span class="badge bg-dark ms-1">Legend (1000+)</span>
+              </small>
+            </div>
           </div>
         </div>
       </div>
@@ -360,35 +376,22 @@
           </div>
           <div class="card-body p-0">
             <% if (recentGames && recentGames.length > 0) { %>
-              <% recentGames.slice(0, 6).forEach(game => { %>
-                <div class="game-item">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1 me-3">
+              <div class="games-grid">
+                <% recentGames.slice(0, 6).forEach(game => { %>
+                  <div class="game-card">
+                    <div class="game-header">
                       <div class="game-teams">
-                        <div class="team-row">
-                          <span class="team-names"><%= game.team1[0].player.username %> & <%= game.team1[1].player.username %></span>
-                        </div>
+                        <div class="team-names"><%= game.team1[0].player.username %> & <%= game.team1[1].player.username %></div>
                         <div class="vs-divider">VS</div>
-                        <div class="team-row">
-                          <span class="team-names"><%= game.team2[0].player.username %> & <%= game.team2[1].player.username %></span>
-                        </div>
+                        <div class="team-names"><%= game.team2[0].player.username %> & <%= game.team2[1].player.username %></div>
                       </div>
-                      <div class="game-date">
-                        <i class="fas fa-calendar-alt me-1"></i>
-                        <%= new Date(game.createdAt).toLocaleDateString('de-DE', { 
-                          day: 'numeric', 
-                          month: 'short' 
-                        }) %>
+                      <div class="game-score">
+                        <%= game.score.team1 %>:<%= game.score.team2 %>
                       </div>
-                    </div>
-                    <div class="game-score">
-                      <div class="<%= game.winner === 'team1' ? 'text-success' : 'text-muted' %>"><%= game.score.team1 %></div>
-                      <div style="font-size: 0.8rem; color: #6c757d;">:</div>
-                      <div class="<%= game.winner === 'team2' ? 'text-success' : 'text-muted' %>"><%= game.score.team2 %></div>
                     </div>
                   </div>
-                </div>
-              <% }) %>
+                <% }) %>
+              </div>
             <% } else { %>
               <div class="p-3 text-center">
                 <p class="text-muted mb-0">Noch keine Spiele verfügbar</p>

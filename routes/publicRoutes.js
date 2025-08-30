@@ -298,12 +298,7 @@ router.get('/dashboardTV', async (req, res) => {
     }
     
     // Sort by all time games (descending), then by ELO if games are equal
-    rankings.sort((a, b) => {
-      if (b.alltimeGames !== a.alltimeGames) {
-        return b.alltimeGames - a.alltimeGames;
-      }
-      return b.user.eloRating - a.user.eloRating;
-    });
+    rankings.sort((a, b) => b.user.eloRating - a.user.eloRating);
     
     // Get recent games for display
     const recentGames = await Game.find()
