@@ -93,7 +93,7 @@ const mailOptions = {
           </div>
           <p><strong>2. Platz buchen:</strong></p>
           <div style="text-align: center; margin: 15px 0;">
-            <a href="https://www.eversports.ch/org/activity/bb89b350-52c1-4372-a95b-9457fa0063ca" 
+            <a href="https://www.eversports.ch/org/widget/d89ac8c4-286b-4f50-a259-b5f3980bb6c7?venueId=726b961f-73a5-4437-8e51-c579d087c0d9" 
                target="_blank" 
                style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
               Platz buchen bei Eversports
