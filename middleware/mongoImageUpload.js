@@ -1,7 +1,5 @@
 const multer = require('multer');
 const sharp = require('sharp');
-const path = require('path');
-const fs = require('fs').promises;
 
 // Multer configuration for memory storage
 const storage = multer.memoryStorage();
@@ -22,30 +20,22 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit (will be compressed anyway)
+    fileSize: 5 * 1024 * 1024, // 5MB limit
     files: 1
   }
 }).single('profileImage');
 
-// Profile image processing middleware
-const processProfileImage = async (req, res, next) => {
+// Profile image processing middleware - speichert direkt in MongoDB als Base64
+const processProfileImageMongo = async (req, res, next) => {
   if (!req.file) {
     return next();
   }
 
   try {
-    const userId = req.user._id.toString();
-    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads', 'profiles');
+    console.log('🖼️ Processing image for MongoDB storage...');
     
-    // Ensure uploads directory exists
-    await fs.mkdir(uploadsDir, { recursive: true });
-
-    // Generate filename
-    const filename = `profile-${userId}-${Date.now()}.webp`;
-    const filepath = path.join(uploadsDir, filename);
-
     // Process and compress image with Sharp
-    await sharp(req.file.buffer)
+    const processedBuffer = await sharp(req.file.buffer)
       .resize(400, 400, {
         fit: 'cover',
         position: 'center'
@@ -54,25 +44,17 @@ const processProfileImage = async (req, res, next) => {
         quality: 80,
         effort: 6
       })
-      .toFile(filepath);
+      .toBuffer();
 
-    // Delete old profile image if exists
-    if (req.user.profileImage) {
-      const oldImagePath = path.join(__dirname, '..', 'public', req.user.profileImage);
-      try {
-        await fs.unlink(oldImagePath);
-      } catch (err) {
-        // Ignore error if file doesn't exist
-        console.log('Old profile image not found or already deleted');
-      }
-    }
-
-    // Add processed file info to request
+    // Convert to Base64 data URL für direktes speichern in MongoDB
+    const base64Image = `data:image/webp;base64,${processedBuffer.toString('base64')}`;
+    
+    // Add processed image data to request
     req.processedImage = {
-      filename: filename,
-      path: `/uploads/profiles/${filename}`
+      path: base64Image  // Das ist jetzt der komplette Base64 String!
     };
 
+    console.log(`✅ Image processed for MongoDB: ${Math.round(processedBuffer.length / 1024)}KB`);
     next();
   } catch (error) {
     console.error('Image processing error:', error);
@@ -104,6 +86,6 @@ const handleUploadError = (error, req, res, next) => {
 
 module.exports = {
   upload,
-  processProfileImage,
+  processProfileImageMongo,
   handleUploadError
 };
