@@ -1,475 +1,599 @@
 <!DOCTYPE html>
 <html lang="de">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>padELO TV Dashboard | WM Padel GmbH</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lobster&display=swap" rel="stylesheet" />
-        <link href="/css/style.css" rel="stylesheet" />
-        <link rel="icon" type="image/x-icon" href="/img/favicon.png" />
-        <style>
-            body {
-                transform: rotate(-90deg);
-                transform-origin: center center;
-                width: 100vh;
-                height: 100vw;
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                margin-top: -50vw;
-                margin-left: -50vh;
-                overflow-x: auto;
-                overflow-y: hidden;
-            }
-            .font-family-lobster {
-                font-family: "Lobster", cursive;
-            }
-            .tv-header {
-                background: linear-gradient(to bottom, #0d6efd, transparent) !important;
-                padding: 0.5rem 0;
-                margin-bottom: 0.5rem;
-            }
-            .tv-brand {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 1rem;
-            }
-            .tv-logo {
-                height: 50px;
-                filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
-            }
-            .tv-title {
-                font-size: 3rem;
-                color: white;
-                margin: 0;
-                line-height: 1;
-            }
-            .tv-subtitle {
-                font-size: 1.1rem;
-                font-weight: 500;
-                color: rgba(255, 255, 255, 0.9);
-                margin: 0;
-                margin-top: 0.2rem;
-            }
-            .card-header {
-                background: #0d6efd !important;
-                color: white;
-                border: none;
-                padding: 0.5rem 0.5rem;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            }
-            .section-header {
-                font-size: 1.5rem;
-                font-weight: 600;
-                margin: 0;
-            }
-            .ranking-table th {
-                font-weight: 600;
-                color: #495057;
-                border: none;
-                padding: 0.5rem;
-                border-bottom: 2px solid #e9ecef;
-            }
-            .table > :not(caption) > * > * {
-                padding: 0.2rem 0.5rem;
-            }
-            .ranking-table tbody tr {
-                transition: all 0.2s ease;
-                border-bottom: 1px solid #e9ecef;
-            }
-            .rank-number {
-                font-weight: 700;
-                color: #0d6efd;
-                font-size: 1.1rem;
-            }
-            /* Game Items - 2 per row - Compact */
-            .games-grid {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 0.2rem;
-                padding: 0.5rem;
-            }
-            .game-card {
-                border: 1px solid #e9ecef;
-                border-radius: 6px;
-                padding: 0.2rem 0.5rem;
-                transition: all 0.2s ease;
-                font-size: 0.85rem;
-            }
-            .game-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .game-teams {
-                flex-grow: 1;
-            }
-            .team-names {
-                font-weight: 600;
-                color: #212529;
-                font-size: 0.8rem;
-                line-height: 1.2;
-            }
-            .vs-divider {
-                color: #6c757d;
-                font-size: 0.7rem;
-                margin: 0.1rem 0;
-            }
-            .game-score {
-                background: white;
-                border: 1px solid #0d6efd;
-                color: #0d6efd;
-                font-weight: 700;
-                font-size: 0.9rem;
-                padding: 0.2rem 0.5rem;
-                border-radius: 4px;
-                text-align: center;
-            }
-            .game-date {
-                color: #6c757d;
-                font-size: 0.75rem;
-                font-weight: 500;
-                text-align: center;
-                margin-top: 0.3rem;
-            }
-            .padelo-info {
-                font-size: 0.95rem;
-                line-height: 1.5;
-            }
-            .qr-placeholder {
-                width: 5.5rem;
-                height: 5.5rem;
-                background: white;
-                border: 2px solid #0d6efd;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 8px;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            }
-            .qr-code {
-              max-width: 100%;
-              max-height: 100%;
-              border-radius: 8px;
-              object-fit: contain;
-            }
-
-            .feature-list {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-            .feature-item {
-                display: flex;
-                align-items: center;
-                padding: 0.2rem 0;
-                border-bottom: 1px solid #e9ecef;
-                transition: all 0.2s ease;
-                white-space: nowrap;
-            }
-            .feature-item:last-child {
-                border-bottom: none;
-            }
-            .feature-icon {
-                width: 20px;
-                text-align: center;
-                color: #0d6efd;
-                margin-right: 0.8rem;
-            }
-            .website-link {
-                background: #0d6efd;
-                color: white;
-                padding: 0.2rem 0.5rem;
-                border-radius: 6px;
-                text-decoration: none;
-                font-weight: 600;
-                display: inline-block;
-                margin-top: 1rem;
-                transition: all 0.3s ease;
-                border: 2px solid #0d6efd;
-            }
-            .divider-line {
-                height: 1px;
-                background: #e9ecef;
-                margin: 0.5rem 0;
-            }
-            .card-body {
-                padding: 0.5rem !important;
-            }
-            @keyframes slideInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            .animate-slide-in {
-                animation: slideInUp 0.5s ease-out forwards;
-            }
-            .animate-delay-1 {
-                animation-delay: 0.1s;
-                opacity: 0;
-            }
-            .animate-delay-2 {
-                animation-delay: 0.2s;
-                opacity: 0;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="tv-header">
-            <div class="container-fluid">
-                <div class="tv-brand d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-2">
-                        <img src="/img/psc-logo-white.png" alt="Padel Sports Club Logo" class="tv-logo" style="height: 50px;" />
-                    </div>
-                    <div>
-                        <h1 class="tv-title mb-0"><span class="font-family-lobster">pad</span>ELO</h1>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <p class="tv-subtitle mb-0">psc.padelo.ch</p>
-                    </div>
-                </div>
-            </div>
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>padELO TV Dashboard | WM Padel GmbH</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+      <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lobster&display=swap" rel="stylesheet" />
+      <link href="/css/style.css" rel="stylesheet" />
+      <link rel="icon" type="image/x-icon" href="/img/favicon.png" />
+      <style>
+         body {
+         transform: rotate(-90deg);
+         transform-origin: center center;
+         width: 100vh;
+         height: 100vw;
+         position: fixed;
+         top: 50%;
+         left: 50%;
+         margin-top: -50vw;
+         margin-left: -50vh;
+         overflow-x: auto;
+         overflow-y: hidden;
+         }
+         .font-family-lobster {
+         font-family: "Lobster", cursive;
+         }
+         .tv-header {
+         background: linear-gradient(to bottom, #0d6efd, transparent) !important;
+         padding: 0.5rem 0;
+         margin-bottom: 0.5rem;
+         }
+         .tv-brand {
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         gap: 1rem;
+         }
+         .tv-logo {
+         height: 50px;
+         filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+         }
+         .tv-title {
+         font-size: 3rem;
+         color: white;
+         margin: 0;
+         line-height: 1;
+         }
+         .tv-subtitle {
+         font-size: 1.1rem;
+         font-weight: 500;
+         color: rgba(255, 255, 255, 0.9);
+         margin: 0;
+         margin-top: 0.2rem;
+         }
+         .card-header {
+         background: #0d6efd !important;
+         color: white;
+         border: none;
+         padding: 0.5rem 0.5rem;
+         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+         }
+         .section-header {
+         font-size: 1.5rem;
+         font-weight: 600;
+         margin: 0;
+         }
+         .ranking-table th {
+         font-weight: 600;
+         color: #495057;
+         border: none;
+         padding: 0.5rem;
+         border-bottom: 2px solid #e9ecef;
+         }
+         .table > :not(caption) > * > * {
+         padding: 0.2rem 0.5rem;
+         }
+         .ranking-table tbody tr {
+         transition: all 0.2s ease;
+         border-bottom: 1px solid #e9ecef;
+         }
+         .rank-number {
+         font-weight: 700;
+         color: #0d6efd;
+         font-size: 1.1rem;
+         }
+         /* Game Items - 2 per row - Compact */
+         .games-grid {
+         display: grid;
+         grid-template-columns: 1fr;
+         gap: 0.2rem;
+         padding: 0.5rem;
+         }
+         .game-card {
+         border: 1px solid #e9ecef;
+         border-radius: 6px;
+         padding: 0.2rem 0.5rem;
+         transition: all 0.2s ease;
+         font-size: 0.85rem;
+         }
+         .game-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         }
+         .game-teams {
+         flex-grow: 1;
+         }
+         .team-names {
+         font-weight: 600;
+         color: #212529;
+         font-size: 0.8rem;
+         line-height: 1.2;
+         }
+         .vs-divider {
+         color: #6c757d;
+         font-size: 0.7rem;
+         margin: 0.1rem 0;
+         }
+         .game-score {
+         background: white;
+         border: 1px solid #0d6efd;
+         color: #0d6efd;
+         font-weight: 700;
+         font-size: 0.9rem;
+         padding: 0.2rem 0.5rem;
+         border-radius: 4px;
+         text-align: center;
+         }
+         .game-date {
+         color: #6c757d;
+         font-size: 0.75rem;
+         font-weight: 500;
+         text-align: center;
+         margin-top: 0.3rem;
+         }
+         .padelo-info {
+         font-size: 0.95rem;
+         line-height: 1.5;
+         }
+         .qr-placeholder {
+         width: 5.5rem;
+         height: 5.5rem;
+         background: white;
+         border: 2px solid #0d6efd;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         border-radius: 8px;
+         transition: all 0.3s ease;
+         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+         }
+         .qr-code {
+         max-width: 100%;
+         max-height: 100%;
+         border-radius: 8px;
+         object-fit: contain;
+         }
+         .feature-list {
+         list-style: none;
+         padding: 0;
+         margin: 0;
+         }
+         .feature-item {
+         display: flex;
+         align-items: center;
+         padding: 0.2rem 0;
+         border-bottom: 1px solid #e9ecef;
+         transition: all 0.2s ease;
+         white-space: nowrap;
+         }
+         .feature-item:last-child {
+         border-bottom: none;
+         }
+         .feature-icon {
+         width: 20px;
+         text-align: center;
+         color: #0d6efd;
+         margin-right: 0.8rem;
+         }
+         .website-link {
+         background: #0d6efd;
+         color: white;
+         padding: 0.2rem 0.5rem;
+         border-radius: 6px;
+         text-decoration: none;
+         font-weight: 600;
+         display: inline-block;
+         margin-top: 1rem;
+         transition: all 0.3s ease;
+         border: 2px solid #0d6efd;
+         }
+         .divider-line {
+         height: 1px;
+         background: #e9ecef;
+         margin: 0.5rem 0;
+         }
+         .card-body {
+         padding: 0.5rem !important;
+         }
+         @keyframes slideInUp {
+         from {
+         opacity: 0;
+         transform: translateY(20px);
+         }
+         to {
+         opacity: 1;
+         transform: translateY(0);
+         }
+         }
+         .animate-slide-in {
+         animation: slideInUp 0.5s ease-out forwards;
+         }
+         .animate-delay-1 {
+         animation-delay: 0.1s;
+         opacity: 0;
+         }
+         .animate-delay-2 {
+         animation-delay: 0.2s;
+         opacity: 0;
+         }
+      </style>
+   </head>
+   <body>
+<div class="tv-header">
+  <div class="container-fluid">
+    <div class="tv-brand d-flex justify-content-between align-items-center">
+      
+      <!-- Logo -->
+      <div class="d-flex align-items-center gap-2">
+        <img src="/img/psc-logo-white.png" alt="Padel Sports Club Logo" class="tv-logo" style="height: 50px;" />
+      </div>
+      
+      <!-- Titel -->
+      <div>
+        <h1 class="tv-title mb-0">
+          <span class="font-family-lobster">pad</span>ELO
+        </h1>
+      </div>
+      
+      <!-- Countdown -->
+      <div class="text-end">
+        <div class="fw-bold text-warning" style="font-size: 1.4rem;">
+          <i class="fas fa-hourglass-half me-1"></i> 
+          Nächster Award in
         </div>
-        <div class="container-fluid px-4">
-            <div class="row">
-                <div class="col-lg-8 col-md-8">
-                    <div class="card section-card animate-slide-in">
-                        <div class="card-header">
-                            <h2 class="section-header"><i class="fas fa-trophy me-2"></i>TOP 10 All Time padELO Rangliste</h2>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0 ranking-table">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">#</th>
-                                            <th scope="col">Spieler</th>
-                                            <th scope="col" class="text-start">Spiele</th>
-                                            <th scope="col" class="text-start">Shirt</th>
-                                            <th scope="col" class="text-start">ELO</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% if (rankings && rankings.length > 0) { %> <% rankings.slice(0, 10).forEach((ranking, index) => { %>
-                                        <tr>
-                                            <td><span class="rank-number"><%= index + 1 %></span></td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="me-2">
-                                                        <% if (ranking.user.profileImage) { %>
-                                                        <img src="<%= ranking.user.profileImage %>" alt="<%= ranking.user.username %>" class="rounded-circle" style="width: 2rem; height: 2rem; object-fit: cover;" />
-                                                        <% } else { %>
-                                                        <i class="fas fa-user-circle text-primary" style="font-size: 2rem;"></i>
-                                                        <% } %>
-                                                    </div>
-                                                    <strong><%= ranking.user.username %></strong>
-                                                </div>
-                                            </td>
-                                            <td class="text-start"><strong><%= ranking.alltimeGames %></strong></td>
-                                            <td class="text-start">
-                                                <span
-                                                    class="badge"
-                                                    style="background-color: <%= 
-              ranking.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
-              ranking.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
-              ranking.shirtColor === 'orange' ? '#fd7e14; color: white' :
-              ranking.shirtColor === 'green' ? '#198754; color: white' :
-              ranking.shirtColor === 'blue' ? '#0d6efd; color: white' :
-              ranking.shirtColor === 'purple' ? '#6f42c1; color: white' :
-              '#212529; color: white'
-            %>"
-                                                >
-                                                    <%= ranking.shirtLevel %>
-                                                </span>
-                                            </td>
-                                            <td class="text-start"><strong class="text-success"><%= ranking.user.eloRating %></strong></td>
-                                        </tr>
-                                        <% }) %> <% } else { %>
-                                        <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">Noch keine Spieler verfügbar</td>
-                                        </tr>
-                                        <% } %>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="card-footer bg-white">
-                                <small class="text-muted">
-                                    <strong>Shirt Levels:</strong>
-                                    <span class="badge ms-1" style="background-color: #f8f9fa; color: #212529; border: 1px solid #dee2e6;">Rookie (0-29)</span>
-                                    <span class="badge bg-light text-dark ms-1">Beginner (30-89)</span>
-                                    <span class="badge ms-1" style="background-color: #ffc107; color: #212529;">Intermediate (90-149)</span>
-                                    <span class="badge ms-1" style="background-color: #fd7e14; color: white;">Experienced (150-299)</span>
-                                    <span class="badge ms-1" style="background-color: #198754; color: white;">Advanced (300-499)</span>
-                                    <span class="badge ms-1" style="background-color: #0d6efd; color: white;">Expert (500-749)</span>
-                                    <span class="badge ms-1" style="background-color: #6f42c1; color: white;">Master (750-999)</span>
-                                    <span class="badge bg-dark ms-1">Legend (1000+)</span>
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-4">
-                    <div class="card section-card animate-slide-in animate-delay-1">
-                        <div class="card-header">
-                            <h3 class="section-header"><i class="fas fa-clock me-2"></i>Letzte Spiele</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <% if (recentGames && recentGames.length > 0) { %>
-                            <div class="games-grid">
-                                <% recentGames.slice(0, 6).forEach(game => { %>
-                                <div class="game-card">
-                                    <div class="game-header">
-                                        <div class="game-teams">
-                                            <div class="team-names"><%= game.team1[0].player.username %> & <%= game.team1[1].player.username %></div>
-                                            <div class="vs-divider">VS</div>
-                                            <div class="team-names"><%= game.team2[0].player.username %> & <%= game.team2[1].player.username %></div>
-                                        </div>
-                                        <div class="game-score">
-                                            <%= game.score.team1 %>:<%= game.score.team2 %>
-                                        </div>
-                                    </div>
-                                </div>
-                                <% }) %>
-                            </div>
-                            <% } else { %>
-                            <div class="p-3 text-center">
-                                <p class="text-muted mb-0">Noch keine Spiele verfügbar</p>
-                            </div>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-6 mt-4">
-                    <div class="card section-card animate-slide-in animate-delay-2">
-                        <div class="card-header">
-                            <h3 class="section-header"><i class="fas fa-info-circle me-2"></i>Was ist padELO?</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="padelo-info">
-                                <p class="mb-2"><strong>padELO</strong> ist unser intelligentes Ranking-System für Padel-Spieler basierend auf dem ELO-Rating-System.</p>
-                                <div class="divider-line"></div>
-                                <div class="row align-items-center">
-                                    <div class="col-6">
-                                <ul class="feature-list">
-                                    <li class="feature-item">
-                                        <i class="fas fa-chart-line feature-icon"></i>
-                                        <span>Dynamisches Rating</span>
-                                    </li>
-                                    <li class="feature-item">
-                                        <i class="fas fa-tshirt feature-icon"></i>
-                                        <span>Shirt-Level-System</span>
-                                    </li>
-                                    <li class="feature-item">
-                                        <i class="fas fa-user-plus feature-icon"></i>
-                                        <span>Solo Startplatz</span>
-                                    </li>
-                                    <li class="feature-item">
-                                        <i class="fas fa-users feature-icon"></i>
-                                        <span>Jeder gegen jeden</span>
-                                    </li>
-                                </ul>
-                                        <a href="#" class="website-link">psc.padelo.ch</a>
-                                    </div>
-                                    <div class="col-6 text-center">
-                                        <div class="qr-placeholder mx-auto">
-                                            <img src="/img/qr-code-padelo.png" class="qr-code" alt="" />
-                                        </div>
-                                        <small class="text-muted mt-2 d-block">Jetzt registrieren!</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-6 mt-4">
-                    <div class="card section-card animate-slide-in animate-delay-1">
-                        <div class="card-header">
-                            <h3 class="section-header"><i class="fas fa-calendar-alt me-2"></i>Termine</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="padelo-info">
-                                <p class="mb-2">
-                                    Unsere fixen Spieltermine – sei dabei und sichere dir deinen Platz.
-                                </p>
-                                <div class="divider-line"></div>
-                                <div class="row align-items-center">
-                                    <div class="col-6">
-                                        <ul class="feature-list">
-                                            <li class="feature-item">
-                                                <i class="fas fa-clock feature-icon"></i>
-                                                <span>Dienstag: <strong>17:30 – 19:00</strong></span>
-                                            </li>
-                                            <li class="feature-item">
-                                                <i class="fas fa-clock feature-icon"></i>
-                                                <span>Freitag: <strong>18:00 – 19:30</strong></span>
-                                            </li>
-                                            <li class="feature-item">
-                                                <i class="fas fa-clock feature-icon"></i>
-                                                <span>Sonntag: <strong>16:00 – 17:30</strong></span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div class="col-6 text-center">
-                                        <div class="qr-placeholder mx-auto">
-                                            <img src="/img/qr-code-eversports.png" class="qr-code" alt="Buchen über Eversports" />
-                                        </div>
-                                        <small class="text-muted mt-2 d-block">Jetzt buchen!</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="divider-line"></div>
-                <div class="col-lg-12">
-                    <div class="card section-card animate-slide-in animate-delay-3" style="background: rgb(39, 39, 39); border: none; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);">
-                        <div class="pt-3 px-3">
-                            <div class="row align-items-center">
-                                <div class="col-lg-7 col-md-7 mb-4 mb-lg-0">
-                                    <img src="/img/logo-white-webtree.svg" alt="WebTree Logo" style="height: 2rem;" class="mb-2" />
-                                    <h3 class="text-white fw-bold mb-2" style="line-height: 1.2;">
-                                        Wir sind Deine Webagentur im Züri-Oberland
-                                    </h3>
-                                    <p class="text-white-50 mb-2" style="font-size: 1rem;">
-                                        Verkaufsstarke Websites, optimiert für Google mit Schweizer Hosting – in max.
-                                        <span class="text-success fw-bold">4 Wochen</span>
-                                    </p>
-                                    <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                        <div>
-                                            <span class="text-white fw-bold" style="font-size: 1rem;">www.webtree.ch</span>
-                                            <div class="text-success" style="font-size: 0.75rem;">⭐⭐⭐⭐⭐ 24+ zufriedene Kunden</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-5 col-md-5 text-center">
-                                    <div class="position-relative">
-                                        <div class="bg-white rounded d-inline-block">
-                                            <img src="/img/qr-code-webtree.png" alt="QR Code webtree.ch" style="width: 4rem; border-radius: 8px;" />
-                                        </div>
-                                        <div class="mt-2">
-                                            <div class="text-success fw-bold" style="font-size: 1rem;">Jetzt scannen!</div>
-                                            <div class="text-white-50" style="font-size: 0.85rem;">30 Minuten kostenlose Beratung</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="award-countdown" class="text-white" style="font-size: 1.6rem; font-weight: bold;">
+          --:--:--
         </div>
+      </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    </body>
+    </div>
+  </div>
+</div>
+
+      <div class="container-fluid px-4">
+         <div class="row">
+            <div class="col-lg-12 col-md-12 mb-4">
+               <div class="card section-card animate-slide-in animate-delay-3">
+                  <div class="card-header">
+                     <h3 class="section-header"><i class="fas fa-trophy me-2"></i>Awards</h3>
+                  </div>
+                  <div class="card-body">
+                     <div class="row">
+                        <!-- Beste Verbesserung -->
+                        <div class="col-12 col-md-6">
+                           <div class="d-flex align-items-center border-end border-light pe-3">
+                              <i class="fas fa-arrow-trend-up text-success me-2"></i>
+                              <div class="me-2">
+                                 <% if (topImprovement && topImprovement.user && topImprovement.user.profileImage) { %>
+                                 <img src="<%= topImprovement.user.profileImage %>" alt="<%= topImprovement.user.username %>" class="rounded-circle" style="width: 2rem; height: 2rem; object-fit: cover;" />
+                                 <% } else { %>
+                                 <i class="fas fa-user-circle text-primary" style="font-size: 2rem;"></i>
+                                 <% } %>
+                              </div>
+                              <div class="flex-grow-1">
+                                 <div class="small fw-bold">Beste Verbesserung</div>
+                                 <% if (topImprovement && topImprovement.user) { %>
+                                 <div class="small"><%= topImprovement.user.username %></div>
+                                 <% } else { %>
+                                 <div class="small">-</div>
+                                 <% } %>
+                              </div>
+                              <div class="fw-bold text-success">
+                                 <% if (topImprovement && topImprovement.user) { %>
+                                 +<%= topImprovement.quarterlyEloChange %>
+                                 <% } else { %>
+                                 -
+                                 <% } %>
+                              </div>
+                           </div>
+                        </div>
+                        <!-- Meiste Spiele -->
+                        <div class="col-12 col-md-6">
+                           <div class="d-flex align-items-center ps-3">
+                              <i class="fas fa-gamepad text-primary me-2"></i>
+                              <div class="me-2">
+                                 <% if (mostGames && mostGames.user && mostGames.user.profileImage) { %>
+                                 <img src="<%= mostGames.user.profileImage %>" alt="<%= mostGames.user.username %>" class="rounded-circle" style="width: 2rem; height: 2rem; object-fit: cover;" />
+                                 <% } else { %>
+                                 <i class="fas fa-user-circle text-primary" style="font-size: 2rem;"></i>
+                                 <% } %>
+                              </div>
+                              <div class="flex-grow-1">
+                                 <div class="small fw-bold">Meiste Spiele</div>
+                                 <% if (mostGames && mostGames.user) { %>
+                                 <div class="small"><%= mostGames.user.username %></div>
+                                 <% } else { %>
+                                 <div class="small">-</div>
+                                 <% } %>
+                              </div>
+                              <div class="fw-bold text-primary">
+                                 <% if (mostGames && mostGames.user) { %>
+                                 <%= mostGames.quarterlyGames %>
+                                 <% } else { %>
+                                 -
+                                 <% } %>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="col-lg-8 col-md-8">
+               <div class="card section-card animate-slide-in">
+                  <div class="card-header">
+                     <h2 class="section-header"><i class="fas fa-trophy me-2"></i>TOP 10 All Time padELO Rangliste</h2>
+                  </div>
+                  <div class="card-body p-0">
+                     <div class="table-responsive">
+                        <table class="table table-hover mb-0 ranking-table">
+                           <thead>
+                              <tr>
+                                 <th scope="col">#</th>
+                                 <th scope="col">Spieler</th>
+                                 <th scope="col" class="text-start">Spiele</th>
+                                 <th scope="col" class="text-start">Shirt</th>
+                                 <th scope="col" class="text-start">ELO</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <% if (rankings && rankings.length > 0) { %> <% rankings.slice(0, 10).forEach((ranking, index) => { %>
+                              <tr>
+                                 <td><span class="rank-number"><%= index + 1 %></span></td>
+                                 <td>
+                                    <div class="d-flex align-items-center">
+                                       <div class="me-2">
+                                          <% if (ranking.user.profileImage) { %>
+                                          <img src="<%= ranking.user.profileImage %>" alt="<%= ranking.user.username %>" class="rounded-circle" style="width: 2rem; height: 2rem; object-fit: cover;" />
+                                          <% } else { %>
+                                          <i class="fas fa-user-circle text-primary" style="font-size: 2rem;"></i>
+                                          <% } %>
+                                       </div>
+                                       <strong><%= ranking.user.username %></strong>
+                                    </div>
+                                 </td>
+                                 <td class="text-start"><strong><%= ranking.alltimeGames %></strong></td>
+                                 <td class="text-start">
+                                    <span
+                                       class="badge"
+                                       style="background-color: <%= 
+                                          ranking.shirtColor === 'white' ? '#f8f9fa; color: #212529; border: 1px solid #dee2e6' :
+                                          ranking.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
+                                          ranking.shirtColor === 'orange' ? '#fd7e14; color: white' :
+                                          ranking.shirtColor === 'green' ? '#198754; color: white' :
+                                          ranking.shirtColor === 'blue' ? '#0d6efd; color: white' :
+                                          ranking.shirtColor === 'purple' ? '#6f42c1; color: white' :
+                                          '#212529; color: white'
+                                          %>"
+                                       >
+                                    <%= ranking.shirtLevel %>
+                                    </span>
+                                 </td>
+                                 <td class="text-start"><strong class="text-success"><%= ranking.user.eloRating %></strong></td>
+                              </tr>
+                              <% }) %> <% } else { %>
+                              <tr>
+                                 <td colspan="5" class="text-center py-4 text-muted">Noch keine Spieler verfügbar</td>
+                              </tr>
+                              <% } %>
+                           </tbody>
+                        </table>
+                     </div>
+                     <div class="card-footer bg-white">
+                        <small class="text-muted">
+                        <strong>Shirt Levels:</strong>
+                        <span class="badge ms-1" style="background-color: #f8f9fa; color: #212529; border: 1px solid #dee2e6;">Rookie (0-29)</span>
+                        <span class="badge bg-light text-dark ms-1">Beginner (30-89)</span>
+                        <span class="badge ms-1" style="background-color: #ffc107; color: #212529;">Intermediate (90-149)</span>
+                        <span class="badge ms-1" style="background-color: #fd7e14; color: white;">Experienced (150-299)</span>
+                        <span class="badge ms-1" style="background-color: #198754; color: white;">Advanced (300-499)</span>
+                        <span class="badge ms-1" style="background-color: #0d6efd; color: white;">Expert (500-749)</span>
+                        <span class="badge ms-1" style="background-color: #6f42c1; color: white;">Master (750-999)</span>
+                        <span class="badge bg-dark ms-1">Legend (1000+)</span>
+                        </small>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="col-lg-4 col-md-4">
+               <div class="card section-card animate-slide-in animate-delay-1">
+                  <div class="card-header">
+                     <h3 class="section-header"><i class="fas fa-clock me-2"></i>Letzte Spiele</h3>
+                  </div>
+                  <div class="card-body p-0">
+                     <% if (recentGames && recentGames.length > 0) { %>
+                     <div class="games-grid">
+                        <% recentGames.slice(0, 6).forEach(game => { %>
+                        <div class="game-card">
+                           <div class="game-header">
+                              <div class="game-teams">
+                                 <div class="team-names"><%= game.team1[0].player.username %> & <%= game.team1[1].player.username %></div>
+                                 <div class="vs-divider">VS</div>
+                                 <div class="team-names"><%= game.team2[0].player.username %> & <%= game.team2[1].player.username %></div>
+                              </div>
+                              <div class="game-score">
+                                 <%= game.score.team1 %>:<%= game.score.team2 %>
+                              </div>
+                           </div>
+                        </div>
+                        <% }) %>
+                     </div>
+                     <% } else { %>
+                     <div class="p-3 text-center">
+                        <p class="text-muted mb-0">Noch keine Spiele verfügbar</p>
+                     </div>
+                     <% } %>
+                  </div>
+               </div>
+            </div>
+            <div class="col-lg-6 col-md-6 mt-4">
+               <div class="card section-card animate-slide-in animate-delay-2">
+                  <div class="card-header">
+                     <h3 class="section-header"><i class="fas fa-info-circle me-2"></i>Was ist padELO?</h3>
+                  </div>
+                  <div class="card-body">
+                     <div class="padelo-info">
+                        <p class="mb-2"><strong>padELO</strong> ist unser intelligentes Ranking-System für Padel-Spieler basierend auf dem ELO-Rating-System.</p>
+                        <div class="divider-line"></div>
+                        <div class="row align-items-center">
+                           <div class="col-6">
+                              <ul class="feature-list">
+                                 <li class="feature-item">
+                                    <i class="fas fa-chart-line feature-icon"></i>
+                                    <span>Dynamisches Rating</span>
+                                 </li>
+                                 <li class="feature-item">
+                                    <i class="fas fa-tshirt feature-icon"></i>
+                                    <span>Shirt-Level-System</span>
+                                 </li>
+                                 <li class="feature-item">
+                                    <i class="fas fa-user-plus feature-icon"></i>
+                                    <span>Solo Startplatz</span>
+                                 </li>
+                                 <li class="feature-item">
+                                    <i class="fas fa-users feature-icon"></i>
+                                    <span>Jeder gegen jeden</span>
+                                 </li>
+                              </ul>
+                              <a href="#" class="website-link">psc.padelo.ch</a>
+                           </div>
+                           <div class="col-6 text-center">
+                              <div class="qr-placeholder mx-auto">
+                                 <img src="/img/qr-code-padelo.png" class="qr-code" alt="" />
+                              </div>
+                              <small class="text-muted mt-2 d-block">Jetzt registrieren!</small>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="col-lg-6 col-md-6 mt-4">
+               <div class="card section-card animate-slide-in animate-delay-1">
+                  <div class="card-header">
+                     <h3 class="section-header"><i class="fas fa-calendar-alt me-2"></i>Termine</h3>
+                  </div>
+                  <div class="card-body">
+                     <div class="padelo-info">
+                        <p class="mb-2">
+                           Unsere fixen Spieltermine – sei dabei und sichere dir deinen Platz.
+                        </p>
+                        <div class="divider-line"></div>
+                        <div class="row align-items-center">
+                           <div class="col-6">
+                              <ul class="feature-list">
+                                 <li class="feature-item">
+                                    <i class="fas fa-clock feature-icon"></i>
+                                    <span>Dienstag: <strong>17:30 – 19:00</strong></span>
+                                 </li>
+                                 <li class="feature-item">
+                                    <i class="fas fa-clock feature-icon"></i>
+                                    <span>Freitag: <strong>18:00 – 19:30</strong></span>
+                                 </li>
+                                 <li class="feature-item">
+                                    <i class="fas fa-clock feature-icon"></i>
+                                    <span>Sonntag: <strong>16:00 – 17:30</strong></span>
+                                 </li>
+                              </ul>
+                           </div>
+                           <div class="col-6 text-center">
+                              <div class="qr-placeholder mx-auto">
+                                 <img src="/img/qr-code-eversports.png" class="qr-code" alt="Buchen über Eversports" />
+                              </div>
+                              <small class="text-muted mt-2 d-block">Jetzt buchen!</small>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="divider-line"></div>
+            <div class="col-lg-12">
+               <div class="card section-card animate-slide-in animate-delay-3" style="background: rgb(39, 39, 39); border: none; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);">
+                  <div class="pt-3 px-3">
+                     <div class="row align-items-center">
+                        <div class="col-lg-7 col-md-7 mb-4 mb-lg-0">
+                           <img src="/img/logo-white-webtree.svg" alt="WebTree Logo" style="height: 2rem;" class="mb-2" />
+                           <h3 class="text-white fw-bold mb-2" style="line-height: 1.2;">
+                              Wir sind Deine Webagentur im Züri-Oberland
+                           </h3>
+                           <p class="text-white-50 mb-2" style="font-size: 1rem;">
+                              Verkaufsstarke Websites, optimiert für Google mit Schweizer Hosting – in max.
+                              <span class="text-success fw-bold">4 Wochen</span>
+                           </p>
+                           <div class="d-flex align-items-center justify-content-between flex-wrap">
+                              <div>
+                                 <span class="text-white fw-bold" style="font-size: 1rem;">www.webtree.ch</span>
+                                 <div class="text-success" style="font-size: 0.75rem;">⭐⭐⭐⭐⭐ 24+ zufriedene Kunden</div>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="col-lg-5 col-md-5 text-center">
+                           <div class="position-relative">
+                              <div class="bg-white rounded d-inline-block">
+                                 <img src="/img/qr-code-webtree.png" alt="QR Code webtree.ch" style="width: 4rem; border-radius: 8px;" />
+                              </div>
+                              <div class="mt-2">
+                                 <div class="text-success fw-bold" style="font-size: 1rem;">Jetzt scannen!</div>
+                                 <div class="text-white-50" style="font-size: 0.85rem;">30 Minuten kostenlose Beratung</div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <script>
+         function getQuarterEnd() {
+             const now = new Date();
+             const year = now.getFullYear();
+             const month = now.getMonth() + 1;
+         
+             let quarterEnd;
+             if (month <= 3) {
+                 quarterEnd = new Date(year, 2, 31, 23, 59, 59); // 31. März
+             } else if (month <= 6) {
+                 quarterEnd = new Date(year, 5, 30, 23, 59, 59); // 30. Juni
+             } else if (month <= 9) {
+                 quarterEnd = new Date(year, 8, 30, 23, 59, 59); // 30. Sept
+             } else {
+                 quarterEnd = new Date(year, 11, 31, 23, 59, 59); // 31. Dez
+             }
+             return quarterEnd;
+         }
+         
+         function updateCountdown() {
+             const countdownEl = document.getElementById("award-countdown");
+             if (!countdownEl) return;
+         
+             const now = new Date();
+             const target = getQuarterEnd();
+             const diff = target - now;
+         
+             if (diff <= 0) {
+                 countdownEl.textContent = "0d 0h 0m 0s";
+                 return;
+             }
+         
+             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+             const minutes = Math.floor((diff / (1000 * 60)) % 60);
+             const seconds = Math.floor((diff / 1000) % 60);
+         
+             countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+         }
+         
+         setInterval(updateCountdown, 1000);
+         updateCountdown();
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+   </body>
 </html>

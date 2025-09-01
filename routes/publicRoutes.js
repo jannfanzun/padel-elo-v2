@@ -245,11 +245,77 @@ router.get('/dashboardTV', async (req, res) => {
     const currentQuarter = Math.floor(now.getMonth() / 3);
     const quarterStart = new Date(currentYear, currentQuarter * 3, 1);
     const quarterEnd = new Date(currentYear, currentQuarter * 3 + 3, 0, 23, 59, 59, 999);
+
+    // Ensure all users have quarterly ELO records
+    await ensureAllUsersHaveQuarterlyRecords(now);
     
+    // Get all quarterly ELO records for current quarter
+    const quarterlyELORecords = await QuarterlyELO.find({
+      year: currentYear,
+      quarter: currentQuarter
+    });
+    
+    // Create a map for quick access
+    const quarterlyELOMap = new Map();
+    quarterlyELORecords.forEach(record => {
+      quarterlyELOMap.set(record.user.toString(), record.startELO);
+    });
+    
+    // Get all games in this quarter
+    const quarterGames = await Game.find({
+      createdAt: { $gte: quarterStart }
+    }).populate('team1.player team2.player', 'username');
+    
+    // Calculate quarterly stats for each user
+    const userStats = {};
+    
+    // Initialize stats for all users
+    users.forEach(user => {
+      const userId = user._id.toString();
+      const startELO = quarterlyELOMap.has(userId) ? 
+        quarterlyELOMap.get(userId) : user.eloRating;
+      
+      userStats[userId] = {
+        quarterlyGames: 0,
+        quarterlyEloChange: user.eloRating - startELO,
+        initialQuarterElo: startELO,
+        currentElo: user.eloRating,
+        alltimeGames: 0
+      };
+    });
+    
+    // Count quarterly games for each player
+    quarterGames.forEach(game => {
+      // Process Team 1 players
+      game.team1.forEach(playerData => {
+        const playerId = playerData.player._id.toString();
+        if (userStats[playerId]) {
+          userStats[playerId].quarterlyGames++;
+        }
+      });
+      
+      // Process Team 2 players
+      game.team2.forEach(playerData => {
+        const playerId = playerData.player._id.toString();
+        if (userStats[playerId]) {
+          userStats[playerId].quarterlyGames++;
+        }
+      });
+    });
+
     // Calculate ranking with all time games focus (like the existing alltime-games ranking)
     let rankings = [];
     
     for (const user of users) {
+      const userId = user._id.toString();
+      const stats = userStats[userId] || { 
+        quarterlyGames: 0, 
+        quarterlyEloChange: 0,
+        initialQuarterElo: user.eloRating,
+        currentElo: user.eloRating,
+        alltimeGames: 0
+      };
+
       // Check if user is inactive (no activity in last 7 days)
       const isInactive = user.isInactive();
       
@@ -292,13 +358,43 @@ router.get('/dashboardTV', async (req, res) => {
         user,
         isInactive,
         alltimeGames,
+        quarterlyGames: stats.quarterlyGames,
+        quarterlyEloChange: stats.quarterlyEloChange,
+        initialQuarterElo: stats.initialQuarterElo,
         shirtColor,
         shirtLevel
       });
     }
     
-    // Sort by all time games (descending), then by ELO if games are equal
+    // Sort by ELO rating (descending)
     rankings.sort((a, b) => b.user.eloRating - a.user.eloRating);
+
+    // Find top improvement and most games for the award cards
+    let topImprovement = null;
+    let mostGames = null;
+
+    // Filter out inactive users and those with no games for awards
+    const activeRankings = rankings.filter(r => !r.isInactive);
+
+    if (activeRankings.length > 0) {
+      // Find best improvement (highest positive ELO change)
+      const improvementRankings = activeRankings
+        .filter(r => r.quarterlyEloChange > 0)
+        .sort((a, b) => b.quarterlyEloChange - a.quarterlyEloChange);
+      
+      if (improvementRankings.length > 0) {
+        topImprovement = improvementRankings[0];
+      }
+
+      // Find most games
+      const gamesRankings = activeRankings
+        .filter(r => r.quarterlyGames > 0)
+        .sort((a, b) => b.quarterlyGames - a.quarterlyGames);
+      
+      if (gamesRankings.length > 0) {
+        mostGames = gamesRankings[0];
+      }
+    }
     
     // Get recent games for display
     const recentGames = await Game.find()
@@ -311,6 +407,8 @@ router.get('/dashboardTV', async (req, res) => {
       title: 'padELO TV Dashboard',
       rankings,
       recentGames,
+      topImprovement,
+      mostGames,
       user: null // Always null for public access
     });
   } catch (error) {
