@@ -229,11 +229,6 @@ router.get('/about', (req, res) => {
   });
 });
 
-/**
- * @desc    Show Dashboard TV (for Fire TV display in landscape mode)
- * @route   GET /dashboardTV
- * @access  Public
- */
 router.get('/dashboardTV', async (req, res) => {
   try {
     // Get all users sorted by ELO rating (descending)
@@ -373,27 +368,22 @@ router.get('/dashboardTV', async (req, res) => {
     let topImprovement = null;
     let mostGames = null;
 
-    // Filter out inactive users and those with no games for awards
-    const activeRankings = rankings.filter(r => !r.isInactive);
+    // Find best improvement (highest positive ELO change) - Include ALL users (active and inactive)
+    const improvementRankings = rankings
+      .filter(r => r.quarterlyEloChange > 0)
+      .sort((a, b) => b.quarterlyEloChange - a.quarterlyEloChange);
 
-    if (activeRankings.length > 0) {
-      // Find best improvement (highest positive ELO change)
-      const improvementRankings = activeRankings
-        .filter(r => r.quarterlyEloChange > 0)
-        .sort((a, b) => b.quarterlyEloChange - a.quarterlyEloChange);
-      
-      if (improvementRankings.length > 0) {
-        topImprovement = improvementRankings[0];
-      }
+    if (improvementRankings.length > 0) {
+      topImprovement = improvementRankings[0];
+    }
 
-      // Find most games
-      const gamesRankings = activeRankings
-        .filter(r => r.quarterlyGames > 0)
-        .sort((a, b) => b.quarterlyGames - a.quarterlyGames);
-      
-      if (gamesRankings.length > 0) {
-        mostGames = gamesRankings[0];
-      }
+    // Find most games - Include ALL users (active and inactive)
+    const gamesRankings = rankings
+      .filter(r => r.quarterlyGames > 0)
+      .sort((a, b) => b.quarterlyGames - a.quarterlyGames);
+    
+    if (gamesRankings.length > 0) {
+      mostGames = gamesRankings[0];
     }
     
     // Get recent games for display
