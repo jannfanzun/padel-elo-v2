@@ -65,12 +65,10 @@ app.use(
   })
 );
 
-// Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Initialize cron jobs
-initCronJobs(app);
+// initCronJobs(app);
 
 app.use('/', require('./routes/publicRoutes'));
 app.use('/auth', require('./routes/authRoutes'));

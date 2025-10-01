@@ -5,11 +5,8 @@ const Game = require('../models/Game');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const { calculateEloForMatch } = require('./eloCalculator');
 
-/**
- * Initialize all cron jobs
- * @param {Object} app - Express app instance
- */
 const initCronJobs = (app) => {
+  /*
   // Check if this is a development environment
   const isDev = process.env.NODE_ENV !== 'production';
   
@@ -21,6 +18,9 @@ const initCronJobs = (app) => {
   } else {
     console.log('Cron jobs initialized in production mode');
   }
+  */
+  
+  console.log('Cron jobs sind deaktiviert');
 };
 
 /**
