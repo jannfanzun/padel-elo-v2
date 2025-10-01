@@ -38,8 +38,8 @@ const scheduleDailyJobs = () => {
       await updateQuarterlyELORecords();
       
       // Add ELO recalculation for the previous quarter
-      console.log('Performing automatic ELO recalculation for the previous quarter');
-      await recalculateQuarterlyELO(getPreviousQuarter(now));
+      // console.log('Performing automatic ELO recalculation for the previous quarter');
+      // await recalculateQuarterlyELO(getPreviousQuarter(now));
     }
     
     // Comment out the inactive users check
