@@ -654,3 +654,30 @@ function recalculateGameELO(playersInfo, score) {
   const { calculateEloForMatch } = require('../utils/eloCalculator');
   return calculateEloForMatch(playersInfo.team1, playersInfo.team2, score);
 }
+
+// @desc    Get email export page with all user emails
+// @route   GET /admin/email-export
+// @access  Private (Admin only)
+exports.getEmailExport = async (req, res) => {
+  try {
+    // Get all non-admin users
+    const users = await User.find({ isAdmin: false }).select('email').sort({ email: 1 });
+
+    // Extract emails and join with comma
+    const emailList = users.map(user => user.email).join(', ');
+    const emailCount = users.length;
+
+    res.render('admin/emailExport', {
+      title: 'E-Mail Export',
+      emailList,
+      emailCount,
+      pendingRequestsCount: await RegistrationRequest.countDocuments({ status: 'pending' })
+    });
+  } catch (error) {
+    console.error('Email export error:', error);
+    res.status(500).render('error', {
+      title: 'Server Error',
+      message: 'An error occurred while loading the email export'
+    });
+  }
+};

@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2>E-Mail Export</h2>
+      <a href="/admin/dashboard" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Zum Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="h5 mb-0">Alle E-Mail-Adressen</h3>
+          <span class="badge bg-primary"><%= emailCount %> E-Mail-Adressen</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          <i class="fas fa-info-circle me-2"></i>
+          Hier findest du alle E-Mail-Adressen der registrierten Spieler, getrennt durch Kommas. Klicke auf "Kopieren", um die Liste in die Zwischenablage zu kopieren.
+        </p>
+
+        <div class="mb-3">
+          <label for="emailList" class="form-label fw-bold">E-Mail-Adressen (kommasepariert):</label>
+          <textarea class="form-control font-monospace" id="emailList" rows="8" readonly><%= emailList %></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" id="copyButton">
+            <i class="fas fa-copy me-2"></i>Kopieren
+          </button>
+          <span class="text-success d-none" id="copySuccess">
+            <i class="fas fa-check-circle me-1"></i>Erfolgreich kopiert!
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const copyButton = document.getElementById('copyButton');
+    const emailList = document.getElementById('emailList');
+    const copySuccess = document.getElementById('copySuccess');
+
+    copyButton.addEventListener('click', function() {
+      // Select the text
+      emailList.select();
+      emailList.setSelectionRange(0, 99999); // For mobile devices
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(emailList.value).then(function() {
+        // Show success message
+        copySuccess.classList.remove('d-none');
+        copyButton.innerHTML = '<i class="fas fa-check me-2"></i>Kopiert!';
+        copyButton.classList.remove('btn-primary');
+        copyButton.classList.add('btn-success');
+
+        // Reset button after 2 seconds
+        setTimeout(function() {
+          copySuccess.classList.add('d-none');
+          copyButton.innerHTML = '<i class="fas fa-copy me-2"></i>Kopieren';
+          copyButton.classList.remove('btn-success');
+          copyButton.classList.add('btn-primary');
+        }, 2000);
+      }).catch(function(err) {
+        console.error('Failed to copy text: ', err);
+        alert('Kopieren fehlgeschlagen. Bitte manuell kopieren (Strg+C).');
+      });
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

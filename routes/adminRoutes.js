@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { adminLimiter } = require('../middleware/rateLimitMiddleware');
-const { 
+const {
   getDashboard,
   manageUsers,
   deleteUser,
@@ -14,7 +14,8 @@ const {
   getGameReports,
   deleteGameReport,
   resetSystem,
-  recalculateELO
+  recalculateELO,
+  getEmailExport
 } = require('../controllers/adminController');
 
 // Apply admin protection to all routes
@@ -39,6 +40,9 @@ router.post('/registration-requests/:id/reject', rejectRegistrationRequest);
 
 router.get('/game-reports', getGameReports);
 router.post('/game-reports/:id/delete', deleteGameReport);
+
+// Email export route
+router.get('/email-export', getEmailExport);
 
 router.post('/reset-system', adminLimiter, resetSystem);
 router.post('/recalculate-elo', adminLimiter, recalculateELO);
