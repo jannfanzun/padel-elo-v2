@@ -52,7 +52,7 @@ exports.getProfile = async (req, res) => {
     const isInactive = user.isInactive();
     
     // Bestimme Shirt-Farbe und Level basierend auf All Time Spielen
-    let shirtColor = 'gray';
+    let shirtColor = '#bebebe';
     let shirtLevel = 'Rookie';
 
     if (gamesPlayed >= 1000) {
@@ -248,7 +248,7 @@ exports.getRankings = async (req, res) => {
       const isInactive = user.isInactive();
       
       // Bestimme Shirt-Farbe und Level für All Time Spiele
-      let shirtColor = 'gray';
+      let shirtColor = '#bebebe';
       let shirtLevel = 'Rookie';
 
       if (rankingType === 'alltime-games') {

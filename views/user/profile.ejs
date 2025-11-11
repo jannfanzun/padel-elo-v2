@@ -70,8 +70,9 @@
         <div class="mb-3">
           <h4 class="h5 mb-2">Shirt Level</h4>
           <div class="mb-2">
-            <span class="badge fs-6" style="background-color: <%= 
-              stats.shirtColor === 'white' ? '#bebebe; color: #212529; border: 1px solid #dee2e6' :
+            <span class="badge fs-6" style="background-color: <%=
+              stats.shirtColor === '#bebebe' ? '#bebebe; color: #212529; border: 1px solid #dee2e6' :
+              stats.shirtColor === 'white' ? 'white; color: #212529; border: 1px solid #dee2e6' :
               stats.shirtColor === 'yellow' ? '#ffc107; color: #212529' :
               stats.shirtColor === 'orange' ? '#fd7e14; color: white' :
               stats.shirtColor === 'green' ? '#198754; color: white' :

@@ -125,7 +125,7 @@ router.get('/', async (req, res) => {
       const isInactive = user.lastActivity < sevenDaysAgo;
       
       // Bestimme Shirt-Farbe und Level für All Time Spiele
-      let shirtColor = 'gray';
+      let shirtColor = '#bebebe';
       let shirtLevel = 'Rookie';
 
       if (rankingType === 'alltime-games') {
@@ -323,7 +323,7 @@ router.get('/dashboardTV', async (req, res) => {
       });
       
       // Determine shirt color and level based on all time games
-      let shirtColor = 'gray';
+      let shirtColor = '#bebebe';
       let shirtLevel = 'Rookie';
 
       if (alltimeGames >= 1000) {
