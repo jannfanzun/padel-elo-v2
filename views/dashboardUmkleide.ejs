@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>padELO Umkleide Dashboard | WM Padel GmbH</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+      <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lobster&display=swap" rel="stylesheet" />
+      <link href="/css/style.css" rel="stylesheet" />
+      <link rel="icon" type="image/x-icon" href="/img/favicon.png" />
+      <style>
+         body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            overflow: hidden;
+            font-family: "Inter", sans-serif;
+         }
+
+         .font-family-lobster {
+            font-family: "Lobster", cursive;
+         }
+
+         .tv-header {
+            background: linear-gradient(to bottom, #0d6efd, transparent) !important;
+            padding: 0.5rem 0;
+            margin-bottom: 0.5rem;
+         }
+
+         .tv-logo {
+            height: 50px;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+         }
+
+         .tv-title {
+            font-size: 3rem;
+            color: white;
+            margin: 0;
+            line-height: 1;
+         }
+
+         /* Main content area */
+         .content-area {
+            height: calc(100vh - 200px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            padding: 2rem;
+         }
+
+         /* Image display */
+         .image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+         }
+
+         .display-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+         }
+
+         /* WebTree Footer Banner */
+         .webtree-banner {
+            background: rgb(39, 39, 39);
+            border: none;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            padding: 1.5rem 2rem;
+         }
+      </style>
+   </head>
+   <body>
+      <!-- Header -->
+      <div class="tv-header">
+         <div class="container-fluid">
+            <div class="row align-items-center text-center">
+               <!-- Logo -->
+               <div class="col-4 text-start">
+                  <img src="/img/psc-logo-white.png" alt="Padel Sports Club Logo" class="tv-logo" style="height: 80px;" />
+               </div>
+               <!-- Titel mittig -->
+               <div class="col-4">
+                  <h1 class="tv-title mb-0">
+                     <span class="font-family-lobster">Werbeanzeigen
+                  </h1>
+               </div>
+               <!-- Rechts leer -->
+               <div class="col-4 text-end">
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="content-area">
+         <div class="image-container">
+            <img src="/img/padelcamp-promotion.jpg" alt="Padel Sports Club" class="display-image" />
+         </div>
+      </div>
+
+      <!-- WebTree Banner (from dashboardTV) -->
+      <div class="container-fluid px-4">
+         <div class="row">
+            <div class="col-lg-12">
+               <div class="card section-card webtree-banner">
+                  <div class="pt-3 px-3">
+                     <div class="row align-items-center">
+                        <div class="col-lg-9 col-md-9 mb-4 mb-lg-0">
+                           <img src="/img/logo-white-webtree.svg" alt="WebTree Logo" style="height: 2rem;" class="mb-2" />
+                           <h3 class="text-white fw-bold mb-2" style="line-height: 1;">
+                              Wir sind Deine Webagentur im Züri-Oberland
+                           </h3>
+                           <p class="text-white-50 mb-2" style="font-size: 1rem;">
+                              Verkaufsstarke Websites, optimiert für Google mit Schweizer Hosting – in max.
+                              <span class="text-success fw-bold">4 Wochen</span>
+                           </p>
+                           <div class="d-flex align-items-center justify-content-between flex-wrap">
+                              <div>
+                                 <span class="text-white fw-bold" style="font-size: 1rem;">www.webtree.ch</span>
+                                 <div class="text-success" style="font-size: 0.75rem;">⭐⭐⭐⭐⭐ 24+ zufriedene Kunden</div>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="col-lg-3 col-md-3 text-center">
+                           <div class="position-relative">
+                              <div class="bg-white rounded d-inline-block">
+                                 <img src="/img/qr-code-webtree.png" alt="QR Code webtree.ch" style="width: 4rem; border-radius: 8px;" />
+                              </div>
+                              <div class="mt-2">
+                                 <div class="text-success fw-bold" style="font-size: 1rem;">Jetzt scannen!</div>
+                                 <div class="mt-1 text-warning fw-bold" style="font-size: 0.9rem;">
+                                    Mit Code <span class="text-white">"psc"</span> –10% auf dein nächstes Projekt
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+   </body>
+</html>

@@ -233,7 +233,7 @@ router.get('/dashboardTV', async (req, res) => {
   try {
     // Get all users sorted by ELO rating (descending)
     const users = await User.find({ isAdmin: false }).sort({ eloRating: -1 });
-    
+
     // Get current quarter information for stats calculation
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -243,33 +243,33 @@ router.get('/dashboardTV', async (req, res) => {
 
     // Ensure all users have quarterly ELO records
     await ensureAllUsersHaveQuarterlyRecords(now);
-    
+
     // Get all quarterly ELO records for current quarter
     const quarterlyELORecords = await QuarterlyELO.find({
       year: currentYear,
       quarter: currentQuarter
     });
-    
+
     // Create a map for quick access
     const quarterlyELOMap = new Map();
     quarterlyELORecords.forEach(record => {
       quarterlyELOMap.set(record.user.toString(), record.startELO);
     });
-    
+
     // Get all games in this quarter
     const quarterGames = await Game.find({
       createdAt: { $gte: quarterStart }
     }).populate('team1.player team2.player', 'username');
-    
+
     // Calculate quarterly stats for each user
     const userStats = {};
-    
+
     // Initialize stats for all users
     users.forEach(user => {
       const userId = user._id.toString();
-      const startELO = quarterlyELOMap.has(userId) ? 
+      const startELO = quarterlyELOMap.has(userId) ?
         quarterlyELOMap.get(userId) : user.eloRating;
-      
+
       userStats[userId] = {
         quarterlyGames: 0,
         quarterlyEloChange: user.eloRating - startELO,
@@ -278,7 +278,7 @@ router.get('/dashboardTV', async (req, res) => {
         alltimeGames: 0
       };
     });
-    
+
     // Count quarterly games for each player
     quarterGames.forEach(game => {
       // Process Team 1 players
@@ -288,7 +288,7 @@ router.get('/dashboardTV', async (req, res) => {
           userStats[playerId].quarterlyGames++;
         }
       });
-      
+
       // Process Team 2 players
       game.team2.forEach(playerData => {
         const playerId = playerData.player._id.toString();
@@ -300,11 +300,11 @@ router.get('/dashboardTV', async (req, res) => {
 
     // Calculate ranking with all time games focus (like the existing alltime-games ranking)
     let rankings = [];
-    
+
     for (const user of users) {
       const userId = user._id.toString();
-      const stats = userStats[userId] || { 
-        quarterlyGames: 0, 
+      const stats = userStats[userId] || {
+        quarterlyGames: 0,
         quarterlyEloChange: 0,
         initialQuarterElo: user.eloRating,
         currentElo: user.eloRating,
@@ -313,7 +313,7 @@ router.get('/dashboardTV', async (req, res) => {
 
       // Check if user is inactive (no activity in last 7 days)
       const isInactive = user.isInactive();
-      
+
       // Get all time games count
       const alltimeGames = await Game.countDocuments({
         $or: [
@@ -321,7 +321,7 @@ router.get('/dashboardTV', async (req, res) => {
           { 'team2.player': user._id }
         ]
       });
-      
+
       // Determine shirt color and level based on all time games
       let shirtColor = '#bebebe';
       let shirtLevel = 'Rookie';
@@ -348,7 +348,7 @@ router.get('/dashboardTV', async (req, res) => {
         shirtColor = 'white';
         shirtLevel = 'Beginner';
       }
-      
+
       rankings.push({
         user,
         isInactive,
@@ -360,7 +360,7 @@ router.get('/dashboardTV', async (req, res) => {
         shirtLevel
       });
     }
-    
+
     // Sort by ELO rating (descending)
     rankings.sort((a, b) => b.user.eloRating - a.user.eloRating);
 
@@ -381,17 +381,17 @@ router.get('/dashboardTV', async (req, res) => {
     const gamesRankings = rankings
       .filter(r => r.quarterlyGames > 0)
       .sort((a, b) => b.quarterlyGames - a.quarterlyGames);
-    
+
     if (gamesRankings.length > 0) {
       mostGames = gamesRankings[0];
     }
-    
+
     // Get recent games for display
     const recentGames = await Game.find()
       .sort({ createdAt: -1 })
       .limit(6)
       .populate('team1.player team2.player', 'username');
-    
+
     // Render the dashboardTV view
     res.render('dashboardTV', {
       title: 'padELO TV Dashboard',
@@ -403,9 +403,29 @@ router.get('/dashboardTV', async (req, res) => {
     });
   } catch (error) {
     console.error('Dashboard TV error:', error);
-    res.status(500).render('error', { 
+    res.status(500).render('error', {
       title: 'Server Error',
       message: 'An error occurred while loading the TV dashboard'
+    });
+  }
+});
+
+/**
+ * @desc    Dashboard for Umkleide display with image slideshow
+ * @route   GET /dashboardUmkleide
+ * @access  Public
+ */
+router.get('/dashboardUmkleide', async (req, res) => {
+  try {
+    res.render('dashboardUmkleide', {
+      title: 'padELO Umkleide Dashboard',
+      user: null // Always null for public access
+    });
+  } catch (error) {
+    console.error('Dashboard Umkleide error:', error);
+    res.status(500).render('error', {
+      title: 'Server Error',
+      message: 'An error occurred while loading the Umkleide dashboard'
     });
   }
 });
