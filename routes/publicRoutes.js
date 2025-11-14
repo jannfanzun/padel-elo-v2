@@ -5,6 +5,7 @@ const Game = require('../models/Game');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const { protect } = require('../middleware/authMiddleware');
 const { ensureAllUsersHaveQuarterlyRecords } = require('../utils/quarterlyEloUtils');
+const { getActiveScheduleAPI } = require('../controllers/adminController');
 
 // @desc    Home page with rankings
 // @route   GET /
@@ -429,5 +430,12 @@ router.get('/dashboardUmkleide', async (req, res) => {
     });
   }
 });
+
+/**
+ * @desc    API endpoint to get active padel schedule
+ * @route   GET /api/padel-schedule
+ * @access  Public
+ */
+router.get('/api/padel-schedule', getActiveScheduleAPI);
 
 module.exports = router;

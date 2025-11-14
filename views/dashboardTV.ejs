@@ -265,7 +265,8 @@
 </div>
 
 
-      <div class="container-fluid px-4">
+      <!-- Dashboard Content -->
+      <div id="dashboardContent" class="container-fluid px-4">
          <div class="row">
             <div class="col-lg-12 col-md-12 mb-4">
                <div class="card section-card animate-slide-in animate-delay-3">
@@ -563,12 +564,159 @@
             </div>
          </div>
       </div>
+
+      <!-- Schedule Content (wird per JavaScript gefüllt) -->
+      <div id="scheduleContent" style="display: none; width: 100%; height: 100%;">
+      </div>
+
       <script>
+         let currentView = 'dashboard'; // 'dashboard' oder 'schedule'
+         let rotationInterval = null;
+         let checkInterval = null;
+
+         // Fetch und zeige den aktiven Spielplan
+         async function checkAndDisplaySchedule() {
+            try {
+               const response = await fetch('/api/padel-schedule');
+               const data = await response.json();
+
+               if (data.isPublished && data.schedule) {
+                  // Prüfe ob Spielplan noch aktiv ist (3h nicht vorbei)
+                  const publishedTime = new Date(data.schedule.publishedAt);
+                  const now = new Date();
+                  const elapsed = now - publishedTime;
+                  const threeHours = 3 * 60 * 60 * 1000;
+
+                  if (elapsed < threeHours) {
+                     // Spielplan ist aktiv - starte Rotation
+                     renderSchedule(data.schedule);
+                     startRotation();
+                  } else {
+                     // 3h vorbei - nur Dashboard
+                     stopRotation();
+                     showDashboard();
+                  }
+               } else {
+                  // Kein aktiver Spielplan - zeige nur Dashboard
+                  stopRotation();
+                  showDashboard();
+               }
+            } catch (error) {
+               console.error('Error checking schedule:', error);
+               showDashboard();
+            }
+         }
+
+         function startRotation() {
+            if (rotationInterval) return; // Vermeide mehrfache Interval-Starts
+
+            // Zeige zuerst Dashboard
+            showDashboard();
+
+            // Wechsel alle 15 Sekunden
+            rotationInterval = setInterval(() => {
+               if (currentView === 'dashboard') {
+                  showSchedule();
+               } else {
+                  showDashboard();
+               }
+            }, 15000);
+         }
+
+         function stopRotation() {
+            if (rotationInterval) {
+               clearInterval(rotationInterval);
+               rotationInterval = null;
+            }
+         }
+
+         function showDashboard() {
+            currentView = 'dashboard';
+            document.getElementById('dashboardContent').style.display = 'block';
+            document.getElementById('scheduleContent').style.display = 'none';
+         }
+
+         function showSchedule() {
+            currentView = 'schedule';
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('scheduleContent').style.display = 'block';
+         }
+
+         function renderSchedule(schedule) {
+            const startTime = new Date(schedule.startTime);
+            const formattedTime = startTime.toLocaleString('de-DE', {
+               timeZone: 'Europe/Berlin',
+               day: '2-digit',
+               month: '2-digit',
+               year: 'numeric',
+               hour: '2-digit',
+               minute: '2-digit'
+            });
+
+            let scheduleHTML = `
+               <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 4rem;">
+                  <div style="text-align: center; background: white; padding: 4rem; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); max-width: 1000px;">
+                     <h1 style="font-size: 5rem; color: #0d6efd; margin-bottom: 1rem; font-family: 'Lobster', cursive;">
+                        padELO Spielplan
+                     </h1>
+
+                     <div style="background: #f8f9fa; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+                        <p style="font-size: 1.8rem; font-weight: 600; margin: 0; color: #212529;">
+                           📅 ${formattedTime} Uhr
+                        </p>
+                     </div>
+
+                     <h2 style="font-size: 2.5rem; color: #495057; margin-bottom: 2rem;">
+                        Spieler (${schedule.players.length})
+                     </h2>
+
+                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            `;
+
+            schedule.players.forEach(player => {
+               scheduleHTML += `
+                  <div style="background: #e7f3ff; padding: 1rem; border-radius: 8px; border-left: 4px solid #0d6efd;">
+                     <p style="font-size: 1.3rem; font-weight: 600; color: #0d6efd; margin: 0;">
+                        👤 ${player}
+                     </p>
+                  </div>
+               `;
+            });
+
+            scheduleHTML += `
+                     </div>
+
+                     <div style="color: #6c757d; font-size: 1rem;">
+                        <i class="fas fa-hourglass-half"></i> Veröffentlicht von ${schedule.publishedBy} um
+                        ${new Date(schedule.publishedAt).toLocaleString('de-DE', {
+                           timeZone: 'Europe/Berlin',
+                           hour: '2-digit',
+                           minute: '2-digit'
+                        })} Uhr
+                     </div>
+                  </div>
+               </div>
+            `;
+
+            document.getElementById('scheduleContent').innerHTML = scheduleHTML;
+         }
+
+         // Initialisiere beim Laden der Seite
+         document.addEventListener('DOMContentLoaded', () => {
+            checkAndDisplaySchedule();
+
+            // Prüfe alle 30 Sekunden, ob ein neuer Spielplan aktiv ist oder die 3h vorbei sind
+            checkInterval = setInterval(() => {
+               checkAndDisplaySchedule();
+            }, 30000);
+         });
+
+         // Quarter-End Countdown
          function getQuarterEnd() {
              const now = new Date();
              const year = now.getFullYear();
              const month = now.getMonth() + 1;
-         
+
              let quarterEnd;
              if (month <= 3) {
                  quarterEnd = new Date(year, 2, 31, 23, 59, 59); // 31. März
@@ -581,28 +729,28 @@
              }
              return quarterEnd;
          }
-         
+
          function updateCountdown() {
              const countdownEl = document.getElementById("award-countdown");
              if (!countdownEl) return;
-         
+
              const now = new Date();
              const target = getQuarterEnd();
              const diff = target - now;
-         
+
              if (diff <= 0) {
                  countdownEl.textContent = "0d 0h 0m 0s";
                  return;
              }
-         
+
              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
              const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
              const minutes = Math.floor((diff / (1000 * 60)) % 60);
              const seconds = Math.floor((diff / 1000) % 60);
-         
+
              countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
          }
-         
+
          setInterval(updateCountdown, 1000);
          updateCountdown();
       </script>

@@ -4,6 +4,7 @@ const Game = require('../models/Game');
 const RegistrationRequest = require('../models/RegistrationRequest');
 const GameReport = require('../models/GameReport');
 const QuarterlyELO = require('../models/QuarterlyELO');
+const PadelSchedule = require('../models/PadelSchedule');
 const moment = require('moment');
 const { sendRegistrationApprovedEmail } = require('../config/email');
 const { recalculateQuarterlyELO } = require('../utils/cronJobs');
@@ -679,5 +680,187 @@ exports.getEmailExport = async (req, res) => {
       title: 'Server Error',
       message: 'An error occurred while loading the email export'
     });
+  }
+};
+
+// ===========================
+// PADEL SCHEDULE FUNCTIONS (VEREINFACHT)
+// ===========================
+
+// @desc    Get padel schedule management page
+// @route   GET /admin/padel-schedule
+// @access  Private (Admin only)
+exports.getPadelSchedule = async (req, res) => {
+  try {
+    // Get all users für Spieler-Auswahl
+    const allUsers = await User.find({ isAdmin: false }).sort({ username: 1 });
+
+    // Get the latest schedule (entweder veröffentlicht oder nur erstellt)
+    const schedule = await PadelSchedule.findOne()
+      .sort({ createdAt: -1 })
+      .populate('players', 'username')
+      .populate('createdBy publishedBy', 'username');
+
+    // Prüfe ob veröffentlichter Schedule 3h alt ist
+    if (schedule && schedule.isPublished && schedule.publishedAt) {
+      const now = new Date();
+      const publishedTime = new Date(schedule.publishedAt);
+      const threeHoursLater = new Date(publishedTime.getTime() + 3 * 60 * 60 * 1000);
+
+      if (now > threeHoursLater) {
+        schedule.isPublished = false;
+        await schedule.save();
+      }
+    }
+
+    res.render('admin/scheduleManagement', {
+      title: 'Padel Spielplan',
+      schedule: schedule || null,
+      allUsers,
+      moment,
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (error) {
+    console.error('Get padel schedule error:', error);
+    res.status(500).render('error', {
+      title: 'Server Error',
+      message: 'Fehler beim Laden des Spielplans'
+    });
+  }
+};
+
+// @desc    Create or update padel schedule
+// @route   POST /admin/padel-schedule/save
+// @access  Private (Admin only)
+exports.savePadelSchedule = async (req, res) => {
+  try {
+    const { players, startTime } = req.body;
+
+    // Validate
+    if (!players || !Array.isArray(players) || players.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bitte wählen Sie mindestens einen Spieler'
+      });
+    }
+
+    if (!startTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bitte geben Sie eine Startzeit an'
+      });
+    }
+
+    // Konvertiere startTime zu Date-Objekt
+    const startDate = new Date(startTime);
+
+    // Get or create schedule
+    let schedule = await PadelSchedule.findOne();
+
+    if (!schedule) {
+      schedule = new PadelSchedule({
+        players,
+        startTime: startDate,
+        createdBy: req.user._id,
+        isPublished: false
+      });
+    } else {
+      schedule.players = players;
+      schedule.startTime = startDate;
+      schedule.updatedAt = new Date();
+    }
+
+    await schedule.save();
+
+    res.json({
+      success: true,
+      message: 'Spielplan erfolgreich erstellt'
+    });
+  } catch (error) {
+    console.error('Save padel schedule error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Speichern des Spielplans: ' + error.message
+    });
+  }
+};
+
+// @desc    Publish padel schedule (make it active and show on dashboardTV)
+// @route   POST /admin/padel-schedule/publish
+// @access  Private (Admin only)
+exports.publishPadelSchedule = async (req, res) => {
+  try {
+    const schedule = await PadelSchedule.findOne()
+      .sort({ createdAt: -1 });
+
+    if (!schedule || !schedule.players || schedule.players.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bitte erstellen Sie zuerst einen Spielplan'
+      });
+    }
+
+    // Deactivate any previously published schedules
+    await PadelSchedule.updateMany({}, { isPublished: false });
+
+    // Publish this schedule
+    schedule.isPublished = true;
+    schedule.publishedAt = new Date();
+    schedule.publishedBy = req.user._id;
+    await schedule.save();
+
+    res.json({
+      success: true,
+      message: 'Spielplan erfolgreich veröffentlicht'
+    });
+  } catch (error) {
+    console.error('Publish padel schedule error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Veröffentlichen des Spielplans: ' + error.message
+    });
+  }
+};
+
+// @desc    Get published schedule API (for dashboardTV)
+// @route   GET /api/padel-schedule
+// @access  Public
+exports.getActiveScheduleAPI = async (req, res) => {
+  try {
+    const schedule = await PadelSchedule.findOne({ isPublished: true })
+      .populate('players', 'username')
+      .populate('createdBy publishedBy', 'username');
+
+    if (!schedule) {
+      return res.json({ isPublished: false, schedule: null });
+    }
+
+    // Prüfe ob 3h vorbei sind
+    if (schedule.publishedAt) {
+      const now = new Date();
+      const publishedTime = new Date(schedule.publishedAt);
+      const threeHoursLater = new Date(publishedTime.getTime() + 3 * 60 * 60 * 1000);
+
+      if (now > threeHoursLater) {
+        schedule.isPublished = false;
+        await schedule.save();
+        return res.json({ isPublished: false, schedule: null });
+      }
+    }
+
+    res.json({
+      isPublished: true,
+      schedule: {
+        _id: schedule._id,
+        startTime: schedule.startTime,
+        players: schedule.players.map(p => p.username),
+        publishedAt: schedule.publishedAt,
+        publishedBy: schedule.publishedBy?.username
+      }
+    });
+  } catch (error) {
+    console.error('Get active schedule API error:', error);
+    res.json({ isPublished: false, schedule: null });
   }
 };

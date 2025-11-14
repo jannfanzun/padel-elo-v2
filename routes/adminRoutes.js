@@ -15,7 +15,11 @@ const {
   deleteGameReport,
   resetSystem,
   recalculateELO,
-  getEmailExport
+  getEmailExport,
+  getPadelSchedule,
+  savePadelSchedule,
+  publishPadelSchedule,
+  getActiveScheduleAPI
 } = require('../controllers/adminController');
 
 // Apply admin protection to all routes
@@ -46,6 +50,11 @@ router.get('/email-export', getEmailExport);
 
 router.post('/reset-system', adminLimiter, resetSystem);
 router.post('/recalculate-elo', adminLimiter, recalculateELO);
+
+// Padel Schedule routes
+router.get('/padel-schedule', getPadelSchedule);
+router.post('/padel-schedule/save', savePadelSchedule);
+router.post('/padel-schedule/publish', publishPadelSchedule);
 
 
 module.exports = router;
