@@ -653,31 +653,77 @@
                minute: '2-digit'
             });
 
+            const playerCount = schedule.players.length;
+            const courtCount = playerCount / 4;
+
+            // Bestimme Gitter-Layout basierend auf Anzahl der Spieler
+            let gridColumns = 'repeat(2, 1fr)';
+            let fontSize = '0.9rem';
+            let padding = '0.6rem';
+            let h1Size = '3.5rem';
+            let containerPadding = '2rem';
+
+            if (playerCount <= 8) {
+               gridColumns = 'repeat(2, 1fr)';
+               fontSize = '1rem';
+               padding = '0.8rem';
+               h1Size = '4rem';
+               containerPadding = '2.5rem';
+            } else if (playerCount <= 12) {
+               gridColumns = 'repeat(3, 1fr)';
+               fontSize = '0.85rem';
+               padding = '0.6rem';
+               h1Size = '3.5rem';
+               containerPadding = '2rem';
+            } else {
+               gridColumns = 'repeat(4, 1fr)';
+               fontSize = '0.75rem';
+               padding = '0.5rem';
+               h1Size = '3rem';
+               containerPadding = '1.5rem';
+            }
+
             let scheduleHTML = `
-               <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 4rem;">
-                  <div style="text-align: center; background: white; padding: 4rem; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); max-width: 1000px;">
-                     <h1 style="font-size: 5rem; color: #0d6efd; margin-bottom: 1rem; font-family: 'Lobster', cursive;">
+               <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 1.5rem;">
+                  <div style="text-align: center; background: white; padding: ${containerPadding}; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); max-width: 1200px; width: 100%;">
+                     <h1 style="font-size: ${h1Size}; color: #0d6efd; margin-bottom: 0.8rem; margin-top: 0; font-family: 'Lobster', cursive;">
                         padELO Spielplan
                      </h1>
 
-                     <div style="background: #f8f9fa; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
-                        <p style="font-size: 1.8rem; font-weight: 600; margin: 0; color: #212529;">
+                     <div style="background: #f8f9fa; padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <p style="font-size: 1.4rem; font-weight: 600; margin: 0; color: #212529;">
                            📅 ${formattedTime} Uhr
+                        </p>
+                        <p style="font-size: 0.9rem; margin: 0.5rem 0 0 0; color: #6c757d;">
+                           ${courtCount} Platz${courtCount > 1 ? 'e' : ''} • ${playerCount} Spieler
                         </p>
                      </div>
 
-                     <h2 style="font-size: 2.5rem; color: #495057; margin-bottom: 2rem;">
-                        Spieler (${schedule.players.length})
+                     <h2 style="font-size: 1.4rem; color: #495057; margin-bottom: 1rem; margin-top: 0;">
+                        Spieler
                      </h2>
 
-                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                     <div style="display: grid; grid-template-columns: ${gridColumns}; gap: 0.6rem; margin-bottom: 1.5rem;">
             `;
 
-            schedule.players.forEach(player => {
+            schedule.players.forEach((player, index) => {
+               const courtNumber = Math.floor(index / 4) + 1;
+               const positionInCourt = (index % 4) + 1;
+               let teamLabel = '';
+
+               if (positionInCourt <= 2) {
+                  teamLabel = 'Team 1';
+               } else {
+                  teamLabel = 'Team 2';
+               }
+
                scheduleHTML += `
-                  <div style="background: #e7f3ff; padding: 1rem; border-radius: 8px; border-left: 4px solid #0d6efd;">
-                     <p style="font-size: 1.3rem; font-weight: 600; color: #0d6efd; margin: 0;">
-                        👤 ${player}
+                  <div style="background: #e7f3ff; padding: ${padding}; border-radius: 6px; border-left: 3px solid #0d6efd;">
+                     <p style="font-size: ${fontSize}; font-weight: 600; color: #0d6efd; margin: 0;">
+                        ${player}
+                     </p>
+                     <p style="font-size: ${fontSize}; color: #6c757d; margin: 0.3rem 0 0 0;">
+                        Platz ${courtNumber} • ${teamLabel}
                      </p>
                   </div>
                `;
@@ -686,8 +732,8 @@
             scheduleHTML += `
                      </div>
 
-                     <div style="color: #6c757d; font-size: 1rem;">
-                        <i class="fas fa-hourglass-half"></i> Veröffentlicht von ${schedule.publishedBy} um
+                     <div style="color: #6c757d; font-size: 0.85rem; border-top: 1px solid #e9ecef; padding-top: 1rem;">
+                        <i class="fas fa-hourglass-half"></i> Veröffentlicht von <strong>${schedule.publishedBy}</strong> um
                         ${new Date(schedule.publishedAt).toLocaleString('de-DE', {
                            timeZone: 'Europe/Berlin',
                            hour: '2-digit',
