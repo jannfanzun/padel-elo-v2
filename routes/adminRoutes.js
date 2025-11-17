@@ -19,6 +19,7 @@ const {
   getPadelSchedule,
   savePadelSchedule,
   publishPadelSchedule,
+  deletePadelSchedule,
   getActiveScheduleAPI
 } = require('../controllers/adminController');
 
@@ -55,6 +56,7 @@ router.post('/recalculate-elo', adminLimiter, recalculateELO);
 router.get('/padel-schedule', getPadelSchedule);
 router.post('/padel-schedule/save', savePadelSchedule);
 router.post('/padel-schedule/publish', publishPadelSchedule);
+router.delete('/padel-schedule/:id', deletePadelSchedule);
 
 
 module.exports = router;

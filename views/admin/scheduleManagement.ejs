@@ -32,6 +32,25 @@
           </div>
         <% } %>
 
+        <!-- Existing Schedule Info (if exists) -->
+        <% if (schedule) { %>
+          <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
+            <div>
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Aktueller Spielplan:</strong>
+              <%= moment(schedule.startTime).format('DD.MM.YYYY HH:mm') %> Uhr
+              <% if (schedule.isPublished) { %>
+                <span class="badge bg-success ms-2">Veröffentlicht</span>
+              <% } else { %>
+                <span class="badge bg-secondary ms-2">Entwurf oder abgeschlossen</span>
+              <% } %>
+            </div>
+            <button class="btn btn-danger btn-sm" id="deleteScheduleBtn" data-schedule-id="<%= schedule._id %>">
+              <i class="fas fa-trash me-1"></i>Löschen
+            </button>
+          </div>
+        <% } %>
+
         <!-- Step 1: Tournament Generation (Spieltag generieren) -->
         <div id="step1">
           <h3 class="mb-4 text-center text-primary">
@@ -255,6 +274,47 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentStep = 1;
     let allPlayers = [];
     let generatedTournament = null;
+
+    // Delete Schedule Button Handler
+    const deleteScheduleBtn = document.getElementById('deleteScheduleBtn');
+    if (deleteScheduleBtn) {
+        deleteScheduleBtn.addEventListener('click', async function() {
+            const scheduleId = this.dataset.scheduleId;
+
+            if (!confirm('Bist du sicher, dass du diesen Spielplan löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+                return;
+            }
+
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Löschen...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch(`/admin/padel-schedule/${scheduleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Spielplan erfolgreich gelöscht!');
+                    window.location.href = '/admin/padel-schedule';
+                } else {
+                    alert('Fehler beim Löschen: ' + data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error deleting schedule:', error);
+                alert('Server-Fehler beim Löschen des Spielplans');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    }
 
     // Initialisiere alle Spieler für die Suche
     document.querySelectorAll('.available-player-item').forEach(item => {
@@ -503,10 +563,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 generatedTournament = data.courts;
                 displayTournamentResults(data.courts);
 
-                // Set default startTime to 30 minutes from now
                 const now = new Date();
                 now.setMinutes(now.getMinutes() + 30);
-                document.getElementById('scheduleStartTime').value = now.toISOString().slice(0, 16);
+
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+
+                document.getElementById('scheduleStartTime').value =
+                    `${year}-${month}-${day}T${hours}:${minutes}`;
 
                 showStep(3);
             } else {

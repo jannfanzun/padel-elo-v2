@@ -829,24 +829,28 @@ exports.publishPadelSchedule = async (req, res) => {
 exports.getActiveScheduleAPI = async (req, res) => {
   try {
     const schedule = await PadelSchedule.findOne({ isPublished: true })
-      .populate('players', 'username')
+      .populate('players', 'username eloRating profileImage')
       .populate('createdBy publishedBy', 'username');
 
     if (!schedule) {
       return res.json({ isPublished: false, schedule: null });
     }
 
-    // Prüfe ob 3h vorbei sind
-    if (schedule.publishedAt) {
-      const now = new Date();
-      const publishedTime = new Date(schedule.publishedAt);
-      const threeHoursLater = new Date(publishedTime.getTime() + 3 * 60 * 60 * 1000);
+    const now = new Date();
+    const startTime = new Date(schedule.startTime);
 
-      if (now > threeHoursLater) {
+    // Berechne Zeitfenster: 15 Min vor Start bis 1 Min nach Start (zum Testen)
+    const displayStartTime = new Date(startTime.getTime() - 15 * 60 * 1000); // 15 Min vor Start
+    const displayEndTime = new Date(startTime.getTime() + 1 * 60 * 1000);    // 1 Min nach Start (Test)
+
+    // Prüfe ob wir im Zeitfenster sind
+    if (now < displayStartTime || now > displayEndTime) {
+      // Außerhalb des Zeitfensters - deaktiviere
+      if (now > displayEndTime) {
         schedule.isPublished = false;
         await schedule.save();
-        return res.json({ isPublished: false, schedule: null });
       }
+      return res.json({ isPublished: false, schedule: null });
     }
 
     res.json({
@@ -854,7 +858,11 @@ exports.getActiveScheduleAPI = async (req, res) => {
       schedule: {
         _id: schedule._id,
         startTime: schedule.startTime,
-        players: schedule.players.map(p => p.username),
+        players: schedule.players.map(p => ({
+          username: p.username,
+          eloRating: p.eloRating,
+          profileImage: p.profileImage
+        })),
         publishedAt: schedule.publishedAt,
         publishedBy: schedule.publishedBy?.username
       }
@@ -862,5 +870,36 @@ exports.getActiveScheduleAPI = async (req, res) => {
   } catch (error) {
     console.error('Get active schedule API error:', error);
     res.json({ isPublished: false, schedule: null });
+  }
+};
+
+// @desc    Delete a padel schedule
+// @route   DELETE /admin/padel-schedule/:id
+// @access  Private (Admin only)
+exports.deletePadelSchedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const schedule = await PadelSchedule.findById(id);
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: 'Spielplan nicht gefunden'
+      });
+    }
+
+    await PadelSchedule.findByIdAndDelete(id);
+
+    res.json({
+      success: true,
+      message: 'Spielplan erfolgreich gelöscht'
+    });
+  } catch (error) {
+    console.error('Delete padel schedule error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Löschen des Spielplans: ' + error.message
+    });
   }
 };
