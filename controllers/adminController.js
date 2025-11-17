@@ -839,9 +839,9 @@ exports.getActiveScheduleAPI = async (req, res) => {
     const now = new Date();
     const startTime = new Date(schedule.startTime);
 
-    // Berechne Zeitfenster: 15 Min vor Start bis 1 Min nach Start (zum Testen)
-    const displayStartTime = new Date(startTime.getTime() - 15 * 60 * 1000); // 15 Min vor Start
-    const displayEndTime = new Date(startTime.getTime() + 1 * 60 * 1000);    // 1 Min nach Start (Test)
+    // Berechne Zeitfenster: 15 Min vor Start bis 3 Stunden nach Start
+    const displayStartTime = new Date(startTime.getTime() - 15 * 60 * 1000);     // 15 Min vor Start
+    const displayEndTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000);   // 3 Stunden nach Start
 
     // Prüfe ob wir im Zeitfenster sind
     if (now < displayStartTime || now > displayEndTime) {
