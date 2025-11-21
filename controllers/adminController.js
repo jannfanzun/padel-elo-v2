@@ -752,8 +752,10 @@ exports.savePadelSchedule = async (req, res) => {
       });
     }
 
-    // Konvertiere startTime zu Date-Objekt
-    const startDate = new Date(startTime);
+    // Konvertiere startTime zu Date-Objekt (aus Schweizer Zeitzone)
+    // datetime-local sendet Format: "2025-11-21T16:25"
+    // Wir müssen es als Schweizer Zeit interpretieren, nicht als UTC
+    const startDate = moment.tz(startTime, 'Europe/Zurich').toDate();
 
     // Get or create schedule
     let schedule = await PadelSchedule.findOne();
