@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const Game = require('../models/Game');
 const QuarterlyELO = require('../models/QuarterlyELO');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const { ensureAllUsersHaveQuarterlyRecords } = require('../utils/quarterlyEloUtils');
 
 // @desc    Show user profile

@@ -68,6 +68,10 @@ app.use(
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Make moment-timezone available in all templates
+const moment = require('moment-timezone');
+app.locals.moment = moment;
+
 // initCronJobs(app);
 
 app.use('/', require('./routes/publicRoutes'));

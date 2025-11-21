@@ -5,7 +5,7 @@ const RegistrationRequest = require('../models/RegistrationRequest');
 const GameReport = require('../models/GameReport');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const PadelSchedule = require('../models/PadelSchedule');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const { sendRegistrationApprovedEmail } = require('../config/email');
 const { recalculateQuarterlyELO } = require('../utils/cronJobs');
 

@@ -47,7 +47,7 @@
                 <div class="col-md-6">
                   <p class="mb-2">
                     <strong><i class="fas fa-clock me-2"></i>Startzeit:</strong>
-                    <%= moment(schedule.startTime).format('DD.MM.YYYY HH:mm') %> Uhr
+                    <%= moment(schedule.startTime).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr
                   </p>
                   <p class="mb-2">
                     <strong><i class="fas fa-users me-2"></i>Spieler:</strong>
@@ -66,7 +66,7 @@
                   <% if (schedule.publishedAt) { %>
                     <p class="mb-0">
                       <strong><i class="fas fa-user me-2"></i>Veröffentlicht:</strong>
-                      <%= moment(schedule.publishedAt).format('DD.MM.YYYY HH:mm') %> Uhr
+                      <%= moment(schedule.publishedAt).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr
                     </p>
                   <% } %>
                 </div>
