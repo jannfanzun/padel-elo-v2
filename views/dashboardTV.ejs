@@ -646,50 +646,66 @@
             const courtCount = playerCount / 4;
 
             // Bestimme Größen basierend auf Anzahl der Plätze - kompakt wie Dashboard
-            let h1Size = '1.5rem';
+            let h1Size = '2rem';
             let containerPadding = '0.5rem';
             let cardMargin = '0.2rem';
             let headerPadding = '0.5rem';
+            let headerFontSize = '1rem';
             let cardBodyPadding = '0.5rem';
             let teamPadding = '0.5rem';
+            let teamHeaderSize = '0.9rem';
             let profileImageSize = '1rem';
-            let iconSize = '1rem';
+            let iconSize = '2rem';
+            let playerNameSize = '0.95rem';
+            let eloFontSize = '0.85rem';
 
             if (courtCount <= 2) {
-               h1Size = '1.8rem';
+               h1Size = '2.5rem';
                containerPadding = '0.8rem';
                cardMargin = '0.4rem';
                headerPadding = '0.6rem';
+               headerFontSize = '1.2rem';
                cardBodyPadding = '0.6rem';
                teamPadding = '0.6rem';
+               teamHeaderSize = '1rem';
+               playerNameSize = '1.05rem';
+               eloFontSize = '0.9rem';
             } else if (courtCount <= 3) {
-               h1Size = '1.5rem';
+               h1Size = '2rem';
                containerPadding = '0.5rem';
                cardMargin = '0.2rem';
                headerPadding = '0.5rem';
+               headerFontSize = '1rem';
                cardBodyPadding = '0.5rem';
                teamPadding = '0.5rem';
+               teamHeaderSize = '0.9rem';
+               playerNameSize = '0.95rem';
+               eloFontSize = '0.85rem';
             } else {
-               h1Size = '1.2rem';
+               h1Size = '1.8rem';
                containerPadding = '0.4rem';
                cardMargin = '0.15rem';
                headerPadding = '0.4rem';
+               headerFontSize = '0.95rem';
                cardBodyPadding = '0.4rem';
                teamPadding = '0.4rem';
+               teamHeaderSize = '0.85rem';
+               playerNameSize = '0.9rem';
+               eloFontSize = '0.8rem';
             }
 
             let scheduleHTML = `
                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 0.5rem;">
                   <div style="text-align: center; background: white; padding: ${containerPadding}; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 1200px; width: 100%;">
-                     <h1 style="font-size: ${h1Size}; color: #0d6efd; margin-bottom: 0.3rem; margin-top: 0; font-family: 'Lobster', cursive;">
+                     <h1 style="font-size: ${h1Size}; color: #0d6efd; margin-bottom: 0.4rem; margin-top: 0; font-family: 'Lobster', cursive;">
                         Spielplan
                      </h1>
 
                      <div style="background: #f8f9fa; padding: 0.5rem; border-radius: 6px; margin-bottom: 0.5rem;">
-                        <p style="font-size: 0.95rem; font-weight: 600; margin: 0; color: #212529;">
+                        <p style="font-size: ${playerNameSize}; font-weight: 600; margin: 0; color: #212529;">
                            ${formattedTime} Uhr
                         </p>
-                        <p style="font-size: 0.75rem; margin: 0.2rem 0 0 0; color: #6c757d;">
+                        <p style="font-size: ${eloFontSize}; margin: 0.2rem 0 0 0; color: #6c757d;">
                            ${courtCount} Platz${courtCount > 1 ? 'e' : ''} • ${playerCount} Spieler
                         </p>
                      </div>
@@ -709,8 +725,8 @@
                   <div style="border: 1px solid #dee2e6; border-left: 4px solid #0d6efd; border-radius: 6px; margin-bottom: ${cardMargin}; overflow: hidden;">
                      <!-- Card Header -->
                      <div style="background: #0d6efd; color: white; padding: ${headerPadding}; text-align: left;">
-                        <h5 style="margin: 0; font-size: 0.85rem;">
-                           <i class="fas fa-map-marker-alt" style="margin-right: 0.3rem; font-size: ${iconSize};"></i>Platz ${courtIndex + 1}
+                        <h5 style="margin: 0; font-size: ${headerFontSize};">
+                           <i class="fas fa-map-marker-alt" style="margin-right: 0.3rem;"></i>Platz ${courtIndex + 1}
                         </h5>
                      </div>
 
@@ -719,60 +735,60 @@
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
                            <!-- Team 1 -->
                            <div style="flex: 1; background: #f8f9fa; padding: ${teamPadding}; border-radius: 6px;">
-                              <h6 style="color: #0d6efd; margin: 0 0 0.3rem 0; font-size: 0.75rem;">Team 1</h6>
+                              <h6 style="color: #0d6efd; margin: 0 0 0.3rem 0; font-size: ${teamHeaderSize};">Team 1</h6>
                `;
 
                team1.forEach(player => {
                   const profileImageHtml = player.profileImage
                      ? `<img src="${player.profileImage}" alt="${player.username}" style="width: ${profileImageSize}; height: ${profileImageSize}; border-radius: 50%; object-fit: cover; margin-right: 0.3rem;" />`
-                     : `<i class="fas fa-user-circle text-primary" style="font-size: ${profileImageSize}; margin-right: 0.3rem;"></i>`;
+                     : `<i class="fas fa-user-circle text-primary" style="font-size: ${iconSize}; margin-right: 0.3rem;"></i>`;
 
                   scheduleHTML += `
                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
                         <div style="display: flex; align-items: center;">
                            ${profileImageHtml}
-                           <span style="font-weight: 600; color: #212529; font-size: 0.8rem;">${player.username}</span>
+                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}</span>
                         </div>
-                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: 0.7rem;">${player.eloRating} ELO</span>
+                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
                      </div>
                   `;
                });
 
                scheduleHTML += `
                               <div style="margin-top: 0.3rem; text-align: center;">
-                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: 0.7rem;">Ø ${team1Elo} ELO</span>
+                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">Ø ${team1Elo} ELO</span>
                               </div>
                            </div>
 
                            <!-- VS Badge -->
-                           <div style="background: #0d6efd; color: white; padding: 0.3rem 0.6rem; border-radius: 20px; font-weight: bold; font-size: 0.75rem;">
+                           <div style="background: #0d6efd; color: white; padding: 0.3rem 0.6rem; border-radius: 20px; font-weight: bold; font-size: ${playerNameSize};">
                               VS
                            </div>
 
                            <!-- Team 2 -->
                            <div style="flex: 1; background: #f8f9fa; padding: ${teamPadding}; border-radius: 6px;">
-                              <h6 style="color: #0d6efd; margin: 0 0 0.3rem 0; font-size: 0.75rem;">Team 2</h6>
+                              <h6 style="color: #0d6efd; margin: 0 0 0.3rem 0; font-size: ${teamHeaderSize};">Team 2</h6>
                `;
 
                team2.forEach(player => {
                   const profileImageHtml = player.profileImage
                      ? `<img src="${player.profileImage}" alt="${player.username}" style="width: ${profileImageSize}; height: ${profileImageSize}; border-radius: 50%; object-fit: cover; margin-right: 0.3rem;" />`
-                     : `<i class="fas fa-user-circle text-primary" style="font-size: ${profileImageSize}; margin-right: 0.3rem;"></i>`;
+                     : `<i class="fas fa-user-circle text-primary" style="font-size: ${iconSize}; margin-right: 0.3rem;"></i>`;
 
                   scheduleHTML += `
                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
                         <div style="display: flex; align-items: center;">
                            ${profileImageHtml}
-                           <span style="font-weight: 600; color: #212529; font-size: 0.8rem;">${player.username}</span>
+                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}</span>
                         </div>
-                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: 0.7rem;">${player.eloRating} ELO</span>
+                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
                      </div>
                   `;
                });
 
                scheduleHTML += `
                               <div style="margin-top: 0.3rem; text-align: center;">
-                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: 0.7rem;">Ø ${team2Elo} ELO</span>
+                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">Ø ${team2Elo} ELO</span>
                               </div>
                            </div>
                         </div>
