@@ -757,6 +757,9 @@ exports.savePadelSchedule = async (req, res) => {
     // Wir müssen es als Schweizer Zeit interpretieren, nicht als UTC
     const startDate = moment.tz(startTime, 'Europe/Zurich').toDate();
 
+    // Hole Court-Namen aus dem Request (optional)
+    const { courtNames } = req.body;
+
     // Get or create schedule
     let schedule = await PadelSchedule.findOne();
 
@@ -765,11 +768,13 @@ exports.savePadelSchedule = async (req, res) => {
         players,
         startTime: startDate,
         createdBy: req.user._id,
-        isPublished: false
+        isPublished: false,
+        courtNames: courtNames || []
       });
     } else {
       schedule.players = players;
       schedule.startTime = startDate;
+      schedule.courtNames = courtNames || [];
       schedule.updatedAt = new Date();
     }
 
@@ -866,7 +871,8 @@ exports.getActiveScheduleAPI = async (req, res) => {
           profileImage: p.profileImage
         })),
         publishedAt: schedule.publishedAt,
-        publishedBy: schedule.publishedBy?.username
+        publishedBy: schedule.publishedBy?.username,
+        courtNames: schedule.courtNames || []
       }
     });
   } catch (error) {

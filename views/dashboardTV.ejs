@@ -721,12 +721,17 @@
                const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
                const team2Elo = Math.round((team2[0].eloRating + team2[1].eloRating) / 2);
 
+               // Bestimme Court-Namen - verwende den gespeicherten Namen oder fallback zu Platz X
+               const courtName = schedule.courtNames && schedule.courtNames[courtIndex]
+                  ? schedule.courtNames[courtIndex]
+                  : `Platz ${courtIndex + 1}`;
+
                scheduleHTML += `
                   <div style="border: 1px solid #dee2e6; border-left: 4px solid #0d6efd; border-radius: 6px; margin-bottom: ${cardMargin}; overflow: hidden;">
                      <!-- Card Header -->
                      <div style="background: #0d6efd; color: white; padding: ${headerPadding}; text-align: left;">
                         <h5 style="margin: 0; font-size: ${headerFontSize};">
-                           <i class="fas fa-map-marker-alt" style="margin-right: 0.3rem;"></i>Platz ${courtIndex + 1}
+                           <i class="fas fa-map-marker-alt" style="margin-right: 0.3rem;"></i>${courtName}
                         </h5>
                      </div>
 

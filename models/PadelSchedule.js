@@ -49,7 +49,16 @@ const PadelScheduleSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+
+  // Court-Namen für diese Spielplan
+  // z.B. ["Puma", "fin.cube", "Swica", ...]
+  courtNames: [
+    {
+      type: String,
+      default: null
+    }
+  ]
 });
 
 // Middleware zum Aktualisieren von updatedAt

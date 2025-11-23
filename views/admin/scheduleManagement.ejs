@@ -195,7 +195,7 @@
           <div class="card mt-4">
             <div class="card-header bg-info text-white">
               <h5 class="mb-0">
-                <i class="fas fa-clock me-2"></i>Startzeit einstellen
+                <i class="fas fa-clock me-2"></i>Startzeit und Courts einstellen
               </h5>
             </div>
             <div class="card-body">
@@ -207,6 +207,16 @@
                 <small class="text-muted d-block mt-2">
                   <i class="fas fa-lightbulb"></i> Tip: Standardmäßig ist es auf +30 Minuten gesetzt
                 </small>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">
+                  <i class="fas fa-location-dot me-2"></i>Court-Namen
+                </label>
+                <small class="text-muted d-block mb-2">
+                  Wähle einen Namen für jeden Platz:
+                </small>
+                <div id="courtNamesContainer"></div>
               </div>
             </div>
           </div>
@@ -617,6 +627,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function generateCourtNameSelectors(courtCount) {
+        const container = document.getElementById('courtNamesContainer');
+        const availableCourtNames = [
+            'Puma',
+            'fin.cube',
+            'Swica',
+            'Swiss Life',
+            'sweets.ch',
+            'ICM Bau',
+            'Schoch & Co.',
+            'Hustech'
+        ];
+
+        let html = '<div class="row g-2">';
+        for (let i = 0; i < courtCount; i++) {
+            html += `
+                <div class="col-md-6 col-lg-3">
+                    <div class="mb-2">
+                        <label class="form-label small">Platz ${i + 1}</label>
+                        <select class="form-select form-select-sm court-name-selector" data-court-index="${i}">
+                            <option value="">-- Auswählen --</option>
+                            ${availableCourtNames.map(name =>
+                                `<option value="${name}">${name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
     function displayTournamentResults(courts) {
         const container = document.getElementById('tournamentResults');
 
@@ -625,12 +668,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const html = courts.map((court, index) => `
+        // Generiere Court-Name-Selektoren
+        generateCourtNameSelectors(courts.length);
+
+        const html = courts.map((court, index) => {
+            const courtNameInput = document.querySelector(`[data-court-index="${index}"]`);
+            const courtName = courtNameInput ? courtNameInput.value : '';
+            const displayName = courtName || `Platz ${index + 1}`;
+
+            const team1PlayersHTML = court.team1.map(player => `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span><strong>${player.username}</strong></span>
+                    <span class="badge bg-primary">${player.elo} ELO</span>
+                </div>
+            `).join('');
+
+            const team2PlayersHTML = court.team2.map(player => `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span><strong>${player.username}</strong></span>
+                    <span class="badge bg-primary">${player.elo} ELO</span>
+                </div>
+            `).join('');
+
+            return `
             <div class="card court-card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        Platz ${index + 1}
+                        ${displayName}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -638,12 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-md-5">
                             <div class="team-section">
                                 <h6 class="text-primary mb-2">Team 1</h6>
-                                ${court.team1.map(player => `
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span><strong>${player.username}</strong></span>
-                                        <span class="badge bg-primary">${player.elo} ELO</span>
-                                    </div>
-                                `).join('')}
+                                ${team1PlayersHTML}
                                 <div class="mt-2 text-center">
                                     <span class="badge bg-primary">Ø ${court.team1Elo} ELO</span>
                                 </div>
@@ -657,12 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-md-5">
                             <div class="team-section">
                                 <h6 class="text-primary mb-2">Team 2</h6>
-                                ${court.team2.map(player => `
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span><strong>${player.username}</strong></span>
-                                        <span class="badge bg-primary">${player.elo} ELO</span>
-                                    </div>
-                                `).join('')}
+                                ${team2PlayersHTML}
                                 <div class="mt-2 text-center">
                                     <span class="badge bg-primary">Ø ${court.team2Elo} ELO</span>
                                 </div>
@@ -677,7 +732,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         container.innerHTML = html;
     }
@@ -697,6 +753,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Sammle Court-Namen
+        const courtNames = [];
+        document.querySelectorAll('.court-name-selector').forEach((selector) => {
+            const value = selector.value || `Platz ${selector.dataset.courtIndex + 1}`;
+            courtNames.push(value);
+        });
+
         const publishBtn = document.getElementById('publishScheduleBtn');
         const originalText = publishBtn.innerHTML;
         publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Veröffentliche...';
@@ -710,7 +773,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     players: selectedPlayers.map(p => p.userId),
-                    startTime: startTimeInput.value
+                    startTime: startTimeInput.value,
+                    courtNames: courtNames
                 })
             });
 
