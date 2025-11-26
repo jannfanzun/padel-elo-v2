@@ -71,6 +71,53 @@
                   <% } %>
                 </div>
               </div>
+
+              <!-- Spielplan Matchups anzeigen (aufklappbar) -->
+              <% if (scheduleCourts && scheduleCourts.length > 0) { %>
+                <hr class="my-3">
+                <div class="d-grid">
+                  <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#scheduleMatchupsCollapse">
+                    <i class="fas fa-list me-2"></i>Spielpaarungen anzeigen
+                    <i class="fas fa-chevron-down ms-2"></i>
+                  </button>
+                </div>
+                <div class="collapse mt-3" id="scheduleMatchupsCollapse">
+                  <div class="row">
+                    <% scheduleCourts.forEach(court => { %>
+                      <div class="col-md-6 mb-3">
+                        <div class="card court-card">
+                          <div class="card-header bg-light">
+                            <strong><i class="fas fa-map-marker-alt me-2"></i><%= court.courtName %></strong>
+                          </div>
+                          <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                              <div class="flex-fill">
+                                <div class="mb-1">
+                                  <small class="text-muted">Team 1</small><br>
+                                  <strong><%= court.team1[0].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team1[0].elo %></span><br>
+                                  <strong><%= court.team1[1].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team1[1].elo %></span>
+                                </div>
+                                <small class="text-muted">Ø <%= court.team1Elo %> ELO</small>
+                              </div>
+                              <div class="px-2">
+                                <span class="badge bg-secondary">VS</span>
+                              </div>
+                              <div class="flex-fill">
+                                <div class="mb-1">
+                                  <small class="text-muted">Team 2</small><br>
+                                  <strong><%= court.team2[0].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team2[0].elo %></span><br>
+                                  <strong><%= court.team2[1].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team2[1].elo %></span>
+                                </div>
+                                <small class="text-muted">Ø <%= court.team2Elo %> ELO</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
             </div>
           </div>
         <% } %>

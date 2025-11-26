@@ -693,12 +693,12 @@ exports.getEmailExport = async (req, res) => {
 exports.getPadelSchedule = async (req, res) => {
   try {
     // Get all users für Spieler-Auswahl
-    const allUsers = await User.find({ isAdmin: false }).sort({ username: 1 });
+    const allUsers = await User.find({ isAdmin: false }).sort({ eloRating: -1 });
 
     // Get the latest schedule (entweder veröffentlicht oder nur erstellt)
     const schedule = await PadelSchedule.findOne()
       .sort({ createdAt: -1 })
-      .populate('players', 'username')
+      .populate('players', 'username eloRating')
       .populate('createdBy publishedBy', 'username');
 
     // Prüfe ob veröffentlichter Schedule 3h alt ist
@@ -713,9 +713,16 @@ exports.getPadelSchedule = async (req, res) => {
       }
     }
 
+    // Generiere die Matchups wenn ein Schedule existiert
+    let scheduleCourts = null;
+    if (schedule && schedule.players && schedule.players.length >= 4) {
+      scheduleCourts = generateScheduleMatchups(schedule.players, schedule.courtNames);
+    }
+
     res.render('admin/scheduleManagement', {
       title: 'Padel Spielplan',
       schedule: schedule || null,
+      scheduleCourts: scheduleCourts,
       allUsers,
       moment,
       success: req.query.success || null,
@@ -729,6 +736,52 @@ exports.getPadelSchedule = async (req, res) => {
     });
   }
 };
+
+/**
+ * Generate matchups für einen gespeicherten Schedule
+ * @param {Array} players - Array von populated User-Objekten
+ * @param {Array} courtNames - Array von Court-Namen
+ * @returns {Array} - Array von Court-Assignments
+ */
+function generateScheduleMatchups(players, courtNames = []) {
+  if (!players || players.length < 4 || players.length % 4 !== 0) {
+    return null;
+  }
+
+  // Sortiere Spieler nach ELO (höchste zuerst)
+  const sortedPlayers = [...players].sort((a, b) => b.eloRating - a.eloRating);
+
+  const courts = [];
+  const numCourts = sortedPlayers.length / 4;
+
+  for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {
+    const courtPlayers = sortedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
+
+    const team1 = [courtPlayers[0], courtPlayers[3]];
+    const team2 = [courtPlayers[1], courtPlayers[2]];
+
+    const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
+    const team2Elo = Math.round((team2[0].eloRating + team2[1].eloRating) / 2);
+
+    courts.push({
+      courtNumber: courtIndex + 1,
+      courtName: courtNames[courtIndex] || `Platz ${courtIndex + 1}`,
+      team1: team1.map(player => ({
+        username: player.username,
+        elo: player.eloRating
+      })),
+      team2: team2.map(player => ({
+        username: player.username,
+        elo: player.eloRating
+      })),
+      team1Elo,
+      team2Elo,
+      eloDifference: Math.abs(team1Elo - team2Elo)
+    });
+  }
+
+  return courts;
+}
 
 // @desc    Create or update padel schedule
 // @route   POST /admin/padel-schedule/save

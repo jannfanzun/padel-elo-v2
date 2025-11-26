@@ -164,7 +164,7 @@ exports.postGenerateTournament = async (req, res) => {
 
 /**
  * Generate balanced tournament matchups based on ELO ratings
- * Verbesserte Algorithmus für faire Teamzusammenstellung
+ * Spieler werden nach ELO gruppiert: Beste gegen Beste, Schwächere gegen Schwächere
  * @param {Array} players - Array of player objects with username and elo
  * @returns {Array} - Array of court assignments
  */
@@ -177,36 +177,25 @@ function generateTournamentMatchups(players) {
 
     // Sortiere Spieler nach ELO (höchste zuerst)
     const sortedPlayers = [...players].sort((a, b) => b.elo - a.elo);
-    
+
     const courts = [];
     const numCourts = sortedPlayers.length / 4;
-    
-    // Erweiterte Balancing-Strategie
+
+    // Jeder Court bekommt die nächsten 4 stärksten Spieler
     for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {
-      let team1, team2;
-      
-      if (courtIndex === 0) {
-        // Erste Court: Beste Verteilung der Top-Spieler
-        team1 = [sortedPlayers[0], sortedPlayers[3]]; // 1. + 4.
-        team2 = [sortedPlayers[1], sortedPlayers[2]]; // 2. + 3.
-      } else {
-        // Weitere Courts: Optimierte Paarung der verbleibenden Spieler
-        const remainingPlayers = sortedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
-        
-        // Snake-Draft Pattern für bessere Balance
-        if (courtIndex % 2 === 1) {
-          team1 = [remainingPlayers[0], remainingPlayers[3]];
-          team2 = [remainingPlayers[1], remainingPlayers[2]];
-        } else {
-          team1 = [remainingPlayers[0], remainingPlayers[2]];
-          team2 = [remainingPlayers[1], remainingPlayers[3]];
-        }
-      }
-      
+      // Hole die 4 Spieler für diesen Court (nach Stärke gruppiert)
+      const courtPlayers = sortedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
+
+      // Verteile die 4 Spieler auf 2 Teams für maximale Balance
+      // Team 1: 1. und 4. stärkster Spieler dieser Gruppe
+      // Team 2: 2. und 3. stärkster Spieler dieser Gruppe
+      const team1 = [courtPlayers[0], courtPlayers[3]];
+      const team2 = [courtPlayers[1], courtPlayers[2]];
+
       // Berechne Team-ELOs
       const team1Elo = Math.round((team1[0].elo + team1[1].elo) / 2);
       const team2Elo = Math.round((team2[0].elo + team2[1].elo) / 2);
-      
+
       courts.push({
         courtNumber: courtIndex + 1,
         team1: team1.map(player => ({
@@ -222,17 +211,9 @@ function generateTournamentMatchups(players) {
         eloDifference: Math.abs(team1Elo - team2Elo)
       });
     }
-    
-    // Sortiere Courts nach ELO-Differenz (fairste zuerst)
-    courts.sort((a, b) => a.eloDifference - b.eloDifference);
-    
-    // Renummeriere Courts
-    courts.forEach((court, index) => {
-      court.courtNumber = index + 1;
-    });
-    
+
     return courts;
-    
+
   } catch (error) {
     console.error('Error in generateTournamentMatchups:', error);
     throw new Error('Fehler bei der Turniergenerierung');
