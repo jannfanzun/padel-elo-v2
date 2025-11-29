@@ -913,12 +913,15 @@ exports.getActiveScheduleAPI = async (req, res) => {
       return res.json({ isPublished: false, schedule: null });
     }
 
+    // WICHTIG: Sortiere die Spieler nach ELO (höchste zuerst) wie in generateScheduleMatchups
+    const sortedPlayers = [...schedule.players].sort((a, b) => b.eloRating - a.eloRating);
+
     res.json({
       isPublished: true,
       schedule: {
         _id: schedule._id,
         startTime: schedule.startTime,
-        players: schedule.players.map(p => ({
+        players: sortedPlayers.map(p => ({
           username: p.username,
           eloRating: p.eloRating,
           profileImage: p.profileImage
