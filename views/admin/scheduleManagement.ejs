@@ -31,6 +31,13 @@
           </div>
         <% } %>
 
+        <!-- Button zum Löschen vergangener Spielpläne -->
+        <div class="mb-4">
+          <button class="btn btn-outline-danger" id="deletePastSchedulesBtn">
+            <i class="fas fa-broom me-2"></i>Alle vergangenen Spielpläne löschen
+          </button>
+        </div>
+
         <!-- Existing Schedule Info (if exists) -->
         <% if (schedule) { %>
           <div class="card mb-4 border">
@@ -38,17 +45,43 @@
               <h5 class="mb-0">
                 <i class="fas fa-calendar-check me-2"></i>Aktueller Spielplan
               </h5>
-              <button class="btn btn-danger btn-sm" id="deleteScheduleBtn" data-schedule-id="<%= schedule._id %>">
-                <i class="fas fa-trash me-1"></i>Löschen
-              </button>
+              <div>
+                <button class="btn btn-outline-primary btn-sm me-2" id="editScheduleBtn"
+                        data-schedule-id="<%= schedule._id %>"
+                        data-players="<%= JSON.stringify(schedule.players.map(p => ({ _id: p._id, username: p.username, eloRating: p.eloRating }))) %>"
+                        data-start-time="<%= moment(schedule.startTime).tz('Europe/Zurich').format('YYYY-MM-DDTHH:mm') %>"
+                        data-court-names="<%= JSON.stringify(schedule.courtNames || []) %>">
+                  <i class="fas fa-users me-1"></i>Spieler ändern
+                </button>
+                <button class="btn btn-danger btn-sm" id="deleteScheduleBtn" data-schedule-id="<%= schedule._id %>">
+                  <i class="fas fa-trash me-1"></i>Löschen
+                </button>
+              </div>
             </div>
             <div class="card-body">
               <div class="row">
                 <div class="col-md-6">
-                  <p class="mb-2">
+                  <div class="mb-2">
                     <strong><i class="fas fa-clock me-2"></i>Startzeit:</strong>
-                    <%= moment(schedule.startTime).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr
-                  </p>
+                    <span id="startTimeDisplay"><%= moment(schedule.startTime).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr</span>
+                    <button class="btn btn-sm btn-outline-primary ms-2" id="editStartTimeBtn">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                  </div>
+                  <div id="startTimeEditForm" class="d-none mb-2">
+                    <div class="input-group">
+                      <input type="datetime-local"
+                             id="editStartTimeInput"
+                             class="form-control"
+                             value="<%= moment(schedule.startTime).tz('Europe/Zurich').format('YYYY-MM-DDTHH:mm') %>">
+                      <button class="btn btn-success" id="saveStartTimeBtn">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button class="btn btn-secondary" id="cancelStartTimeBtn">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
                   <p class="mb-2">
                     <strong><i class="fas fa-users me-2"></i>Spieler:</strong>
                     <%= schedule.players.length %> Spieler (<%= schedule.players.length / 4 %> Plätze)
@@ -397,6 +430,144 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Delete Past Schedules Button Handler
+    const deletePastSchedulesBtn = document.getElementById('deletePastSchedulesBtn');
+    if (deletePastSchedulesBtn) {
+        deletePastSchedulesBtn.addEventListener('click', async function() {
+            if (!confirm('Bist du sicher, dass du alle vergangenen Spielpläne löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+                return;
+            }
+
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Löschen...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/admin/padel-schedule/past', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    window.location.href = '/admin/padel-schedule';
+                } else {
+                    alert('Fehler beim Löschen: ' + data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error deleting past schedules:', error);
+                alert('Server-Fehler beim Löschen vergangener Spielpläne');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Edit Schedule Button Handler (für Spieler-Bearbeitung)
+    const editScheduleBtn = document.getElementById('editScheduleBtn');
+    if (editScheduleBtn) {
+        editScheduleBtn.addEventListener('click', function() {
+            const playersData = JSON.parse(this.dataset.players);
+            const startTime = this.dataset.startTime;
+            const courtNames = JSON.parse(this.dataset.courtNames);
+
+            // Setze die Spieleranzahl
+            selectedPlayerCount = playersData.length;
+
+            // Wähle die passende Karte für Spielerzahl
+            document.querySelectorAll('.player-count-card').forEach(card => {
+                if (parseInt(card.dataset.count) === selectedPlayerCount) {
+                    card.classList.add('selected');
+                }
+            });
+
+            // Lade die vorhandenen Spieler
+            selectedPlayers = playersData.map(p => ({
+                username: p.username,
+                elo: p.eloRating,
+                userId: p._id
+            }));
+
+            // Speichere Court-Namen und Startzeit für später
+            window.editModeCourtNames = courtNames;
+            window.editModeStartTime = startTime;
+
+            // Zeige Step 2
+            showStep(2);
+            document.getElementById('maxPlayers').textContent = selectedPlayerCount;
+            updateSelectedPlayersDisplay();
+            updateAvailablePlayersVisibility();
+        });
+    }
+
+    // Edit Start Time Handler (Inline-Bearbeitung)
+    const editStartTimeBtn = document.getElementById('editStartTimeBtn');
+    const startTimeDisplay = document.getElementById('startTimeDisplay');
+    const startTimeEditForm = document.getElementById('startTimeEditForm');
+    const editStartTimeInput = document.getElementById('editStartTimeInput');
+    const saveStartTimeBtn = document.getElementById('saveStartTimeBtn');
+    const cancelStartTimeBtn = document.getElementById('cancelStartTimeBtn');
+
+    if (editStartTimeBtn) {
+        editStartTimeBtn.addEventListener('click', function() {
+            startTimeDisplay.classList.add('d-none');
+            editStartTimeBtn.classList.add('d-none');
+            startTimeEditForm.classList.remove('d-none');
+        });
+
+        cancelStartTimeBtn.addEventListener('click', function() {
+            startTimeDisplay.classList.remove('d-none');
+            editStartTimeBtn.classList.remove('d-none');
+            startTimeEditForm.classList.add('d-none');
+        });
+
+        saveStartTimeBtn.addEventListener('click', async function() {
+            const newStartTime = editStartTimeInput.value;
+            if (!newStartTime) {
+                alert('Bitte wähle eine Startzeit!');
+                return;
+            }
+
+            const scheduleId = document.getElementById('deleteScheduleBtn').dataset.scheduleId;
+
+            saveStartTimeBtn.disabled = true;
+            saveStartTimeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch(`/admin/padel-schedule/${scheduleId}/start-time`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ startTime: newStartTime })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    startTimeDisplay.textContent = data.newStartTime + ' Uhr';
+                    startTimeDisplay.classList.remove('d-none');
+                    editStartTimeBtn.classList.remove('d-none');
+                    startTimeEditForm.classList.add('d-none');
+                } else {
+                    alert('Fehler: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error updating start time:', error);
+                alert('Server-Fehler beim Aktualisieren der Startzeit');
+            } finally {
+                saveStartTimeBtn.disabled = false;
+                saveStartTimeBtn.innerHTML = '<i class="fas fa-check"></i>';
+            }
+        });
+    }
+
     // Initialisiere alle Spieler für die Suche
     document.querySelectorAll('.available-player-item').forEach(item => {
         allPlayers.push({
@@ -599,6 +770,10 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedPlayers = [];
         selectedPlayerCount = 0;
 
+        // Bearbeiten-Modus zurücksetzen
+        window.editModeCourtNames = null;
+        window.editModeStartTime = null;
+
         document.querySelectorAll('.player-count-card').forEach(card =>
             card.classList.remove('selected'));
         document.querySelectorAll('.available-player-item').forEach(item => {
@@ -644,19 +819,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 generatedTournament = data.courts;
                 displayTournamentResults(data.courts);
 
-                const now = new Date();
-                now.setMinutes(now.getMinutes() + 30);
+                // Prüfe ob im Bearbeiten-Modus - verwende gespeicherte Startzeit
+                if (window.editModeStartTime) {
+                    document.getElementById('scheduleStartTime').value = window.editModeStartTime;
+                } else {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 30);
 
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
 
-                document.getElementById('scheduleStartTime').value =
-                    `${year}-${month}-${day}T${hours}:${minutes}`;
+                    document.getElementById('scheduleStartTime').value =
+                        `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
 
                 showStep(3);
+
+                // Setze Court-Namen wenn im Bearbeiten-Modus
+                if (window.editModeCourtNames && window.editModeCourtNames.length > 0) {
+                    setTimeout(() => {
+                        document.querySelectorAll('.court-name-selector').forEach((selector, index) => {
+                            if (window.editModeCourtNames[index]) {
+                                selector.value = window.editModeCourtNames[index];
+                            }
+                        });
+                    }, 100);
+                }
             } else {
                 alert('Fehler beim Generieren: ' + data.message);
             }

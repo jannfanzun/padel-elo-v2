@@ -20,6 +20,8 @@ const {
   savePadelSchedule,
   publishPadelSchedule,
   deletePadelSchedule,
+  deletePastPadelSchedules,
+  updatePadelScheduleStartTime,
   getActiveScheduleAPI
 } = require('../controllers/adminController');
 
@@ -52,10 +54,12 @@ router.get('/email-export', getEmailExport);
 router.post('/reset-system', adminLimiter, resetSystem);
 router.post('/recalculate-elo', adminLimiter, recalculateELO);
 
-// Padel Schedule routes
+// Padel Schedule routes - WICHTIG: Spezifische Routen MÜSSEN vor :id Routen kommen!
 router.get('/padel-schedule', getPadelSchedule);
 router.post('/padel-schedule/save', savePadelSchedule);
 router.post('/padel-schedule/publish', publishPadelSchedule);
+router.delete('/padel-schedule/past', deletePastPadelSchedules);  // Muss vor /:id kommen!
+router.put('/padel-schedule/:id/start-time', updatePadelScheduleStartTime);
 router.delete('/padel-schedule/:id', deletePadelSchedule);
 
 

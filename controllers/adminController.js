@@ -967,3 +967,76 @@ exports.deletePadelSchedule = async (req, res) => {
     });
   }
 };
+
+// @desc    Update padel schedule start time
+// @route   PUT /admin/padel-schedule/:id/start-time
+// @access  Private (Admin only)
+exports.updatePadelScheduleStartTime = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { startTime } = req.body;
+
+    if (!startTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bitte geben Sie eine Startzeit an'
+      });
+    }
+
+    const schedule = await PadelSchedule.findById(id);
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: 'Spielplan nicht gefunden'
+      });
+    }
+
+    // Konvertiere startTime zu Date-Objekt (aus Schweizer Zeitzone)
+    const startDate = moment.tz(startTime, 'Europe/Zurich').toDate();
+
+    schedule.startTime = startDate;
+    schedule.updatedAt = new Date();
+    await schedule.save();
+
+    res.json({
+      success: true,
+      message: 'Startzeit erfolgreich aktualisiert',
+      newStartTime: moment(startDate).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm')
+    });
+  } catch (error) {
+    console.error('Update padel schedule start time error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Aktualisieren der Startzeit: ' + error.message
+    });
+  }
+};
+
+// @desc    Delete all past padel schedules (startTime in the past and not published)
+// @route   DELETE /admin/padel-schedule/past
+// @access  Private (Admin only)
+exports.deletePastPadelSchedules = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Lösche alle Spielpläne, deren Startzeit in der Vergangenheit liegt
+    // und die nicht mehr veröffentlicht sind
+    const result = await PadelSchedule.deleteMany({
+      startTime: { $lt: now },
+      isPublished: false
+    });
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} vergangene Spielpläne erfolgreich gelöscht`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete past padel schedules error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Löschen vergangener Spielpläne: ' + error.message
+    });
+  }
+};
