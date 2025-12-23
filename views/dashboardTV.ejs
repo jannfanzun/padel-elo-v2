@@ -582,7 +582,7 @@
 
                if (data.isPublished && data.schedule) {
                   // Backend hat bereits geprüft ob wir im Zeitfenster sind
-                  // (15 Min vor Start bis 1 Min nach Start)
+                  // (Ab Veröffentlichung am Spieltag / 9:00 Uhr wenn vorher veröffentlicht, bis 23:00 Uhr am Spieltag)
                   renderSchedule(data.schedule);
                   startRotation();
                } else {
@@ -817,7 +817,7 @@
             checkAndDisplaySchedule();
 
             // Prüfe alle 10 Sekunden, ob ein neuer Spielplan im Zeitfenster ist
-            // (15 Min vor Start bis 1 Min nach Start)
+            // (Ab Veröffentlichung am Spieltag / 9:00 Uhr wenn vorher veröffentlicht, bis 23:00 Uhr am Spieltag)
             checkInterval = setInterval(() => {
                checkAndDisplaySchedule();
             }, 10000); // 10 Sekunden für schnellere Reaktion

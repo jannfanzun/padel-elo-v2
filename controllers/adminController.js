@@ -898,14 +898,36 @@ exports.getActiveScheduleAPI = async (req, res) => {
 
     const now = new Date();
     const startTime = new Date(schedule.startTime);
+    const publishedAt = schedule.publishedAt ? new Date(schedule.publishedAt) : now;
 
-    // Berechne Zeitfenster: 15 Min vor Start bis 3 Stunden nach Start
-    const displayStartTime = new Date(startTime.getTime() - 15 * 60 * 1000);     // 15 Min vor Start
-    const displayEndTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000);   // 3 Stunden nach Start
+    // Spieltag: Datum des Spielstarts (nur Datum, ohne Uhrzeit)
+    const gameDay = new Date(startTime);
+    gameDay.setHours(0, 0, 0, 0);
+
+    // Tag der Veröffentlichung (nur Datum, ohne Uhrzeit)
+    const publishDay = new Date(publishedAt);
+    publishDay.setHours(0, 0, 0, 0);
+
+    // Ende ist immer 23:00 Uhr am Spieltag
+    const displayEndTime = new Date(gameDay);
+    displayEndTime.setHours(23, 0, 0, 0);
+
+    // Start-Zeitpunkt bestimmen:
+    // - Wenn am Spieltag veröffentlicht: Sofort (publishedAt)
+    // - Wenn am Vortag oder früher veröffentlicht: 9:00 Uhr am Spieltag
+    let displayStartTime;
+    if (publishDay.getTime() >= gameDay.getTime()) {
+      // Am Spieltag (oder später) veröffentlicht -> sofort
+      displayStartTime = publishedAt;
+    } else {
+      // Vor dem Spieltag veröffentlicht -> 9:00 Uhr am Spieltag
+      displayStartTime = new Date(gameDay);
+      displayStartTime.setHours(9, 0, 0, 0);
+    }
 
     // Prüfe ob wir im Zeitfenster sind
     if (now < displayStartTime || now > displayEndTime) {
-      // Außerhalb des Zeitfensters - deaktiviere
+      // Außerhalb des Zeitfensters - deaktiviere nach 23:00 Uhr
       if (now > displayEndTime) {
         schedule.isPublished = false;
         await schedule.save();
