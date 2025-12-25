@@ -230,7 +230,7 @@ router.get('/about', (req, res) => {
   });
 });
 
-router.get('/dashboardTV', async (req, res) => {
+router.get('/dashboardtv', async (req, res) => {
   // Prevent browser caching to ensure display always shows latest version
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate, private',
@@ -401,7 +401,7 @@ router.get('/dashboardTV', async (req, res) => {
       .populate('team1.player team2.player', 'username');
 
     // Render the dashboardTV view
-    res.render('dashboardTV', {
+    res.render('dashboardtv', {
       title: 'padELO TV Dashboard',
       rankings,
       recentGames,
