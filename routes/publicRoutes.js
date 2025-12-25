@@ -231,6 +231,13 @@ router.get('/about', (req, res) => {
 });
 
 router.get('/dashboardTV', async (req, res) => {
+  // Prevent browser caching to ensure display always shows latest version
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+
   try {
     // Get all users sorted by ELO rating (descending)
     const users = await User.find({ isAdmin: false }).sort({ eloRating: -1 });
