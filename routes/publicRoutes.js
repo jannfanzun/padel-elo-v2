@@ -401,7 +401,7 @@ router.get('/dashboardtv', async (req, res) => {
       .populate('team1.player team2.player', 'username');
 
     // Render the dashboardTV view
-    res.render('dashboardtv', {
+    res.render('dashboardTV', {
       title: 'padELO TV Dashboard',
       rankings,
       recentGames,
