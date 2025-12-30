@@ -90,17 +90,41 @@
                 <div class="col-md-6">
                   <p class="mb-2">
                     <strong><i class="fas fa-info-circle me-2"></i>Status:</strong>
-                    <% if (schedule.isPublished) { %>
-                      <span class="badge bg-success">Veröffentlicht</span>
+                    <%
+                      const now = new Date();
+                      const startTime = new Date(schedule.startTime);
+                      const isUpcoming = startTime > now;
+                      const gameDay = new Date(startTime);
+                      gameDay.setHours(23, 0, 0, 0);
+                      const isPast = now > gameDay;
+
+                      if (schedule.isPublished && isUpcoming) {
+                    %>
+                      <span class="badge bg-primary">Bevorstehend (veröffentlicht)</span>
+                    <% } else if (schedule.isPublished && !isPast) { %>
+                      <span class="badge bg-success">Live / Aktiv</span>
+                    <% } else if (schedule.isPublished && isPast) { %>
+                      <span class="badge bg-secondary">Abgeschlossen</span>
+                    <% } else if (!schedule.isPublished && isPast) { %>
+                      <span class="badge bg-dark">Abgeschlossen (nicht veröffentlicht)</span>
                     <% } else { %>
-                      <span class="badge bg-secondary">Entwurf oder abgeschlossen</span>
+                      <span class="badge bg-warning text-dark">Entwurf</span>
                     <% } %>
                   </p>
                   <% if (schedule.publishedAt) { %>
-                    <p class="mb-0">
-                      <strong><i class="fas fa-user me-2"></i>Veröffentlicht:</strong>
+                    <p class="mb-2">
+                      <strong><i class="fas fa-calendar-check me-2"></i>Veröffentlicht:</strong>
                       <%= moment(schedule.publishedAt).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr
                     </p>
+                  <% } %>
+                  <% if (!schedule.isPublished && !isPast) { %>
+                    <button class="btn btn-success btn-sm" id="republishScheduleBtn" data-schedule-id="<%= schedule._id %>">
+                      <i class="fas fa-paper-plane me-1"></i>Jetzt veröffentlichen
+                    </button>
+                  <% } else if (schedule.isPublished && isUpcoming) { %>
+                    <button class="btn btn-outline-success btn-sm" id="republishScheduleBtn" data-schedule-id="<%= schedule._id %>">
+                      <i class="fas fa-sync me-1"></i>Erneut veröffentlichen
+                    </button>
                   <% } %>
                 </div>
               </div>
@@ -424,6 +448,41 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error('Error deleting schedule:', error);
                 alert('Server-Fehler beim Löschen des Spielplans');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Republish Schedule Button Handler
+    const republishScheduleBtn = document.getElementById('republishScheduleBtn');
+    if (republishScheduleBtn) {
+        republishScheduleBtn.addEventListener('click', async function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Veröffentliche...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/admin/padel-schedule/publish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Spielplan erfolgreich veröffentlicht!');
+                    window.location.href = '/admin/padel-schedule';
+                } else {
+                    alert('Fehler beim Veröffentlichen: ' + data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error publishing schedule:', error);
+                alert('Server-Fehler beim Veröffentlichen des Spielplans');
                 this.innerHTML = originalText;
                 this.disabled = false;
             }

@@ -701,13 +701,20 @@ exports.getPadelSchedule = async (req, res) => {
       .populate('players', 'username eloRating')
       .populate('createdBy publishedBy', 'username');
 
-    // Prüfe ob veröffentlichter Schedule 3h alt ist
-    if (schedule && schedule.isPublished && schedule.publishedAt) {
+    // Prüfe ob veröffentlichter Schedule abgelaufen ist (3h nach Startzeit ODER nach 23:00 am Spieltag)
+    if (schedule && schedule.isPublished && schedule.startTime) {
       const now = new Date();
-      const publishedTime = new Date(schedule.publishedAt);
-      const threeHoursLater = new Date(publishedTime.getTime() + 3 * 60 * 60 * 1000);
+      const startTime = new Date(schedule.startTime);
 
-      if (now > threeHoursLater) {
+      // Spieltag Ende: 23:00 Uhr am Tag der Startzeit
+      const gameDay = new Date(startTime);
+      gameDay.setHours(23, 0, 0, 0);
+
+      // Deaktiviere 3 Stunden nach Startzeit ODER nach 23:00 am Spieltag
+      const threeHoursAfterStart = new Date(startTime.getTime() + 3 * 60 * 60 * 1000);
+      const deactivationTime = new Date(Math.min(threeHoursAfterStart.getTime(), gameDay.getTime()));
+
+      if (now > deactivationTime) {
         schedule.isPublished = false;
         await schedule.save();
       }
@@ -925,10 +932,14 @@ exports.getActiveScheduleAPI = async (req, res) => {
       displayStartTime.setHours(9, 0, 0, 0);
     }
 
+    // Deaktivierungszeit: 3h nach Startzeit ODER 23:00 am Spieltag (was früher ist)
+    const threeHoursAfterStart = new Date(startTime.getTime() + 3 * 60 * 60 * 1000);
+    const deactivationTime = new Date(Math.min(threeHoursAfterStart.getTime(), displayEndTime.getTime()));
+
     // Prüfe ob wir im Zeitfenster sind
-    if (now < displayStartTime || now > displayEndTime) {
-      // Außerhalb des Zeitfensters - deaktiviere nach 23:00 Uhr
-      if (now > displayEndTime) {
+    if (now < displayStartTime || now > deactivationTime) {
+      // Außerhalb des Zeitfensters - deaktiviere wenn Zeit abgelaufen
+      if (now > deactivationTime) {
         schedule.isPublished = false;
         await schedule.save();
       }
@@ -1019,6 +1030,12 @@ exports.updatePadelScheduleStartTime = async (req, res) => {
 
     schedule.startTime = startDate;
     schedule.updatedAt = new Date();
+
+    // Wenn veröffentlicht, aktualisiere auch publishedAt für korrektes Zeitfenster
+    if (schedule.isPublished) {
+      schedule.publishedAt = new Date();
+    }
+
     await schedule.save();
 
     res.json({
