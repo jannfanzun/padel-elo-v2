@@ -932,9 +932,8 @@ exports.getActiveScheduleAPI = async (req, res) => {
       displayStartTime.setHours(9, 0, 0, 0);
     }
 
-    // Deaktivierungszeit: 3h nach Startzeit ODER 23:00 am Spieltag (was früher ist)
-    const threeHoursAfterStart = new Date(startTime.getTime() + 3 * 60 * 60 * 1000);
-    const deactivationTime = new Date(Math.min(threeHoursAfterStart.getTime(), displayEndTime.getTime()));
+    // Deaktivierungszeit: Immer 23:00 Uhr am Spieltag
+    const deactivationTime = displayEndTime;
 
     // Prüfe ob wir im Zeitfenster sind
     if (now < displayStartTime || now > deactivationTime) {
