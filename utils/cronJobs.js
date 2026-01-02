@@ -1,4 +1,5 @@
-const { ensureAllUsersHaveQuarterlyRecords } = require('./quarterlyEloUtils');
+const { ensureAllUsersHaveQuarterlyRecords, getQuarterlyReportData } = require('./quarterlyEloUtils');
+const { sendQuarterlyReportEmail } = require('../config/email');
 const { checkInactiveUsers } = require('./inactivityCheck');
 const User = require('../models/User');
 const Game = require('../models/Game');
@@ -35,8 +36,12 @@ const scheduleDailyJobs = () => {
     // Check if today is the first day of a new quarter
     if (isFirstDayOfQuarter(now)) {
       console.log('First day of a new quarter detected, initializing quarterly ELO records');
+
+      // Send quarterly report email for the previous quarter before initializing new records
+      await sendQuarterlyReport(getPreviousQuarter(now));
+
       await updateQuarterlyELORecords();
-      
+
       // Add ELO recalculation for the previous quarter
       // console.log('Performing automatic ELO recalculation for the previous quarter');
       // await recalculateQuarterlyELO(getPreviousQuarter(now));
@@ -116,6 +121,31 @@ const updateQuarterlyELORecords = async () => {
     console.log('Quarterly ELO records updated successfully');
   } catch (error) {
     console.error('Error updating quarterly ELO records:', error);
+  }
+};
+
+/**
+ * Send quarterly report email to admin
+ * @param {Object} quarterInfo - Object with year and quarter
+ */
+const sendQuarterlyReport = async (quarterInfo) => {
+  try {
+    const { year, quarter } = quarterInfo;
+    console.log(`Generating quarterly report for Q${quarter + 1}/${year}`);
+
+    // Get report data
+    const reportData = await getQuarterlyReportData(year, quarter);
+
+    if (reportData.players.length === 0) {
+      console.log(`No players found for Q${quarter + 1}/${year}, skipping report email`);
+      return;
+    }
+
+    // Send email to admin
+    await sendQuarterlyReportEmail(reportData);
+    console.log(`Quarterly report email sent for Q${quarter + 1}/${year}`);
+  } catch (error) {
+    console.error('Error sending quarterly report:', error);
   }
 };
 
@@ -262,5 +292,7 @@ function recalculateGameELO(playersInfo, score) {
 
 module.exports = {
   initCronJobs,
-  recalculateQuarterlyELO  // Export this so it can be used by the admin controller
+  recalculateQuarterlyELO,  // Export this so it can be used by the admin controller
+  sendQuarterlyReport,      // Export for manual triggering by admin
+  getPreviousQuarter        // Export for use in admin controller
 };

@@ -399,11 +399,104 @@ const sendGameNotificationEmail = async (game) => {
   }
 };
 
+/**
+ * Send quarterly ELO report email to admin
+ * @param {Object} reportData - Report data containing quarter info and player stats
+ */
+const sendQuarterlyReportEmail = async (reportData) => {
+  try {
+    const transporter = createTransporter();
+
+    const { year, quarter, players, totalGames } = reportData;
+    const quarterNames = ['Q1 (Jan-Mär)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Okt-Dez)'];
+    const quarterName = quarterNames[quarter];
+
+    // Build player ranking table rows
+    let playerRows = '';
+    players.forEach((player, index) => {
+      const eloChangeColor = player.eloChange >= 0 ? '#198754' : '#dc3545';
+      const eloChangePrefix = player.eloChange >= 0 ? '+' : '';
+
+      playerRows += `
+        <tr style="border-bottom: 1px solid #e0e0e0;">
+          <td style="padding: 10px; text-align: center;">${index + 1}</td>
+          <td style="padding: 10px;">${player.username}</td>
+          <td style="padding: 10px; text-align: center;">${player.startELO}</td>
+          <td style="padding: 10px; text-align: center;">${player.endELO}</td>
+          <td style="padding: 10px; text-align: center; color: ${eloChangeColor}; font-weight: bold;">${eloChangePrefix}${player.eloChange}</td>
+          <td style="padding: 10px; text-align: center;">${player.gamesPlayed}</td>
+        </tr>
+      `;
+    });
+
+    // Find top performers
+    const topGainer = players.reduce((prev, current) => (prev.eloChange > current.eloChange) ? prev : current, players[0]);
+    const mostActive = players.reduce((prev, current) => (prev.gamesPlayed > current.gamesPlayed) ? prev : current, players[0]);
+
+    // Email content
+    const mailOptions = {
+      from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: `📊 Quarterly ELO Report - ${quarterName} ${year}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #0d6efd; text-align: center;">📊 Quarterly ELO Report</h2>
+          <h3 style="text-align: center; color: #6c757d;">${quarterName} ${year}</h3>
+
+          <div style="background-color: #e7f1ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h4 style="margin-top: 0;">Quartalsübersicht</h4>
+            <p><strong>Aktive Spieler:</strong> ${players.length}</p>
+            <p><strong>Gespielte Spiele:</strong> ${totalGames}</p>
+            ${topGainer ? `<p><strong>Grösster Aufsteiger:</strong> ${topGainer.username} (${topGainer.eloChange >= 0 ? '+' : ''}${topGainer.eloChange} ELO)</p>` : ''}
+            ${mostActive ? `<p><strong>Aktivster Spieler:</strong> ${mostActive.username} (${mostActive.gamesPlayed} Spiele)</p>` : ''}
+          </div>
+
+          <h4>Rangliste nach End-ELO</h4>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+              <tr style="background-color: #0d6efd; color: white;">
+                <th style="padding: 12px; text-align: center;">Rang</th>
+                <th style="padding: 12px; text-align: left;">Spieler</th>
+                <th style="padding: 12px; text-align: center;">Start ELO</th>
+                <th style="padding: 12px; text-align: center;">End ELO</th>
+                <th style="padding: 12px; text-align: center;">Änderung</th>
+                <th style="padding: 12px; text-align: center;">Spiele</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${playerRows}
+            </tbody>
+          </table>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.SITE_URL}/ranking" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Zum aktuellen Ranking
+            </a>
+          </div>
+
+          <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px; text-align: center;">
+            Dies ist eine automatische Nachricht von padELO Ranking.<br>
+            Generiert am ${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      `
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+    console.log(`Quarterly report email sent to admin for ${quarterName} ${year}`);
+
+  } catch (error) {
+    console.error('Error sending quarterly report email:', error);
+  }
+};
+
 module.exports = {
   sendRegistrationRequestEmail,
   sendRegistrationApprovedEmail,
   sendPasswordResetEmail,
   sendGameReportEmail,
   sendInactivityPenaltyEmail,
-  sendGameNotificationEmail // Export the new function
+  sendGameNotificationEmail,
+  sendQuarterlyReportEmail
 };
