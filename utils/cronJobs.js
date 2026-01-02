@@ -7,21 +7,10 @@ const QuarterlyELO = require('../models/QuarterlyELO');
 const { calculateEloForMatch } = require('./eloCalculator');
 
 const initCronJobs = (app) => {
-  /*
-  // Check if this is a development environment
-  const isDev = process.env.NODE_ENV !== 'production';
-  
   // Schedule jobs
   scheduleDailyJobs();
-  
-  if (isDev) {
-    console.log('Cron jobs initialized in development mode');
-  } else {
-    console.log('Cron jobs initialized in production mode');
-  }
-  */
-  
-  console.log('Cron jobs sind deaktiviert');
+
+  console.log('Cron jobs aktiviert - Quarterly Report wird am 1. Jan/Apr/Jul/Okt gesendet');
 };
 
 /**
