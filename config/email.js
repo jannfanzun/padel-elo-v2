@@ -491,6 +491,95 @@ const sendQuarterlyReportEmail = async (reportData) => {
   }
 };
 
+/**
+ * Send shirt level up notification email to admin
+ * @param {Object} user - User who leveled up
+ * @param {Object} levelUpInfo - Level up details (oldLevel, newLevel, etc.)
+ */
+const sendShirtLevelUpEmail = async (user, levelUpInfo) => {
+  try {
+    const transporter = createTransporter();
+
+    const { oldLevel, oldColor, newLevel, newColor, gamesPlayed } = levelUpInfo;
+
+    // Color mapping for display
+    const colorNames = {
+      '#bebebe': 'Grau',
+      'white': 'Weiss',
+      'yellow': 'Gelb',
+      'orange': 'Orange',
+      'green': 'Grün',
+      'blue': 'Blau',
+      'purple': 'Lila',
+      'black': 'Schwarz'
+    };
+
+    const colorStyles = {
+      '#bebebe': '#bebebe; color: #212529; border: 1px solid #dee2e6',
+      'white': 'white; color: #212529; border: 1px solid #dee2e6',
+      'yellow': '#ffc107; color: #212529',
+      'orange': '#fd7e14; color: white',
+      'green': '#198754; color: white',
+      'blue': '#0d6efd; color: white',
+      'purple': '#6f42c1; color: white',
+      'black': '#212529; color: white'
+    };
+
+    // Email content
+    const mailOptions = {
+      from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: `👕 Neues Shirt Level: ${user.username} ist jetzt ${newLevel}!`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #0d6efd; text-align: center;">👕 Neues Shirt Level erreicht!</h2>
+
+          <div style="text-align: center; margin: 20px 0;">
+            <p style="font-size: 18px; margin-bottom: 15px;"><strong>${user.username}</strong> hat ein neues Shirt Level erreicht!</p>
+          </div>
+
+          <div style="display: flex; justify-content: center; align-items: center; margin: 30px 0;">
+            <div style="text-align: center; padding: 15px;">
+              <span style="display: inline-block; padding: 10px 20px; border-radius: 5px; background-color: ${colorStyles[oldColor]};">
+                ${oldLevel}
+              </span>
+              <p style="color: #6c757d; margin-top: 10px; font-size: 14px;">${colorNames[oldColor]}</p>
+            </div>
+            <div style="padding: 0 20px; font-size: 24px;">→</div>
+            <div style="text-align: center; padding: 15px;">
+              <span style="display: inline-block; padding: 10px 20px; border-radius: 5px; background-color: ${colorStyles[newColor]};">
+                ${newLevel}
+              </span>
+              <p style="color: #6c757d; margin-top: 10px; font-size: 14px;">${colorNames[newColor]}</p>
+            </div>
+          </div>
+
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center;">
+            <p style="margin: 0;"><strong>Gespielte Spiele:</strong> ${gamesPlayed}</p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.SITE_URL}/ranking" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Zum Ranking
+            </a>
+          </div>
+
+          <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px; text-align: center;">
+            Dies ist eine automatische Nachricht von padELO Ranking.
+          </p>
+        </div>
+      `
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+    console.log(`Shirt level up email sent to admin for user: ${user.username} (${oldLevel} -> ${newLevel})`);
+
+  } catch (error) {
+    console.error('Error sending shirt level up email:', error);
+  }
+};
+
 module.exports = {
   sendRegistrationRequestEmail,
   sendRegistrationApprovedEmail,
@@ -498,5 +587,6 @@ module.exports = {
   sendGameReportEmail,
   sendInactivityPenaltyEmail,
   sendGameNotificationEmail,
-  sendQuarterlyReportEmail
+  sendQuarterlyReportEmail,
+  sendShirtLevelUpEmail
 };

@@ -1,8 +1,9 @@
 const User = require('../models/User');
 const Game = require('../models/Game');
 const { calculateEloForMatch } = require('../utils/eloCalculator');
-const { sendGameReportEmail, sendGameNotificationEmail } = require('../config/email');
+const { sendGameReportEmail, sendGameNotificationEmail, sendShirtLevelUpEmail } = require('../config/email');
 const { getOrCreateQuarterlyELO } = require('../utils/quarterlyEloUtils');
+const { checkShirtLevelUp } = require('../utils/shirtLevelUtils');
 
 // @desc    Show add game page
 // @route   GET /game/add
@@ -95,7 +96,21 @@ exports.postAddGame = async (req, res) => {
     await getOrCreateQuarterlyELO(player2._id);
     await getOrCreateQuarterlyELO(player3._id);
     await getOrCreateQuarterlyELO(player4._id);
-    
+
+    // Count games for each player BEFORE this game (for shirt level tracking)
+    const players = [player1, player2, player3, player4];
+    const gamesBeforeMatch = await Promise.all(
+      players.map(async (player) => {
+        const count = await Game.countDocuments({
+          $or: [
+            { 'team1.player': player._id },
+            { 'team2.player': player._id }
+          ]
+        });
+        return { player, gamesCount: count };
+      })
+    );
+
     // Prepare teams
     const team1 = {
       player1: player1,
@@ -156,7 +171,17 @@ exports.postAddGame = async (req, res) => {
       
     // Send email notifications to all players
     await sendGameNotificationEmail(populatedGame);
-    
+
+    // Check for shirt level-ups and notify admin
+    for (const playerData of gamesBeforeMatch) {
+      const gamesAfterMatch = playerData.gamesCount + 1;
+      const levelUp = checkShirtLevelUp(playerData.gamesCount, gamesAfterMatch);
+
+      if (levelUp) {
+        await sendShirtLevelUpEmail(playerData.player, levelUp);
+      }
+    }
+
     res.redirect(`/game/${game._id}?success=Spiel erfolgreich hinzugefügt und alle Spieler wurden benachrichtigt`);
   } catch (error) {
     console.error('Add game error:', error);
