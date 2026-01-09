@@ -634,12 +634,11 @@ const sendScheduleNotificationEmail = async (schedule, courts) => {
 
             <p>Der Spielplan für heute ist verfügbar. Du bist dabei!</p>
 
-            <div style="background-color: #e7f1ff; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
-              <h3 style="margin-top: 0; color: #0d6efd;">${dateStr}</h3>
-              <h2 style="margin-bottom: 0; color: #198754;">${timeStr} Uhr</h2>
-            </div>
+            <p style="font-size: 18px; text-align: center; margin: 25px 0;">
+              <strong>${dateStr} um ${timeStr} Uhr</strong>
+            </p>
 
-            <h3 style="border-bottom: 2px solid #0d6efd; padding-bottom: 10px;">Spielplan</h3>
+            <h3 style="border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; color: #333;">Spielplan</h3>
             ${courtsHTML}
 
             <div style="text-align: center; margin: 30px 0;">
@@ -648,7 +647,7 @@ const sendScheduleNotificationEmail = async (schedule, courts) => {
               </a>
             </div>
 
-            <p style="text-align: center; color: #198754; font-size: 16px;">Bis gleich auf dem Platz!</p>
+            <p style="text-align: center; color: #333;">Bis gleich auf dem Platz!</p>
 
             <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
             <p style="color: #6c757d; font-size: 0.9em; text-align: center;">
