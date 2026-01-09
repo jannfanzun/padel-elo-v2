@@ -6,7 +6,7 @@ const GameReport = require('../models/GameReport');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const PadelSchedule = require('../models/PadelSchedule');
 const moment = require('moment-timezone');
-const { sendRegistrationApprovedEmail } = require('../config/email');
+const { sendRegistrationApprovedEmail, sendScheduleNotificationEmail } = require('../config/email');
 const { recalculateQuarterlyELO } = require('../utils/cronJobs');
 
 
@@ -1075,6 +1075,69 @@ exports.deletePastPadelSchedules = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Fehler beim Löschen vergangener Spielpläne: ' + error.message
+    });
+  }
+};
+
+// @desc    Send notification email to all players in the schedule
+// @route   POST /admin/padel-schedule/notify
+// @access  Private (Admin only)
+exports.sendScheduleNotification = async (req, res) => {
+  try {
+    // Get the latest schedule with populated players
+    const schedule = await PadelSchedule.findOne()
+      .sort({ createdAt: -1 })
+      .populate('players', 'username eloRating email');
+
+    if (!schedule || !schedule.players || schedule.players.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kein Spielplan mit Spielern gefunden'
+      });
+    }
+
+    // Generate matchups for the email
+    const courts = [];
+    const sortedPlayers = [...schedule.players].sort((a, b) => b.eloRating - a.eloRating);
+    const numCourts = sortedPlayers.length / 4;
+
+    for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {
+      const courtPlayers = sortedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
+
+      const team1 = [courtPlayers[0], courtPlayers[3]];
+      const team2 = [courtPlayers[1], courtPlayers[2]];
+
+      const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
+      const team2Elo = Math.round((team2[0].eloRating + team2[1].eloRating) / 2);
+
+      courts.push({
+        courtNumber: courtIndex + 1,
+        courtName: schedule.courtNames?.[courtIndex] || `Platz ${courtIndex + 1}`,
+        team1: team1.map(player => ({
+          username: player.username,
+          elo: player.eloRating
+        })),
+        team2: team2.map(player => ({
+          username: player.username,
+          elo: player.eloRating
+        })),
+        team1Elo,
+        team2Elo
+      });
+    }
+
+    // Send emails
+    await sendScheduleNotificationEmail(schedule, courts);
+
+    res.json({
+      success: true,
+      message: `E-Mail erfolgreich an ${schedule.players.length} Spieler gesendet`
+    });
+  } catch (error) {
+    console.error('Send schedule notification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Senden der Benachrichtigungen: ' + error.message
     });
   }
 };

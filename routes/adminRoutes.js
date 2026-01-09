@@ -22,7 +22,8 @@ const {
   deletePadelSchedule,
   deletePastPadelSchedules,
   updatePadelScheduleStartTime,
-  getActiveScheduleAPI
+  getActiveScheduleAPI,
+  sendScheduleNotification
 } = require('../controllers/adminController');
 
 // Apply admin protection to all routes
@@ -58,6 +59,7 @@ router.post('/recalculate-elo', adminLimiter, recalculateELO);
 router.get('/padel-schedule', getPadelSchedule);
 router.post('/padel-schedule/save', savePadelSchedule);
 router.post('/padel-schedule/publish', publishPadelSchedule);
+router.post('/padel-schedule/notify', sendScheduleNotification);  // E-Mail an alle Spieler
 router.delete('/padel-schedule/past', deletePastPadelSchedules);  // Muss vor /:id kommen!
 router.put('/padel-schedule/:id/start-time', updatePadelScheduleStartTime);
 router.delete('/padel-schedule/:id', deletePadelSchedule);

@@ -580,6 +580,97 @@ const sendShirtLevelUpEmail = async (user, levelUpInfo) => {
   }
 };
 
+/**
+ * Send schedule notification email to all players in the schedule
+ * @param {Object} schedule - Populated schedule object with players
+ * @param {Array} courts - Array of court assignments with matchups
+ */
+const sendScheduleNotificationEmail = async (schedule, courts) => {
+  try {
+    const transporter = createTransporter();
+
+    // Format start time
+    const moment = require('moment-timezone');
+    const startTime = moment(schedule.startTime).tz('Europe/Zurich');
+    const dateStr = startTime.format('DD.MM.YYYY');
+    const timeStr = startTime.format('HH:mm');
+
+    // Build courts HTML
+    let courtsHTML = '';
+    courts.forEach((court) => {
+      courtsHTML += `
+        <div style="background-color: #f8f9fa; border-left: 4px solid #0d6efd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+          <h4 style="color: #0d6efd; margin-top: 0;">${court.courtName}</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1; text-align: center;">
+              <strong>Team 1</strong><br>
+              ${court.team1[0].username} (${court.team1[0].elo})<br>
+              ${court.team1[1].username} (${court.team1[1].elo})<br>
+              <small style="color: #6c757d;">Ø ${court.team1Elo} ELO</small>
+            </div>
+            <div style="padding: 0 15px; font-weight: bold; color: #6c757d;">VS</div>
+            <div style="flex: 1; text-align: center;">
+              <strong>Team 2</strong><br>
+              ${court.team2[0].username} (${court.team2[0].elo})<br>
+              ${court.team2[1].username} (${court.team2[1].elo})<br>
+              <small style="color: #6c757d;">Ø ${court.team2Elo} ELO</small>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    // Send email to each player
+    for (const player of schedule.players) {
+      const mailOptions = {
+        from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
+        to: player.email,
+        subject: `padELO Spielplan - Heute um ${timeStr} Uhr`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+            <h2 style="color: #0d6efd; text-align: center;">padELO Spielplan</h2>
+
+            <p>Hallo ${player.username},</p>
+
+            <p>Der Spielplan für heute ist verfügbar. Du bist dabei!</p>
+
+            <div style="background-color: #e7f1ff; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
+              <h3 style="margin-top: 0; color: #0d6efd;">${dateStr}</h3>
+              <h2 style="margin-bottom: 0; color: #198754;">${timeStr} Uhr</h2>
+            </div>
+
+            <h3 style="border-bottom: 2px solid #0d6efd; padding-bottom: 10px;">Spielplan</h3>
+            ${courtsHTML}
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.SITE_URL}/dashboard" style="background-color: #0d6efd; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Zum Dashboard
+              </a>
+            </div>
+
+            <p style="text-align: center; color: #198754; font-size: 16px;">Bis gleich auf dem Platz!</p>
+
+            <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+            <p style="color: #6c757d; font-size: 0.9em; text-align: center;">
+              Dies ist eine automatische Nachricht von padELO Ranking.
+            </p>
+          </div>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`Schedule notification email sent to ${player.email}`);
+    }
+
+    console.log(`Schedule notification emails sent to ${schedule.players.length} players`);
+    return { success: true, count: schedule.players.length };
+
+  } catch (error) {
+    console.error('Error sending schedule notification emails:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendRegistrationRequestEmail,
   sendRegistrationApprovedEmail,
@@ -588,5 +679,6 @@ module.exports = {
   sendInactivityPenaltyEmail,
   sendGameNotificationEmail,
   sendQuarterlyReportEmail,
-  sendShirtLevelUpEmail
+  sendShirtLevelUpEmail,
+  sendScheduleNotificationEmail
 };
