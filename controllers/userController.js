@@ -199,7 +199,7 @@ exports.getRankings = async (req, res) => {
           userStats[playerId].quarterlyGames++;
         }
       });
-      
+
       // Process Team 2 players
       game.team2.forEach(playerData => {
         const playerId = playerData.player._id.toString();
@@ -208,29 +208,27 @@ exports.getRankings = async (req, res) => {
         }
       });
     });
-    
-    // Für All Time Spiele: Zähle alle Spiele
-    if (rankingType === 'alltime-games') {
-      const allGames = await Game.find({}).populate('team1.player team2.player', 'username');
-      
-      allGames.forEach(game => {
-        // Process Team 1 players
-        game.team1.forEach(playerData => {
-          const playerId = playerData.player._id.toString();
-          if (userStats[playerId]) {
-            userStats[playerId].alltimeGames++;
-          }
-        });
-        
-        // Process Team 2 players
-        game.team2.forEach(playerData => {
-          const playerId = playerData.player._id.toString();
-          if (userStats[playerId]) {
-            userStats[playerId].alltimeGames++;
-          }
-        });
+
+    // Zähle alle Spiele für jeden Spieler (für (N) Anzeige bei neuen Spielern)
+    const allGames = await Game.find({}).populate('team1.player team2.player', 'username');
+
+    allGames.forEach(game => {
+      // Process Team 1 players
+      game.team1.forEach(playerData => {
+        const playerId = playerData.player._id.toString();
+        if (userStats[playerId]) {
+          userStats[playerId].alltimeGames++;
+        }
       });
-    }
+
+      // Process Team 2 players
+      game.team2.forEach(playerData => {
+        const playerId = playerData.player._id.toString();
+        if (userStats[playerId]) {
+          userStats[playerId].alltimeGames++;
+        }
+      });
+    });
     
     // Create rankings array with different sorting based on ranking type
     let rankings = [];

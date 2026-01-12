@@ -10,6 +10,62 @@ const { sendRegistrationApprovedEmail, sendScheduleNotificationEmail } = require
 const { recalculateQuarterlyELO } = require('../utils/cronJobs');
 
 
+/**
+ * Lädt die Anzahl der gespielten Spiele für eine Liste von Spielern
+ * @param {Array} playerIds - Array von Spieler-IDs
+ * @returns {Object} - Map von Spieler-ID zu Anzahl Spiele
+ */
+async function getPlayersGamesCount(playerIds) {
+  const gamesCountMap = {};
+
+  // Initialisiere alle mit 0
+  playerIds.forEach(id => {
+    gamesCountMap[id.toString()] = 0;
+  });
+
+  // Zähle Spiele für jeden Spieler einzeln (einfach und zuverlässig)
+  for (const playerId of playerIds) {
+    const count = await Game.countDocuments({
+      $or: [
+        { 'team1.player': playerId },
+        { 'team2.player': playerId }
+      ]
+    });
+    gamesCountMap[playerId.toString()] = count;
+  }
+
+  return gamesCountMap;
+}
+
+/**
+ * Sortiert Spieler für den Spielplan:
+ * - Normale Spieler: Nach ELO (höchste zuerst)
+ * - Neue Spieler (0 Spiele): Werden ans Ende sortiert (in die schlechteste Gruppe)
+ * @param {Array} players - Array von Spieler-Objekten mit _id und eloRating
+ * @param {Object} gamesCountMap - Map von Spieler-ID zu Anzahl Spiele
+ * @returns {Array} - Sortiertes Array von Spielern
+ */
+function sortPlayersForSchedule(players, gamesCountMap) {
+  return [...players].sort((a, b) => {
+    const aId = a._id.toString();
+    const bId = b._id.toString();
+    const aGames = gamesCountMap[aId] || 0;
+    const bGames = gamesCountMap[bId] || 0;
+
+    // Wenn beide neu sind (0 Spiele), sortiere nach ELO untereinander
+    if (aGames === 0 && bGames === 0) {
+      return b.eloRating - a.eloRating;
+    }
+
+    // Neue Spieler (0 Spiele) kommen ans Ende
+    if (aGames === 0) return 1;
+    if (bGames === 0) return -1;
+
+    // Normale Sortierung nach ELO (höchste zuerst)
+    return b.eloRating - a.eloRating;
+  });
+}
+
 // @desc    Admin dashboard
 // @route   GET /admin/dashboard
 // @access  Private (Admin only)
@@ -723,7 +779,10 @@ exports.getPadelSchedule = async (req, res) => {
     // Generiere die Matchups wenn ein Schedule existiert
     let scheduleCourts = null;
     if (schedule && schedule.players && schedule.players.length >= 4) {
-      scheduleCourts = generateScheduleMatchups(schedule.players, schedule.courtNames);
+      // Lade die Anzahl der Spiele für jeden Spieler (neue Spieler kommen in die schlechteste Gruppe)
+      const playerIds = schedule.players.map(p => p._id);
+      const gamesCountMap = await getPlayersGamesCount(playerIds);
+      scheduleCourts = generateScheduleMatchups(schedule.players, schedule.courtNames, gamesCountMap);
     }
 
     res.render('admin/scheduleManagement', {
@@ -748,15 +807,22 @@ exports.getPadelSchedule = async (req, res) => {
  * Generate matchups für einen gespeicherten Schedule
  * @param {Array} players - Array von populated User-Objekten
  * @param {Array} courtNames - Array von Court-Namen
+ * @param {Object} gamesCountMap - Map von Spieler-ID zu Anzahl Spiele (optional)
  * @returns {Array} - Array von Court-Assignments
  */
-function generateScheduleMatchups(players, courtNames = []) {
+function generateScheduleMatchups(players, courtNames = [], gamesCountMap = null) {
   if (!players || players.length < 4 || players.length % 4 !== 0) {
     return null;
   }
 
-  // Sortiere Spieler nach ELO (höchste zuerst)
-  const sortedPlayers = [...players].sort((a, b) => b.eloRating - a.eloRating);
+  // Sortiere Spieler: Normale nach ELO, neue Spieler (0 Spiele) ans Ende
+  let sortedPlayers;
+  if (gamesCountMap) {
+    sortedPlayers = sortPlayersForSchedule(players, gamesCountMap);
+  } else {
+    // Fallback: Einfache ELO-Sortierung wenn keine gamesCountMap vorhanden
+    sortedPlayers = [...players].sort((a, b) => b.eloRating - a.eloRating);
+  }
 
   const courts = [];
   const numCourts = sortedPlayers.length / 4;
@@ -775,11 +841,13 @@ function generateScheduleMatchups(players, courtNames = []) {
       courtName: courtNames[courtIndex] || `Platz ${courtIndex + 1}`,
       team1: team1.map(player => ({
         username: player.username,
-        elo: player.eloRating
+        elo: player.eloRating,
+        isNewPlayer: gamesCountMap ? (gamesCountMap[player._id.toString()] || 0) === 0 : false
       })),
       team2: team2.map(player => ({
         username: player.username,
-        elo: player.eloRating
+        elo: player.eloRating,
+        isNewPlayer: gamesCountMap ? (gamesCountMap[player._id.toString()] || 0) === 0 : false
       })),
       team1Elo,
       team2Elo,
@@ -945,8 +1013,11 @@ exports.getActiveScheduleAPI = async (req, res) => {
       return res.json({ isPublished: false, schedule: null });
     }
 
-    // WICHTIG: Sortiere die Spieler nach ELO (höchste zuerst) wie in generateScheduleMatchups
-    const sortedPlayers = [...schedule.players].sort((a, b) => b.eloRating - a.eloRating);
+    // WICHTIG: Sortiere die Spieler wie in generateScheduleMatchups
+    // Neue Spieler (0 Spiele) kommen in die schlechteste Gruppe
+    const playerIds = schedule.players.map(p => p._id);
+    const gamesCountMap = await getPlayersGamesCount(playerIds);
+    const sortedPlayers = sortPlayersForSchedule(schedule.players, gamesCountMap);
 
     res.json({
       isPublished: true,
@@ -956,7 +1027,8 @@ exports.getActiveScheduleAPI = async (req, res) => {
         players: sortedPlayers.map(p => ({
           username: p.username,
           eloRating: p.eloRating,
-          profileImage: p.profileImage
+          profileImage: p.profileImage,
+          isNewPlayer: (gamesCountMap[p._id.toString()] || 0) === 0
         })),
         publishedAt: schedule.publishedAt,
         publishedBy: schedule.publishedBy?.username,
@@ -1097,8 +1169,12 @@ exports.sendScheduleNotification = async (req, res) => {
     }
 
     // Generate matchups for the email
+    // Neue Spieler (0 Spiele) kommen in die schlechteste Gruppe
+    const playerIds = schedule.players.map(p => p._id);
+    const gamesCountMap = await getPlayersGamesCount(playerIds);
+    const sortedPlayers = sortPlayersForSchedule(schedule.players, gamesCountMap);
+
     const courts = [];
-    const sortedPlayers = [...schedule.players].sort((a, b) => b.eloRating - a.eloRating);
     const numCourts = sortedPlayers.length / 4;
 
     for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {

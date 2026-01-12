@@ -749,12 +749,13 @@
                   const profileImageHtml = player.profileImage
                      ? `<img src="${player.profileImage}" alt="${player.username}" style="width: ${profileImageSize}; height: ${profileImageSize}; border-radius: 50%; object-fit: cover; margin-right: 0.3rem;" />`
                      : `<i class="fas fa-user-circle text-primary" style="font-size: ${iconSize}; margin-right: 0.3rem;"></i>`;
+                  const newPlayerTag = player.isNewPlayer ? ' <span style="color: #6c757d;">(N)</span>' : '';
 
                   scheduleHTML += `
                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
                         <div style="display: flex; align-items: center;">
                            ${profileImageHtml}
-                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}</span>
+                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}${newPlayerTag}</span>
                         </div>
                         <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
                      </div>
@@ -781,12 +782,13 @@
                   const profileImageHtml = player.profileImage
                      ? `<img src="${player.profileImage}" alt="${player.username}" style="width: ${profileImageSize}; height: ${profileImageSize}; border-radius: 50%; object-fit: cover; margin-right: 0.3rem;" />`
                      : `<i class="fas fa-user-circle text-primary" style="font-size: ${iconSize}; margin-right: 0.3rem;"></i>`;
+                  const newPlayerTag = player.isNewPlayer ? ' <span style="color: #6c757d;">(N)</span>' : '';
 
                   scheduleHTML += `
                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
                         <div style="display: flex; align-items: center;">
                            ${profileImageHtml}
-                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}</span>
+                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}${newPlayerTag}</span>
                         </div>
                         <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
                      </div>

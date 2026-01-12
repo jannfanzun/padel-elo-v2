@@ -102,7 +102,7 @@
     </div>
     <!-- Username and Badges -->
     <div>
-      <strong><%= ranking.user.username %></strong>
+      <strong><%= ranking.user.username %></strong><% if (ranking.alltimeGames === 0) { %> <span class="text-muted">(N)</span><% } %>
       <% if (ranking.isInactive) { %>
         <span class="badge bg-warning text-dark ms-1 small">Inaktiv</span>
       <% } %>

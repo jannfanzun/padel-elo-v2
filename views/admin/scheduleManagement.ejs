@@ -156,8 +156,8 @@
                               <div class="flex-fill">
                                 <div class="mb-1">
                                   <small class="text-muted">Team 1</small><br>
-                                  <strong><%= court.team1[0].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team1[0].elo %></span><br>
-                                  <strong><%= court.team1[1].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team1[1].elo %></span>
+                                  <strong><%= court.team1[0].username %></strong><% if (court.team1[0].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team1[0].elo %></span><br>
+                                  <strong><%= court.team1[1].username %></strong><% if (court.team1[1].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team1[1].elo %></span>
                                 </div>
                                 <small class="text-muted">Ø <%= court.team1Elo %> ELO</small>
                               </div>
@@ -167,8 +167,8 @@
                               <div class="flex-fill">
                                 <div class="mb-1">
                                   <small class="text-muted">Team 2</small><br>
-                                  <strong><%= court.team2[0].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team2[0].elo %></span><br>
-                                  <strong><%= court.team2[1].username %></strong> <span class="badge bg-primary badge-sm"><%= court.team2[1].elo %></span>
+                                  <strong><%= court.team2[0].username %></strong><% if (court.team2[0].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team2[0].elo %></span><br>
+                                  <strong><%= court.team2[1].username %></strong><% if (court.team2[1].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team2[1].elo %></span>
                                 </div>
                                 <small class="text-muted">Ø <%= court.team2Elo %> ELO</small>
                               </div>
@@ -1020,14 +1020,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const team1PlayersHTML = court.team1.map(player => `
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span><strong>${player.username}</strong></span>
+                    <span><strong>${player.username}</strong>${player.isNewPlayer ? ' <span class="text-muted">(N)</span>' : ''}</span>
                     <span class="badge bg-primary">${player.elo} ELO</span>
                 </div>
             `).join('');
 
             const team2PlayersHTML = court.team2.map(player => `
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span><strong>${player.username}</strong></span>
+                    <span><strong>${player.username}</strong>${player.isNewPlayer ? ' <span class="text-muted">(N)</span>' : ''}</span>
                     <span class="badge bg-primary">${player.elo} ELO</span>
                 </div>
             `).join('');
