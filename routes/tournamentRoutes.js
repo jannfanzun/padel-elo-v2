@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
 const { 
     getTournamentGenerator,
     postGenerateTournament,
@@ -104,19 +104,21 @@ const logTournamentActivity = (req, res, next) => {
   next();
 };
 
-// Tournament generator page
-router.get('/generator', 
+// Tournament generator page (Admin only)
+router.get('/generator',
   tournamentPageLimiter,
   securityHeaders,
-  protect, 
+  protect,
+  authorize('admin'),
   getTournamentGenerator
 );
 
-// Generate tournament (API endpoint)
-router.post('/generate', 
+// Generate tournament (API endpoint - Admin only)
+router.post('/generate',
   tournamentGenerationLimiter,
   securityHeaders,
   protect,
+  authorize('admin'),
   sanitizeInput,
   validateTournamentGeneration,
   logTournamentActivity,

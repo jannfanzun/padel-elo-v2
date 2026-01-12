@@ -49,8 +49,8 @@ exports.getTournamentGenerator = async (req, res) => {
 // Validierungsregeln für Tournament Generation
 exports.validateTournamentGeneration = [
   body('players')
-    .isArray({ min: 4, max: 24 })
-    .withMessage('Spieleranzahl muss zwischen 4 und 24 liegen'),
+    .isArray({ min: 4, max: 32 })
+    .withMessage('Spieleranzahl muss zwischen 4 und 32 liegen'),
   body('players.*.username')
     .trim()
     .isLength({ min: 1, max: 30 })
@@ -59,7 +59,7 @@ exports.validateTournamentGeneration = [
     .isInt({ min: 0, max: 2000 })
     .withMessage('ELO-Rating ungültig'),
   body('playerCount')
-    .isInt({ min: 4, max: 24 })
+    .isInt({ min: 4, max: 32 })
     .custom((value, { req }) => {
       if (value % 4 !== 0) {
         throw new Error('Spieleranzahl muss durch 4 teilbar sein');
