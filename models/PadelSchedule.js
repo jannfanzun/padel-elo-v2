@@ -58,7 +58,15 @@ const PadelScheduleSchema = new mongoose.Schema({
       type: String,
       default: null
     }
-  ]
+  ],
+
+  // Ob die Spieler manuell sortiert wurden (nicht nach ELO)
+  // Wenn true, werden Spieler in der gespeicherten Reihenfolge angezeigt:
+  // [Court1_Team1_P1, Court1_Team1_P2, Court1_Team2_P1, Court1_Team2_P2, Court2_Team1_P1, ...]
+  manualOrder: {
+    type: Boolean,
+    default: false
+  }
 });
 
 // Middleware zum Aktualisieren von updatedAt

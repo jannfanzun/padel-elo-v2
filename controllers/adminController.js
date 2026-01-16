@@ -782,7 +782,7 @@ exports.getPadelSchedule = async (req, res) => {
       // Lade die Anzahl der Spiele für jeden Spieler (neue Spieler kommen in die schlechteste Gruppe)
       const playerIds = schedule.players.map(p => p._id);
       const gamesCountMap = await getPlayersGamesCount(playerIds);
-      scheduleCourts = generateScheduleMatchups(schedule.players, schedule.courtNames, gamesCountMap);
+      scheduleCourts = generateScheduleMatchups(schedule.players, schedule.courtNames, gamesCountMap, schedule.manualOrder || false);
     }
 
     res.render('admin/scheduleManagement', {
@@ -808,30 +808,46 @@ exports.getPadelSchedule = async (req, res) => {
  * @param {Array} players - Array von populated User-Objekten
  * @param {Array} courtNames - Array von Court-Namen
  * @param {Object} gamesCountMap - Map von Spieler-ID zu Anzahl Spiele (optional)
+ * @param {Boolean} manualOrder - Wenn true, wird die Spieler-Reihenfolge beibehalten (keine Sortierung)
  * @returns {Array} - Array von Court-Assignments
  */
-function generateScheduleMatchups(players, courtNames = [], gamesCountMap = null) {
+function generateScheduleMatchups(players, courtNames = [], gamesCountMap = null, manualOrder = false) {
   if (!players || players.length < 4 || players.length % 4 !== 0) {
     return null;
   }
 
-  // Sortiere Spieler: Normale nach ELO, neue Spieler (0 Spiele) ans Ende
-  let sortedPlayers;
-  if (gamesCountMap) {
-    sortedPlayers = sortPlayersForSchedule(players, gamesCountMap);
+  let orderedPlayers;
+
+  if (manualOrder) {
+    // Behalte die manuelle Reihenfolge bei
+    // Format: [Court1_Team1_P1, Court1_Team1_P2, Court1_Team2_P1, Court1_Team2_P2, Court2_Team1_P1, ...]
+    orderedPlayers = [...players];
   } else {
-    // Fallback: Einfache ELO-Sortierung wenn keine gamesCountMap vorhanden
-    sortedPlayers = [...players].sort((a, b) => b.eloRating - a.eloRating);
+    // Sortiere Spieler: Normale nach ELO, neue Spieler (0 Spiele) ans Ende
+    if (gamesCountMap) {
+      orderedPlayers = sortPlayersForSchedule(players, gamesCountMap);
+    } else {
+      // Fallback: Einfache ELO-Sortierung wenn keine gamesCountMap vorhanden
+      orderedPlayers = [...players].sort((a, b) => b.eloRating - a.eloRating);
+    }
   }
 
   const courts = [];
-  const numCourts = sortedPlayers.length / 4;
+  const numCourts = orderedPlayers.length / 4;
 
   for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {
-    const courtPlayers = sortedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
+    const courtPlayers = orderedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
 
-    const team1 = [courtPlayers[0], courtPlayers[3]];
-    const team2 = [courtPlayers[1], courtPlayers[2]];
+    let team1, team2;
+    if (manualOrder) {
+      // Bei manueller Reihenfolge: [0,1] = Team 1, [2,3] = Team 2
+      team1 = [courtPlayers[0], courtPlayers[1]];
+      team2 = [courtPlayers[2], courtPlayers[3]];
+    } else {
+      // Bei automatischer Sortierung: Stärkster+Schwächster vs Mitte
+      team1 = [courtPlayers[0], courtPlayers[3]];
+      team2 = [courtPlayers[1], courtPlayers[2]];
+    }
 
     const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
     const team2Elo = Math.round((team2[0].eloRating + team2[1].eloRating) / 2);
@@ -863,7 +879,7 @@ function generateScheduleMatchups(players, courtNames = [], gamesCountMap = null
 // @access  Private (Admin only)
 exports.savePadelSchedule = async (req, res) => {
   try {
-    const { players, startTime } = req.body;
+    const { players, startTime, manualOrder } = req.body;
 
     // Validate
     if (!players || !Array.isArray(players) || players.length === 0) {
@@ -897,12 +913,14 @@ exports.savePadelSchedule = async (req, res) => {
         startTime: startDate,
         createdBy: req.user._id,
         isPublished: false,
-        courtNames: courtNames || []
+        courtNames: courtNames || [],
+        manualOrder: manualOrder || false
       });
     } else {
       schedule.players = players;
       schedule.startTime = startDate;
       schedule.courtNames = courtNames || [];
+      schedule.manualOrder = manualOrder || false;
       schedule.updatedAt = new Date();
     }
 
@@ -1013,18 +1031,22 @@ exports.getActiveScheduleAPI = async (req, res) => {
       return res.json({ isPublished: false, schedule: null });
     }
 
-    // WICHTIG: Sortiere die Spieler wie in generateScheduleMatchups
-    // Neue Spieler (0 Spiele) kommen in die schlechteste Gruppe
+    // Spieler sortieren oder manuelle Reihenfolge beibehalten
     const playerIds = schedule.players.map(p => p._id);
     const gamesCountMap = await getPlayersGamesCount(playerIds);
-    const sortedPlayers = sortPlayersForSchedule(schedule.players, gamesCountMap);
+
+    // Wenn manualOrder true ist, behalte die gespeicherte Reihenfolge bei
+    // Format: [Court1_Team1_P1, Court1_Team1_P2, Court1_Team2_P1, Court1_Team2_P2, ...]
+    const orderedPlayers = schedule.manualOrder
+      ? [...schedule.players]  // Manuelle Reihenfolge beibehalten
+      : sortPlayersForSchedule(schedule.players, gamesCountMap);  // Nach ELO sortieren
 
     res.json({
       isPublished: true,
       schedule: {
         _id: schedule._id,
         startTime: schedule.startTime,
-        players: sortedPlayers.map(p => ({
+        players: orderedPlayers.map(p => ({
           username: p.username,
           eloRating: p.eloRating,
           profileImage: p.profileImage,
@@ -1032,7 +1054,8 @@ exports.getActiveScheduleAPI = async (req, res) => {
         })),
         publishedAt: schedule.publishedAt,
         publishedBy: schedule.publishedBy?.username,
-        courtNames: schedule.courtNames || []
+        courtNames: schedule.courtNames || [],
+        manualOrder: schedule.manualOrder || false
       }
     });
   } catch (error) {

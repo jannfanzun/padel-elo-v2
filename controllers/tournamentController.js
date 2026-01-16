@@ -232,11 +232,13 @@ function generateTournamentMatchups(players, gamesCountMap = {}) {
         team1: team1.map(player => ({
           username: sanitizeString(player.username),
           elo: player.elo,
+          userId: player.id?.toString() || null,
           isNewPlayer: (gamesCountMap[player.id?.toString()] || 0) === 0
         })),
         team2: team2.map(player => ({
           username: sanitizeString(player.username),
           elo: player.elo,
+          userId: player.id?.toString() || null,
           isNewPlayer: (gamesCountMap[player.id?.toString()] || 0) === 0
         })),
         team1Elo,

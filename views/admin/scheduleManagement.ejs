@@ -1,5 +1,8 @@
 <%- include('../partials/header') %>
 
+<!-- SortableJS for drag-and-drop player management -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 <div class="row justify-content-center">
   <div class="col-lg-10">
     <div class="card shadow border-0">
@@ -407,6 +410,73 @@
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-weight: bold;
+  }
+
+  /* Drag-and-Drop Styles */
+  .draggable-player {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .draggable-player:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+  }
+
+  .draggable-player:active {
+    cursor: grabbing;
+  }
+
+  .draggable-player.sortable-ghost {
+    opacity: 0.4;
+    background: #e7f1ff;
+  }
+
+  .draggable-player.sortable-chosen {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+  }
+
+  .draggable-player .drag-handle {
+    color: #adb5bd;
+    margin-right: 8px;
+  }
+
+  .team-dropzone {
+    min-height: 80px;
+    border: 2px dashed transparent;
+    border-radius: 8px;
+    padding: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .team-dropzone.sortable-drag-over {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+  }
+
+  .drag-hint {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .elo-warning {
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .elo-balanced {
+    color: #198754;
   }
 </style>
 
@@ -1013,71 +1083,191 @@ document.addEventListener('DOMContentLoaded', function() {
         // Generiere Court-Name-Selektoren
         generateCourtNameSelectors(courts.length);
 
-        const html = courts.map((court, index) => {
-            const courtNameInput = document.querySelector(`[data-court-index="${index}"]`);
-            const courtName = courtNameInput ? courtNameInput.value : '';
-            const displayName = courtName || `Platz ${index + 1}`;
-
-            const team1PlayersHTML = court.team1.map(player => `
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span><strong>${player.username}</strong>${player.isNewPlayer ? ' <span class="text-muted">(N)</span>' : ''}</span>
-                    <span class="badge bg-primary">${player.elo} ELO</span>
-                </div>
-            `).join('');
-
-            const team2PlayersHTML = court.team2.map(player => `
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span><strong>${player.username}</strong>${player.isNewPlayer ? ' <span class="text-muted">(N)</span>' : ''}</span>
-                    <span class="badge bg-primary">${player.elo} ELO</span>
-                </div>
-            `).join('');
-
-            return `
-            <div class="card court-card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-map-marker-alt me-2"></i>
-                        ${displayName}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-5">
-                            <div class="team-section">
-                                <h6 class="text-primary mb-2">Team 1</h6>
-                                ${team1PlayersHTML}
-                                <div class="mt-2 text-center">
-                                    <span class="badge bg-primary">Ø ${court.team1Elo} ELO</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-2 text-center">
-                            <div class="vs-badge">VS</div>
-                        </div>
-
-                        <div class="col-md-5">
-                            <div class="team-section">
-                                <h6 class="text-primary mb-2">Team 2</h6>
-                                ${team2PlayersHTML}
-                                <div class="mt-2 text-center">
-                                    <span class="badge bg-primary">Ø ${court.team2Elo} ELO</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center mt-3">
-                        <small class="text-muted">
-                            ELO-Differenz: ${Math.abs(court.team1Elo - court.team2Elo)} Punkte
-                        </small>
-                    </div>
-                </div>
+        const html = `
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Tipp:</strong> Du kannst Spieler per Drag & Drop zwischen Teams und Plätzen verschieben.
             </div>
-            `;
-        }).join('');
+            ${courts.map((court, index) => {
+                const team1PlayersHTML = court.team1.map(player => `
+                    <div class="draggable-player"
+                         data-username="${player.username}"
+                         data-elo="${player.elo}"
+                         data-userid="${player.userId || ''}"
+                         data-is-new="${player.isNewPlayer || false}">
+                        <div>
+                            <i class="fas fa-grip-vertical drag-handle"></i>
+                            <strong>${player.username}</strong>
+                            ${player.isNewPlayer ? '<span class="text-muted ms-1">(N)</span>' : ''}
+                        </div>
+                        <span class="badge bg-primary">${player.elo}</span>
+                    </div>
+                `).join('');
+
+                const team2PlayersHTML = court.team2.map(player => `
+                    <div class="draggable-player"
+                         data-username="${player.username}"
+                         data-elo="${player.elo}"
+                         data-userid="${player.userId || ''}"
+                         data-is-new="${player.isNewPlayer || false}">
+                        <div>
+                            <i class="fas fa-grip-vertical drag-handle"></i>
+                            <strong>${player.username}</strong>
+                            ${player.isNewPlayer ? '<span class="text-muted ms-1">(N)</span>' : ''}
+                        </div>
+                        <span class="badge bg-primary">${player.elo}</span>
+                    </div>
+                `).join('');
+
+                return `
+                <div class="card court-card mb-3" data-court-index="${index}">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Platz ${index + 1}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-stretch">
+                            <div class="col-md-5">
+                                <div class="team-section h-100">
+                                    <h6 class="text-primary mb-2">Team 1</h6>
+                                    <div class="team-dropzone" id="court-${index}-team1" data-court="${index}" data-team="team1">
+                                        ${team1PlayersHTML}
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team1-elo">Ø ${court.team1Elo} ELO</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2 text-center d-flex align-items-center justify-content-center">
+                                <div class="vs-badge">VS</div>
+                            </div>
+
+                            <div class="col-md-5">
+                                <div class="team-section h-100">
+                                    <h6 class="text-primary mb-2">Team 2</h6>
+                                    <div class="team-dropzone" id="court-${index}-team2" data-court="${index}" data-team="team2">
+                                        ${team2PlayersHTML}
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team2-elo">Ø ${court.team2Elo} ELO</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <small class="elo-diff-display" id="court-${index}-diff">
+                                ELO-Differenz: <span class="${Math.abs(court.team1Elo - court.team2Elo) > 100 ? 'elo-warning' : 'elo-balanced'}">${Math.abs(court.team1Elo - court.team2Elo)} Punkte</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('')}
+        `;
 
         container.innerHTML = html;
+
+        // Initialize Sortable for all team dropzones
+        initializeDragAndDrop();
+    }
+
+    // Initialize drag-and-drop functionality
+    function initializeDragAndDrop() {
+        const dropzones = document.querySelectorAll('.team-dropzone');
+
+        dropzones.forEach(dropzone => {
+            new Sortable(dropzone, {
+                group: 'players', // Allow dragging between all dropzones
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.draggable-player', // The whole element is draggable
+                onEnd: function(evt) {
+                    // Update the tournament data and recalculate ELOs
+                    updateTournamentFromDOM();
+                }
+            });
+        });
+    }
+
+    // Update generatedTournament from current DOM state and recalculate ELOs
+    function updateTournamentFromDOM() {
+        if (!generatedTournament) return;
+
+        generatedTournament.forEach((court, courtIndex) => {
+            const team1Zone = document.getElementById(`court-${courtIndex}-team1`);
+            const team2Zone = document.getElementById(`court-${courtIndex}-team2`);
+
+            if (team1Zone && team2Zone) {
+                // Get players from team 1
+                court.team1 = Array.from(team1Zone.querySelectorAll('.draggable-player')).map(el => ({
+                    username: el.dataset.username,
+                    elo: parseInt(el.dataset.elo),
+                    userId: el.dataset.userid,
+                    isNewPlayer: el.dataset.isNew === 'true'
+                }));
+
+                // Get players from team 2
+                court.team2 = Array.from(team2Zone.querySelectorAll('.draggable-player')).map(el => ({
+                    username: el.dataset.username,
+                    elo: parseInt(el.dataset.elo),
+                    userId: el.dataset.userid,
+                    isNewPlayer: el.dataset.isNew === 'true'
+                }));
+
+                // Recalculate ELO averages
+                court.team1Elo = court.team1.length > 0
+                    ? Math.round(court.team1.reduce((sum, p) => sum + p.elo, 0) / court.team1.length)
+                    : 0;
+                court.team2Elo = court.team2.length > 0
+                    ? Math.round(court.team2.reduce((sum, p) => sum + p.elo, 0) / court.team2.length)
+                    : 0;
+
+                // Update ELO displays
+                const team1EloBadge = document.getElementById(`court-${courtIndex}-team1-elo`);
+                const team2EloBadge = document.getElementById(`court-${courtIndex}-team2-elo`);
+                const diffDisplay = document.getElementById(`court-${courtIndex}-diff`);
+
+                if (team1EloBadge) team1EloBadge.textContent = `Ø ${court.team1Elo} ELO`;
+                if (team2EloBadge) team2EloBadge.textContent = `Ø ${court.team2Elo} ELO`;
+
+                const eloDiff = Math.abs(court.team1Elo - court.team2Elo);
+                if (diffDisplay) {
+                    diffDisplay.innerHTML = `ELO-Differenz: <span class="${eloDiff > 100 ? 'elo-warning' : 'elo-balanced'}">${eloDiff} Punkte</span>`;
+                }
+            }
+        });
+
+        // Also update the selectedPlayers array to match the new arrangement
+        updateSelectedPlayersFromTournament();
+    }
+
+    // Sync selectedPlayers with current tournament state
+    function updateSelectedPlayersFromTournament() {
+        if (!generatedTournament) return;
+
+        selectedPlayers = [];
+        generatedTournament.forEach(court => {
+            court.team1.forEach(p => {
+                selectedPlayers.push({
+                    username: p.username,
+                    elo: p.elo,
+                    userId: p.userId
+                });
+            });
+            court.team2.forEach(p => {
+                selectedPlayers.push({
+                    username: p.username,
+                    elo: p.elo,
+                    userId: p.userId
+                });
+            });
+        });
     }
 
     function resetTournament() {
@@ -1102,6 +1292,32 @@ document.addEventListener('DOMContentLoaded', function() {
             courtNames.push(value);
         });
 
+        // Extrahiere Spieler-IDs aus dem DOM in der richtigen Reihenfolge
+        // Format: [Court1_Team1_P1, Court1_Team1_P2, Court1_Team2_P1, Court1_Team2_P2, Court2_Team1_P1, ...]
+        const orderedPlayerIds = [];
+        if (generatedTournament && generatedTournament.length > 0) {
+            generatedTournament.forEach((court, courtIndex) => {
+                const team1Zone = document.getElementById(`court-${courtIndex}-team1`);
+                const team2Zone = document.getElementById(`court-${courtIndex}-team2`);
+
+                if (team1Zone && team2Zone) {
+                    // Hole Team 1 Spieler
+                    Array.from(team1Zone.querySelectorAll('.draggable-player')).forEach(el => {
+                        orderedPlayerIds.push(el.dataset.userid);
+                    });
+                    // Hole Team 2 Spieler
+                    Array.from(team2Zone.querySelectorAll('.draggable-player')).forEach(el => {
+                        orderedPlayerIds.push(el.dataset.userid);
+                    });
+                }
+            });
+        }
+
+        // Fallback auf selectedPlayers wenn DOM nicht verfügbar
+        const playerIds = orderedPlayerIds.length > 0
+            ? orderedPlayerIds
+            : selectedPlayers.map(p => p.userId);
+
         const publishBtn = document.getElementById('publishScheduleBtn');
         const originalText = publishBtn.innerHTML;
         publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Veröffentliche...';
@@ -1114,9 +1330,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    players: selectedPlayers.map(p => p.userId),
+                    players: playerIds,
                     startTime: startTimeInput.value,
-                    courtNames: courtNames
+                    courtNames: courtNames,
+                    manualOrder: true // Spieler wurden manuell angeordnet
                 })
             });
 
