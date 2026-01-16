@@ -1191,37 +1191,22 @@ exports.sendScheduleNotification = async (req, res) => {
       });
     }
 
-    // Generate matchups for the email
-    // Neue Spieler (0 Spiele) kommen in die schlechteste Gruppe
+    // Generate matchups for the email - respektiere manuelle Reihenfolge!
     const playerIds = schedule.players.map(p => p._id);
     const gamesCountMap = await getPlayersGamesCount(playerIds);
-    const sortedPlayers = sortPlayersForSchedule(schedule.players, gamesCountMap);
 
-    const courts = [];
-    const numCourts = sortedPlayers.length / 4;
+    // Verwende generateScheduleMatchups um konsistente Ergebnisse zu erhalten
+    const courts = generateScheduleMatchups(
+      schedule.players,
+      schedule.courtNames || [],
+      gamesCountMap,
+      schedule.manualOrder || false
+    );
 
-    for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {
-      const courtPlayers = sortedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
-
-      const team1 = [courtPlayers[0], courtPlayers[3]];
-      const team2 = [courtPlayers[1], courtPlayers[2]];
-
-      const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
-      const team2Elo = Math.round((team2[0].eloRating + team2[1].eloRating) / 2);
-
-      courts.push({
-        courtNumber: courtIndex + 1,
-        courtName: schedule.courtNames?.[courtIndex] || `Platz ${courtIndex + 1}`,
-        team1: team1.map(player => ({
-          username: player.username,
-          elo: player.eloRating
-        })),
-        team2: team2.map(player => ({
-          username: player.username,
-          elo: player.eloRating
-        })),
-        team1Elo,
-        team2Elo
+    if (!courts) {
+      return res.status(400).json({
+        success: false,
+        message: 'Fehler beim Generieren der Spielpaarungen für E-Mail'
       });
     }
 
