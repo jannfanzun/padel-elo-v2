@@ -751,11 +751,29 @@ exports.getPadelSchedule = async (req, res) => {
     // Get all users für Spieler-Auswahl
     const allUsers = await User.find({ isAdmin: false }).sort({ eloRating: -1 });
 
-    // Get the latest schedule (entweder veröffentlicht oder nur erstellt)
-    const schedule = await PadelSchedule.findOne()
-      .sort({ createdAt: -1 })
-      .populate('players', 'username eloRating')
-      .populate('createdBy publishedBy', 'username');
+    // Get the latest schedule - erst ohne populate um die originale ID-Reihenfolge zu erhalten
+    const scheduleRaw = await PadelSchedule.findOne()
+      .sort({ createdAt: -1 });
+
+    let schedule = null;
+    if (scheduleRaw) {
+      // Speichere die originale Reihenfolge der Spieler-IDs
+      const originalPlayerOrder = scheduleRaw.players.map(id => id.toString());
+
+      // Jetzt mit populate laden
+      schedule = await PadelSchedule.findById(scheduleRaw._id)
+        .populate('players', 'username eloRating')
+        .populate('createdBy publishedBy', 'username');
+
+      // WICHTIG: Stelle die originale Reihenfolge der Spieler wieder her
+      // (Mongoose populate garantiert nicht die Reihenfolge!)
+      if (schedule.players && schedule.players.length > 0) {
+        const playersMap = new Map(schedule.players.map(p => [p._id.toString(), p]));
+        schedule.players = originalPlayerOrder
+          .map(id => playersMap.get(id))
+          .filter(p => p); // Filter out any undefined
+      }
+    }
 
     // Prüfe ob veröffentlichter Schedule abgelaufen ist (3h nach Startzeit ODER nach 23:00 am Spieltag)
     if (schedule && schedule.isPublished && schedule.startTime) {
@@ -981,12 +999,28 @@ exports.publishPadelSchedule = async (req, res) => {
 // @access  Public
 exports.getActiveScheduleAPI = async (req, res) => {
   try {
-    const schedule = await PadelSchedule.findOne({ isPublished: true })
+    // Erst ohne populate laden um die originale ID-Reihenfolge zu erhalten
+    const scheduleRaw = await PadelSchedule.findOne({ isPublished: true });
+
+    if (!scheduleRaw) {
+      return res.json({ isPublished: false, schedule: null });
+    }
+
+    // Speichere die originale Reihenfolge der Spieler-IDs
+    const originalPlayerOrder = scheduleRaw.players.map(id => id.toString());
+
+    // Jetzt mit populate laden
+    const schedule = await PadelSchedule.findById(scheduleRaw._id)
       .populate('players', 'username eloRating profileImage')
       .populate('createdBy publishedBy', 'username');
 
-    if (!schedule) {
-      return res.json({ isPublished: false, schedule: null });
+    // WICHTIG: Stelle die originale Reihenfolge der Spieler wieder her
+    // (Mongoose populate garantiert nicht die Reihenfolge!)
+    if (schedule.players && schedule.players.length > 0) {
+      const playersMap = new Map(schedule.players.map(p => [p._id.toString(), p]));
+      schedule.players = originalPlayerOrder
+        .map(id => playersMap.get(id))
+        .filter(p => p); // Filter out any undefined
     }
 
     const now = new Date();
@@ -1179,16 +1213,31 @@ exports.deletePastPadelSchedules = async (req, res) => {
 // @access  Private (Admin only)
 exports.sendScheduleNotification = async (req, res) => {
   try {
-    // Get the latest schedule with populated players
-    const schedule = await PadelSchedule.findOne()
-      .sort({ createdAt: -1 })
-      .populate('players', 'username eloRating email');
+    // Erst ohne populate laden um die originale ID-Reihenfolge zu erhalten
+    const scheduleRaw = await PadelSchedule.findOne()
+      .sort({ createdAt: -1 });
 
-    if (!schedule || !schedule.players || schedule.players.length === 0) {
+    if (!scheduleRaw || !scheduleRaw.players || scheduleRaw.players.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Kein Spielplan mit Spielern gefunden'
       });
+    }
+
+    // Speichere die originale Reihenfolge der Spieler-IDs
+    const originalPlayerOrder = scheduleRaw.players.map(id => id.toString());
+
+    // Jetzt mit populate laden
+    const schedule = await PadelSchedule.findById(scheduleRaw._id)
+      .populate('players', 'username eloRating email');
+
+    // WICHTIG: Stelle die originale Reihenfolge der Spieler wieder her
+    // (Mongoose populate garantiert nicht die Reihenfolge!)
+    if (schedule.players && schedule.players.length > 0) {
+      const playersMap = new Map(schedule.players.map(p => [p._id.toString(), p]));
+      schedule.players = originalPlayerOrder
+        .map(id => playersMap.get(id))
+        .filter(p => p); // Filter out any undefined
     }
 
     // Generate matchups for the email - respektiere manuelle Reihenfolge!
