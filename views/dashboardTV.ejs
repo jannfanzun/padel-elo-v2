@@ -714,10 +714,18 @@
             // Erstelle Platz-Karten (wie in Schritt 3)
             for (let courtIndex = 0; courtIndex < courtCount; courtIndex++) {
                const playersOnCourt = schedule.players.slice(courtIndex * 4, (courtIndex + 1) * 4);
-               // WICHTIG: Verwende die gleiche Logik wie in generateScheduleMatchups (adminController.js)
-               // Team 1: Bester + Schlechtester, Team 2: Zweitbester + Zweitschlechtester
-               const team1 = [playersOnCourt[0], playersOnCourt[3]];
-               const team2 = [playersOnCourt[1], playersOnCourt[2]];
+
+               // Team-Zuweisung abhängig von manualOrder:
+               // - manualOrder=true: Reihenfolge [0,1] = Team1, [2,3] = Team2 (manuell angeordnet)
+               // - manualOrder=false: Reihenfolge [0,3] = Team1, [1,2] = Team2 (ELO-basiert)
+               let team1, team2;
+               if (schedule.manualOrder) {
+                  team1 = [playersOnCourt[0], playersOnCourt[1]];
+                  team2 = [playersOnCourt[2], playersOnCourt[3]];
+               } else {
+                  team1 = [playersOnCourt[0], playersOnCourt[3]];
+                  team2 = [playersOnCourt[1], playersOnCourt[2]];
+               }
 
                // Berechne Team-ELO Durchschnitt
                const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
