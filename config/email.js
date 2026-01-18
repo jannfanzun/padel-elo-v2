@@ -22,7 +22,7 @@ const sendRegistrationRequestEmail = async (request) => {
     const mailOptions = {
         from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
         to: process.env.ADMIN_EMAIL,
-        subject: '🥎 Neue Registrierungsanfrage',
+        subject: '🎾 Neue Registrierungsanfrage',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
             <h2 style="color: #0d6efd;">Neue Registrierungsanfrage</h2>
@@ -104,7 +104,7 @@ const mailOptions = {
         
         <p><strong>Wichtig:</strong> Nach jedem Spiel trägst du das Ergebnis im padELO System ein. So wird dein Ranking berechnet!</p>
         
-        <p>Viel Spass beim Spielen!🥎</p>
+        <p>Viel Spass beim Spielen!🎾</p>
         
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
         <p style="color: #6c757d; font-size: 0.9em; text-align: center;">
@@ -625,20 +625,20 @@ const sendScheduleNotificationEmail = async (schedule, courts) => {
       const mailOptions = {
         from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
         to: player.email,
-        subject: `padELO Spielplan - Heute um ${timeStr} Uhr`,
+        subject: `🎾 padELO Spielplan - Heute um ${timeStr} Uhr`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-            <h2 style="color: #0d6efd; text-align: center;">padELO Spielplan</h2>
+            <h2 style="color: #0d6efd; text-align: center;">🎾 padELO Spielplan</h2>
 
             <p>Hallo ${player.username},</p>
 
-            <p>Der Spielplan für heute ist verfügbar. Du bist dabei!</p>
+            <p>Der Spielplan für heute ist verfügbar. Du bist dabei! 🙌</p>
 
             <p style="font-size: 18px; text-align: center; margin: 25px 0;">
-              <strong>${dateStr} um ${timeStr} Uhr</strong>
+              📅 <strong>${dateStr} um ${timeStr} Uhr</strong>
             </p>
 
-            <h3 style="border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; color: #333;">Spielplan</h3>
+            <h3 style="border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; color: #333;">🏟️ Spielplan</h3>
             ${courtsHTML}
 
             <div style="text-align: center; margin: 30px 0;">
@@ -647,7 +647,7 @@ const sendScheduleNotificationEmail = async (schedule, courts) => {
               </a>
             </div>
 
-            <p style="text-align: center; color: #333;">Bis gleich auf dem Platz!</p>
+            <p style="text-align: center; color: #333;">Bis gleich auf dem Platz! 🎾💪</p>
 
             <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
             <p style="color: #6c757d; font-size: 0.9em; text-align: center;">
