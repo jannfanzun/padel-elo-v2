@@ -8,6 +8,7 @@ const PadelSchedule = require('../models/PadelSchedule');
 const moment = require('moment-timezone');
 const { sendRegistrationApprovedEmail, sendScheduleNotificationEmail } = require('../config/email');
 const { recalculateQuarterlyELO } = require('../utils/cronJobs');
+const { getShirtLevel, SHIRT_LEVELS } = require('../utils/shirtLevelUtils');
 
 
 /**
@@ -113,16 +114,16 @@ exports.getDashboard = async (req, res) => {
 exports.manageUsers = async (req, res) => {
   try {
     // Get query parameters
-    const { search, page = 1, limit = 10 } = req.query;
-    
+    const { search, page = 1, limit = 10, shirtLevel } = req.query;
+
     // Convert page and limit to numbers
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     const skip = (pageNum - 1) * limitNum;
-    
+
     // Build query
     let query = { isAdmin: false };
-    
+
     if (search) {
       query = {
         ...query,
@@ -132,23 +133,46 @@ exports.manageUsers = async (req, res) => {
         ]
       };
     }
-    
-    // Count total documents for pagination
-    const total = await User.countDocuments(query);
-    
+
+    // Get all matching users first (for shirt level filtering)
+    let allUsers = await User.find(query).sort({ username: 1 });
+
+    // Load games count for all users
+    const userIds = allUsers.map(u => u._id);
+    const gamesCountMap = await getPlayersGamesCount(userIds);
+
+    // Add shirt level info to each user
+    allUsers = allUsers.map(user => {
+      const gamesPlayed = gamesCountMap[user._id.toString()] || 0;
+      const shirtLevelInfo = getShirtLevel(gamesPlayed);
+      return {
+        ...user.toObject(),
+        gamesPlayed,
+        shirtLevel: shirtLevelInfo.level,
+        shirtColor: shirtLevelInfo.color
+      };
+    });
+
+    // Filter by shirt level if specified
+    if (shirtLevel && shirtLevel !== 'all') {
+      allUsers = allUsers.filter(user => user.shirtLevel === shirtLevel);
+    }
+
+    // Count total after filtering
+    const total = allUsers.length;
+
     // Calculate total pages
     const totalPages = Math.ceil(total / limitNum);
-    
-    // Get users with pagination
-    const users = await User.find(query)
-      .sort({ username: 1 })
-      .skip(skip)
-      .limit(limitNum);
-    
+
+    // Apply pagination
+    const users = allUsers.slice(skip, skip + limitNum);
+
     res.render('admin/users', {
       title: 'Spieler verwalten',
       users,
       search,
+      shirtLevel: shirtLevel || 'all',
+      shirtLevels: SHIRT_LEVELS,
       moment,
       success: req.query.success || null,
       error: req.query.error || null,
@@ -160,7 +184,7 @@ exports.manageUsers = async (req, res) => {
     });
   } catch (error) {
     console.error('Manage users error:', error);
-    res.status(500).render('error', { 
+    res.status(500).render('error', {
       title: 'Server Error',
       message: 'An error occurred while loading the users'
     });
@@ -204,6 +228,69 @@ exports.deleteUser = async (req, res) => {
   } catch (error) {
     console.error('Delete user error:', error);
     res.redirect('/admin/users?error=Server error');
+  }
+};
+
+// @desc    Toggle shirt distributed status for a user
+// @route   POST /admin/users/:id/toggle-shirt
+// @access  Private (Admin only)
+exports.toggleShirtDistributed = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { level } = req.body;
+
+    if (!level) {
+      return res.status(400).json({
+        success: false,
+        message: 'Trikotlevel ist erforderlich'
+      });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Benutzer nicht gefunden'
+      });
+    }
+
+    // Initialize shirtsDistributed if it doesn't exist
+    if (!user.shirtsDistributed) {
+      user.shirtsDistributed = [];
+    }
+
+    // Check if this level was already distributed
+    const existingIndex = user.shirtsDistributed.findIndex(s => s.level === level);
+
+    if (existingIndex >= 0) {
+      // Remove the distributed record (toggle off)
+      user.shirtsDistributed.splice(existingIndex, 1);
+      await user.save();
+      return res.json({
+        success: true,
+        distributed: false,
+        message: `${level}-Trikot wurde als nicht ausgeteilt markiert`
+      });
+    } else {
+      // Add the distributed record (toggle on)
+      user.shirtsDistributed.push({
+        level: level,
+        distributedAt: new Date()
+      });
+      await user.save();
+      return res.json({
+        success: true,
+        distributed: true,
+        message: `${level}-Trikot wurde als ausgeteilt markiert`
+      });
+    }
+  } catch (error) {
+    console.error('Toggle shirt distributed error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
   }
 };
 

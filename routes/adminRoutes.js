@@ -6,6 +6,7 @@ const {
   getDashboard,
   manageUsers,
   deleteUser,
+  toggleShirtDistributed,
   manageGames,
   deleteGame,
   getRegistrationRequests,
@@ -36,6 +37,7 @@ router.get('/dashboard', getDashboard);
 // User management routes
 router.get('/users', manageUsers);
 router.post('/users/:id/delete', deleteUser);
+router.post('/users/:id/toggle-shirt', toggleShirtDistributed);
 
 // Game management routes
 router.get('/games', manageGames);

@@ -55,7 +55,17 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpire: {
     type: Date,
     select: false
-  }
+  },
+  shirtsDistributed: [{
+    level: {
+      type: String,
+      required: true
+    },
+    distributedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 });
 
 // Encrypt password using bcrypt

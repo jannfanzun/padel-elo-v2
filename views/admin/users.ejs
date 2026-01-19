@@ -16,14 +16,24 @@
       <div class="card shadow-sm">
         <div class="card-header bg-white">
           <form method="GET" action="/admin/users" class="row g-2">
-            <div class="col-md-8">
+            <div class="col-md-5">
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                 <input type="text" class="form-control" name="search" placeholder="Suche nach Benutzername oder E-Mail" value="<%= search || '' %>">
               </div>
             </div>
+            <div class="col-md-3">
+              <select name="shirtLevel" class="form-select">
+                <option value="all" <%= shirtLevel === 'all' ? 'selected' : '' %>>Alle Trikotlevels</option>
+                <% shirtLevels.forEach(level => { %>
+                  <option value="<%= level.level %>" <%= shirtLevel === level.level ? 'selected' : '' %>>
+                    <%= level.level %> (<%= level.minGames %>+ Spiele)
+                  </option>
+                <% }) %>
+              </select>
+            </div>
             <div class="col-md-4 d-flex">
-              <button type="submit" class="btn btn-primary me-2">Suchen</button>
+              <button type="submit" class="btn btn-primary me-2">Filtern</button>
               <a href="/admin/users" class="btn btn-outline-secondary">Zurücksetzen</a>
             </div>
           </form>
@@ -59,26 +69,40 @@
                   <tr>
                     <th>Benutzername</th>
                     <th>E-Mail</th>
-                    <th>ELO-Wertung</th>
-                    <th>Registrierungsdatum</th>
-                    <th>Letzte Aktivität</th>
+                    <th>ELO</th>
+                    <th>Spiele</th>
+                    <th>Trikotlevel</th>
+                    <th>Trikot verteilt</th>
                     <th>Status</th>
                     <th>Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
                   <% users.forEach(user => { %>
-                    <% 
+                    <%
                       const sevenDaysAgo = new Date();
                       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
                       const isInactive = user.lastActivity < sevenDaysAgo;
+                      const shirtDistributed = user.shirtsDistributed && user.shirtsDistributed.find(s => s.level === user.shirtLevel);
                     %>
                     <tr>
                       <td><%= user.username %></td>
                       <td><%= user.email %></td>
                       <td><%= user.eloRating %></td>
-                      <td><%= moment(user.createdAt).format('MMM D, YYYY') %></td>
-                      <td><%= moment(user.lastActivity).fromNow() %></td>
+                      <td><%= user.gamesPlayed %></td>
+                      <td>
+                        <span class="badge" style="background-color: <%= user.shirtColor %>; <%= user.shirtColor === 'white' || user.shirtColor === 'yellow' ? 'color: #333;' : 'color: white;' %>">
+                          <%= user.shirtLevel %>
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm <%= shirtDistributed ? 'btn-success' : 'btn-outline-secondary' %> toggle-shirt-btn"
+                          data-user-id="<%= user._id %>"
+                          data-level="<%= user.shirtLevel %>"
+                          title="<%= shirtDistributed ? 'Ausgeteilt am ' + moment(shirtDistributed.distributedAt).format('DD.MM.YYYY') : 'Als ausgeteilt markieren' %>">
+                          <i class="fas <%= shirtDistributed ? 'fa-check' : 'fa-tshirt' %>"></i>
+                        </button>
+                      </td>
                       <td>
                         <% if (isInactive) { %>
                           <span class="badge bg-warning text-dark">Inaktiv</span>
@@ -90,14 +114,14 @@
                         <a href="/admin/games?userId=<%= user._id %>" class="btn btn-sm btn-outline-primary">
                           <i class="fas fa-history"></i>
                         </a>
-                        <button class="btn btn-sm btn-outline-danger" 
-                          data-bs-toggle="modal" 
+                        <button class="btn btn-sm btn-outline-danger"
+                          data-bs-toggle="modal"
                           data-bs-target="#deleteUserModal"
                           data-id="<%= user._id %>"
                           data-username="<%= user.username %>">
                           <i class="fas fa-trash"></i>
                         </button>
-                      </td>                      
+                      </td>
                     </tr>
                   <% }) %>
                 </tbody>
@@ -111,7 +135,7 @@
             <ul class="pagination justify-content-center mb-0">
               <% if (hasPrevPage) { %>
                 <li class="page-item">
-                  <a class="page-link" href="/admin/users?page=<%= currentPage - 1 %><%= search ? `&search=${search}` : '' %>">
+                  <a class="page-link" href="/admin/users?page=<%= currentPage - 1 %><%= search ? `&search=${search}` : '' %><%= shirtLevel !== 'all' ? `&shirtLevel=${shirtLevel}` : '' %>">
                     <i class="fas fa-chevron-left"></i> Zurück
                   </a>
                 </li>
@@ -131,7 +155,7 @@
               
               <% if (startPage > 1) { %>
                 <li class="page-item">
-                  <a class="page-link" href="/admin/users?page=1<%= search ? `&search=${search}` : '' %>">1</a>
+                  <a class="page-link" href="/admin/users?page=1<%= search ? `&search=${search}` : '' %><%= shirtLevel !== 'all' ? `&shirtLevel=${shirtLevel}` : '' %>">1</a>
                 </li>
                 <% if (startPage > 2) { %>
                   <li class="page-item disabled">
@@ -142,7 +166,7 @@
               
               <% for (let i = startPage; i <= endPage; i++) { %>
                 <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                  <a class="page-link" href="/admin/users?page=<%= i %><%= search ? `&search=${search}` : '' %>">
+                  <a class="page-link" href="/admin/users?page=<%= i %><%= search ? `&search=${search}` : '' %><%= shirtLevel !== 'all' ? `&shirtLevel=${shirtLevel}` : '' %>">
                     <%= i %>
                   </a>
                 </li>
@@ -155,7 +179,7 @@
                   </li>
                 <% } %>
                 <li class="page-item">
-                  <a class="page-link" href="/admin/users?page=<%= totalPages %><%= search ? `&search=${search}` : '' %>">
+                  <a class="page-link" href="/admin/users?page=<%= totalPages %><%= search ? `&search=${search}` : '' %><%= shirtLevel !== 'all' ? `&shirtLevel=${shirtLevel}` : '' %>">
                     <%= totalPages %>
                   </a>
                 </li>
@@ -163,7 +187,7 @@
               
               <% if (hasNextPage) { %>
                 <li class="page-item">
-                  <a class="page-link" href="/admin/users?page=<%= currentPage + 1 %><%= search ? `&search=${search}` : '' %>">
+                  <a class="page-link" href="/admin/users?page=<%= currentPage + 1 %><%= search ? `&search=${search}` : '' %><%= shirtLevel !== 'all' ? `&shirtLevel=${shirtLevel}` : '' %>">
                     Weiter <i class="fas fa-chevron-right"></i>
                   </a>
                 </li>
@@ -207,16 +231,58 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Delete user modal
     const deleteModal = document.getElementById('deleteUserModal');
     deleteModal.addEventListener('show.bs.modal', function(event) {
       const button = event.relatedTarget;
       const userId = button.getAttribute('data-id');
       const username = button.getAttribute('data-username');
-      
+
       document.getElementById('userToDelete').textContent = username;
-      
+
       const form = document.getElementById('deleteUserForm');
       form.action = `/admin/users/${userId}/delete`;
+    });
+
+    // Toggle shirt distributed buttons
+    document.querySelectorAll('.toggle-shirt-btn').forEach(button => {
+      button.addEventListener('click', async function() {
+        const userId = this.getAttribute('data-user-id');
+        const level = this.getAttribute('data-level');
+        const btn = this;
+
+        try {
+          const response = await fetch(`/admin/users/${userId}/toggle-shirt`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ level })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Update button appearance
+            if (data.distributed) {
+              btn.classList.remove('btn-outline-secondary');
+              btn.classList.add('btn-success');
+              btn.innerHTML = '<i class="fas fa-check"></i>';
+              btn.title = 'Ausgeteilt am ' + new Date().toLocaleDateString('de-CH');
+            } else {
+              btn.classList.remove('btn-success');
+              btn.classList.add('btn-outline-secondary');
+              btn.innerHTML = '<i class="fas fa-tshirt"></i>';
+              btn.title = 'Als ausgeteilt markieren';
+            }
+          } else {
+            alert('Fehler: ' + data.message);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Ein Fehler ist aufgetreten');
+        }
+      });
     });
   });
 </script>
