@@ -1,0 +1,375 @@
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2>Awards verwalten</h2>
+      <a href="/admin/dashboard" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Zum Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Automatische Award-Verteilung -->
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm border-primary">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Automatische Award-Verteilung</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          Verteilt automatisch die Awards für ein Quartal basierend auf: Beste ELO-Verbesserung, Meiste Spiele, Beste ELO-Wertung.
+          <br><small>Die automatische Verteilung erfolgt normalerweise am 1. Tag jedes neuen Quartals.</small>
+        </p>
+        <form id="autoDistributeForm" class="row g-3">
+          <div class="col-md-4">
+            <label for="autoQuarterYear" class="form-label">Quartal wählen</label>
+            <select class="form-select" id="autoQuarterYear" name="autoQuarterYear" required>
+              <% availableQuarters.forEach(q => { %>
+                <option value="<%= q.quarter %>|<%= q.year %>"><%= q.label %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-bolt me-2"></i>Awards automatisch verteilen
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Award manuell vergeben -->
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-award me-2"></i>Award manuell vergeben</h5>
+      </div>
+      <div class="card-body">
+        <form id="grantAwardForm" class="row g-3">
+          <div class="col-md-3">
+            <label for="playerSearch" class="form-label">Spieler suchen</label>
+            <div class="position-relative">
+              <input type="text" class="form-control" id="playerSearch" placeholder="Name eingeben..." autocomplete="off">
+              <input type="hidden" id="userId" name="userId" required>
+              <div id="playerSearchResults" class="list-group position-absolute w-100 shadow" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label for="awardType" class="form-label">Award-Typ</label>
+            <select class="form-select" id="awardType" name="awardType" required>
+              <option value="">Award wählen...</option>
+              <% Object.keys(awardTypes).forEach(key => { %>
+                <option value="<%= key %>"><%= awardTypes[key].emoji %> <%= awardTypes[key].name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="quarterYear" class="form-label">Quartal</label>
+            <select class="form-select" id="quarterYear" name="quarterYear" required>
+              <% availableQuarters.forEach(q => { %>
+                <option value="<%= q.quarter %>|<%= q.year %>"><%= q.label %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-success w-100">
+              <i class="fas fa-plus me-2"></i>Award vergeben
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden player data for search -->
+<script>
+  const allPlayers = [
+    <% users.forEach((user, index) => { %>
+      { id: '<%= user._id %>', name: '<%= user.username %>' }<%= index < users.length - 1 ? ',' : '' %>
+    <% }) %>
+  ];
+</script>
+
+<!-- Award-Typen Legende -->
+<div class="row mb-4">
+  <% Object.keys(awardTypes).forEach(key => { %>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center">
+          <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: <%= awardTypes[key].color %>;">
+            <i class="fas <%= awardTypes[key].icon %> text-white" style="font-size: 1.4rem;"></i>
+          </div>
+          <div>
+            <h6 class="mb-1"><%= awardTypes[key].name %></h6>
+            <small class="text-muted"><%= awardTypes[key].description %></small>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<!-- Vergebene Awards -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card shadow">
+      <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Vergebene Awards</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Spieler</th>
+                <th>Awards</th>
+              </tr>
+            </thead>
+            <tbody id="awardsTableBody">
+              <%
+                const usersWithAwards = users.filter(u => u.awards && u.awards.length > 0);
+                if (usersWithAwards.length === 0) {
+              %>
+                <tr>
+                  <td colspan="2" class="text-center py-4 text-muted">
+                    Noch keine Awards vergeben.
+                  </td>
+                </tr>
+              <% } else {
+                usersWithAwards.forEach(user => { %>
+                <tr>
+                  <td><strong><%= user.username %></strong></td>
+                  <td>
+                    <% user.awards.forEach(award => {
+                      const info = getAwardInfo(award.type);
+                      if (info) { %>
+                        <span class="badge me-1 mb-1 award-badge"
+                              style="background-color: <%= info.color %>; cursor: pointer;"
+                              data-user-id="<%= user._id %>"
+                              data-award-type="<%= award.type %>"
+                              data-quarter="<%= award.quarter %>"
+                              data-year="<%= award.year %>"
+                              data-bs-toggle="tooltip"
+                              title="<%= info.name %> - <%= award.quarter %> <%= award.year %> (Klicken zum Entfernen)">
+                          <i class="fas <%= info.icon %> me-1"></i><%= award.quarter %> <%= award.year %>
+                        </span>
+                    <% }
+                    }) %>
+                  </td>
+                </tr>
+              <% })
+              } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bestätigungs-Modal -->
+<div class="modal fade" id="removeAwardModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Award entfernen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+      </div>
+      <div class="modal-body">
+        <p>Möchtest du diesen Award wirklich entfernen?</p>
+        <p id="removeAwardDetails" class="fw-bold"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-danger" id="confirmRemoveAward">
+          <i class="fas fa-trash me-2"></i>Entfernen
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize tooltips
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Player search functionality
+  const playerSearch = document.getElementById('playerSearch');
+  const playerSearchResults = document.getElementById('playerSearchResults');
+  const userIdInput = document.getElementById('userId');
+
+  playerSearch.addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase().trim();
+
+    if (searchTerm.length < 1) {
+      playerSearchResults.style.display = 'none';
+      return;
+    }
+
+    const filteredPlayers = allPlayers.filter(player =>
+      player.name.toLowerCase().includes(searchTerm)
+    ).slice(0, 10);
+
+    if (filteredPlayers.length === 0) {
+      playerSearchResults.innerHTML = '<div class="list-group-item text-muted">Keine Spieler gefunden</div>';
+    } else {
+      playerSearchResults.innerHTML = filteredPlayers.map(player =>
+        `<button type="button" class="list-group-item list-group-item-action" data-id="${player.id}" data-name="${player.name}">${player.name}</button>`
+      ).join('');
+    }
+
+    playerSearchResults.style.display = 'block';
+  });
+
+  playerSearchResults.addEventListener('click', function(e) {
+    if (e.target.classList.contains('list-group-item-action')) {
+      const playerId = e.target.dataset.id;
+      const playerName = e.target.dataset.name;
+
+      playerSearch.value = playerName;
+      userIdInput.value = playerId;
+      playerSearchResults.style.display = 'none';
+    }
+  });
+
+  // Hide results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!playerSearch.contains(e.target) && !playerSearchResults.contains(e.target)) {
+      playerSearchResults.style.display = 'none';
+    }
+  });
+
+  // Auto distribute form
+  document.getElementById('autoDistributeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const quarterYear = document.getElementById('autoQuarterYear').value.split('|');
+    const quarter = quarterYear[0];
+    const year = quarterYear[1];
+
+    if (!confirm(`Awards für ${quarter} ${year} automatisch verteilen?\n\nDies vergibt Awards an:\n- Beste ELO-Verbesserung\n- Meiste Spiele\n- Beste ELO-Wertung`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/admin/awards/auto-distribute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ quarter, year })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Fehler: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Ein Fehler ist aufgetreten');
+    }
+  });
+
+  // Grant award form
+  document.getElementById('grantAwardForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const userId = document.getElementById('userId').value;
+    const awardType = document.getElementById('awardType').value;
+    const quarterYear = document.getElementById('quarterYear').value.split('|');
+    const quarter = quarterYear[0];
+    const year = quarterYear[1];
+
+    if (!userId) {
+      alert('Bitte wähle einen Spieler aus');
+      return;
+    }
+
+    try {
+      const response = await fetch('/admin/awards/grant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, awardType, quarter, year })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Fehler: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Ein Fehler ist aufgetreten');
+    }
+  });
+
+  // Remove award - click handler
+  let awardToRemove = null;
+  const removeModal = new bootstrap.Modal(document.getElementById('removeAwardModal'));
+
+  document.querySelectorAll('.award-badge').forEach(badge => {
+    badge.addEventListener('click', function() {
+      awardToRemove = {
+        userId: this.dataset.userId,
+        awardType: this.dataset.awardType,
+        quarter: this.dataset.quarter,
+        year: this.dataset.year
+      };
+
+      document.getElementById('removeAwardDetails').textContent =
+        `${this.title}`;
+
+      removeModal.show();
+    });
+  });
+
+  document.getElementById('confirmRemoveAward').addEventListener('click', async function() {
+    if (!awardToRemove) return;
+
+    try {
+      const response = await fetch('/admin/awards/remove', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(awardToRemove)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        removeModal.hide();
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Fehler: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Ein Fehler ist aufgetreten');
+    }
+  });
+});
+</script>
+
+<%- include('../partials/footer') %>

@@ -92,8 +92,8 @@
     <!-- Profile Image -->
     <div class="me-2">
       <% if (ranking.user.profileImage) { %>
-        <img src="<%= ranking.user.profileImage %>" 
-             alt="<%= ranking.user.username %>" 
+        <img src="<%= ranking.user.profileImage %>"
+             alt="<%= ranking.user.username %>"
              class="rounded-circle"
              style="width: 32px; height: 32px; object-fit: cover;">
       <% } else { %>
@@ -102,7 +102,19 @@
     </div>
     <!-- Username and Badges -->
     <div>
-      <strong><%= ranking.user.username %></strong>
+      <strong><%= ranking.user.username %></strong><% if (ranking.alltimeGames === 0) { %> <span class="text-muted">(N)</span><% } %>
+      <% if (ranking.user.awards && ranking.user.awards.length > 0) { %>
+        <span class="ms-1">
+          <% ranking.user.awards.forEach(award => {
+            const info = getAwardInfo(award.type);
+            if (info) { %>
+              <span class="badge" style="background-color: <%= info.color %>; font-size: 0.7rem; padding: 2px 4px;" title="<%= info.name %> - <%= award.quarter %> <%= award.year %>">
+                <i class="fas <%= info.icon %>"></i>
+              </span>
+          <% }
+          }) %>
+        </span>
+      <% } %>
       <% if (ranking.isInactive) { %>
         <span class="badge bg-warning text-dark ms-1 small">Inaktiv</span>
       <% } %>

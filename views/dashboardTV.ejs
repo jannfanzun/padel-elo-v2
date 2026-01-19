@@ -366,6 +366,18 @@
                                           <% } %>
                                        </div>
                                        <strong><%= ranking.user.username %></strong>
+                                       <% if (ranking.user.awards && ranking.user.awards.length > 0) { %>
+                                         <span class="ms-1">
+                                           <% ranking.user.awards.forEach(award => {
+                                             const info = getAwardInfo(award.type);
+                                             if (info) { %>
+                                               <span class="badge" style="background-color: <%= info.color %>; font-size: 0.6rem; padding: 2px 3px;" title="<%= info.name %> - <%= award.quarter %> <%= award.year %>">
+                                                 <i class="fas <%= info.icon %>"></i>
+                                               </span>
+                                           <% }
+                                           }) %>
+                                         </span>
+                                       <% } %>
                                     </div>
                                  </td>
                                  <td class="text-start"><strong><%= ranking.alltimeGames %></strong></td>

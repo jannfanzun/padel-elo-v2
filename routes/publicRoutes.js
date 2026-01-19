@@ -6,6 +6,7 @@ const QuarterlyELO = require('../models/QuarterlyELO');
 const { protect } = require('../middleware/authMiddleware');
 const { ensureAllUsersHaveQuarterlyRecords } = require('../utils/quarterlyEloUtils');
 const { getActiveScheduleAPI } = require('../controllers/adminController');
+const { getAwardInfo } = require('../utils/awardUtils');
 
 // @desc    Home page with rankings
 // @route   GET /
@@ -232,8 +233,8 @@ router.get('/about', (req, res) => {
 
 router.get('/dashboardTV', async (req, res) => {
   try {
-    // Get all users sorted by ELO rating (descending)
-    const users = await User.find({ isAdmin: false }).sort({ eloRating: -1 });
+    // Get all users sorted by ELO rating (descending) - include awards
+    const users = await User.find({ isAdmin: false }).sort({ eloRating: -1 }).select('username eloRating lastActivity profileImage awards');
 
     // Get current quarter information for stats calculation
     const now = new Date();
@@ -400,7 +401,8 @@ router.get('/dashboardTV', async (req, res) => {
       recentGames,
       topImprovement,
       mostGames,
-      user: null // Always null for public access
+      user: null, // Always null for public access
+      getAwardInfo
     });
   } catch (error) {
     console.error('Dashboard TV error:', error);

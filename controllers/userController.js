@@ -3,6 +3,7 @@ const Game = require('../models/Game');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const moment = require('moment-timezone');
 const { ensureAllUsersHaveQuarterlyRecords } = require('../utils/quarterlyEloUtils');
+const { getAwardInfo, getAllAwardTypes } = require('../utils/awardUtils');
 
 // @desc    Show user profile
 // @route   GET /user/profile
@@ -10,9 +11,9 @@ const { ensureAllUsersHaveQuarterlyRecords } = require('../utils/quarterlyEloUti
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    
-    // Get user with rank
-    const user = req.user;
+
+    // Get user with awards (req.user might not have awards populated)
+    const user = await User.findById(userId).select('-password');
     const rank = await user.getRank();
     
     // Get recent games
@@ -120,7 +121,8 @@ exports.getProfile = async (req, res) => {
         nextLevelGames,
         nextLevelName
       },
-      moment
+      moment,
+      getAwardInfo
     });
   } catch (error) {
     console.error('Get profile error:', error);
@@ -153,7 +155,7 @@ exports.getRankings = async (req, res) => {
     // Get all users (excluding admin)
     const users = await User.find({ isAdmin: false })
       .sort({ eloRating: -1 })
-      .select('username eloRating lastActivity profileImage');
+      .select('username eloRating lastActivity profileImage awards');
     
     // Get all quarterly ELO records for current quarter
     const quarterlyELORecords = await QuarterlyELO.find({
@@ -317,7 +319,8 @@ exports.getRankings = async (req, res) => {
       rankings,
       rankingType,
       quarterName,
-      user: req.user
+      user: req.user,
+      getAwardInfo
     });
   } catch (error) {
     console.error('Get rankings error:', error);

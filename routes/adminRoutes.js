@@ -6,6 +6,7 @@ const {
   getDashboard,
   manageUsers,
   deleteUser,
+  toggleShirtDistributed,
   manageGames,
   deleteGame,
   getRegistrationRequests,
@@ -20,7 +21,14 @@ const {
   savePadelSchedule,
   publishPadelSchedule,
   deletePadelSchedule,
-  getActiveScheduleAPI
+  deletePastPadelSchedules,
+  updatePadelScheduleStartTime,
+  getActiveScheduleAPI,
+  sendScheduleNotification,
+  getAwardsPage,
+  grantAward,
+  removeAward,
+  autoDistributeAwards
 } = require('../controllers/adminController');
 
 // Apply admin protection to all routes
@@ -33,6 +41,7 @@ router.get('/dashboard', getDashboard);
 // User management routes
 router.get('/users', manageUsers);
 router.post('/users/:id/delete', deleteUser);
+router.post('/users/:id/toggle-shirt', toggleShirtDistributed);
 
 // Game management routes
 router.get('/games', manageGames);
@@ -52,11 +61,19 @@ router.get('/email-export', getEmailExport);
 router.post('/reset-system', adminLimiter, resetSystem);
 router.post('/recalculate-elo', adminLimiter, recalculateELO);
 
-// Padel Schedule routes
+// Padel Schedule routes - WICHTIG: Spezifische Routen MÜSSEN vor :id Routen kommen!
 router.get('/padel-schedule', getPadelSchedule);
 router.post('/padel-schedule/save', savePadelSchedule);
 router.post('/padel-schedule/publish', publishPadelSchedule);
+router.post('/padel-schedule/notify', sendScheduleNotification);  // E-Mail an alle Spieler
+router.delete('/padel-schedule/past', deletePastPadelSchedules);  // Muss vor /:id kommen!
+router.put('/padel-schedule/:id/start-time', updatePadelScheduleStartTime);
 router.delete('/padel-schedule/:id', deletePadelSchedule);
 
+// Award routes
+router.get('/awards', getAwardsPage);
+router.post('/awards/grant', grantAward);
+router.post('/awards/remove', removeAward);
+router.post('/awards/auto-distribute', autoDistributeAwards);
 
 module.exports = router;

@@ -1,26 +1,17 @@
-const { ensureAllUsersHaveQuarterlyRecords } = require('./quarterlyEloUtils');
+const { ensureAllUsersHaveQuarterlyRecords, getQuarterlyReportData } = require('./quarterlyEloUtils');
+const { sendQuarterlyReportEmail } = require('../config/email');
 const { checkInactiveUsers } = require('./inactivityCheck');
 const User = require('../models/User');
 const Game = require('../models/Game');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const { calculateEloForMatch } = require('./eloCalculator');
+const { getAwardInfo } = require('./awardUtils');
 
 const initCronJobs = (app) => {
-  /*
-  // Check if this is a development environment
-  const isDev = process.env.NODE_ENV !== 'production';
-  
   // Schedule jobs
   scheduleDailyJobs();
-  
-  if (isDev) {
-    console.log('Cron jobs initialized in development mode');
-  } else {
-    console.log('Cron jobs initialized in production mode');
-  }
-  */
-  
-  console.log('Cron jobs sind deaktiviert');
+
+  console.log('Cron jobs aktiviert - Quarterly Report wird am 1. Jan/Apr/Jul/Okt gesendet');
 };
 
 /**
@@ -35,8 +26,15 @@ const scheduleDailyJobs = () => {
     // Check if today is the first day of a new quarter
     if (isFirstDayOfQuarter(now)) {
       console.log('First day of a new quarter detected, initializing quarterly ELO records');
+
+      // Distribute awards for the previous quarter BEFORE sending report
+      await distributeQuarterlyAwards(getPreviousQuarter(now));
+
+      // Send quarterly report email for the previous quarter before initializing new records
+      await sendQuarterlyReport(getPreviousQuarter(now));
+
       await updateQuarterlyELORecords();
-      
+
       // Add ELO recalculation for the previous quarter
       // console.log('Performing automatic ELO recalculation for the previous quarter');
       // await recalculateQuarterlyELO(getPreviousQuarter(now));
@@ -116,6 +114,168 @@ const updateQuarterlyELORecords = async () => {
     console.log('Quarterly ELO records updated successfully');
   } catch (error) {
     console.error('Error updating quarterly ELO records:', error);
+  }
+};
+
+/**
+ * Automatically distribute quarterly awards
+ * Awards: best_improvement, most_games, best_elo
+ * @param {Object} quarterInfo - Object with year and quarter
+ */
+const distributeQuarterlyAwards = async (quarterInfo) => {
+  try {
+    const { year, quarter } = quarterInfo;
+    const quarterLabel = `Q${quarter + 1}`;
+    console.log(`Distributing awards for ${quarterLabel}/${year}`);
+
+    // Calculate quarter start and end dates
+    const quarterStart = new Date(year, quarter * 3, 1);
+    const quarterEnd = new Date(year, (quarter + 1) * 3, 0, 23, 59, 59, 999);
+
+    // Get all users (excluding admin)
+    const users = await User.find({ isAdmin: false });
+
+    if (users.length === 0) {
+      console.log('No users found for award distribution');
+      return;
+    }
+
+    // Get quarterly ELO records
+    const quarterlyRecords = await QuarterlyELO.find({ year, quarter });
+    const quarterlyELOMap = new Map();
+    quarterlyRecords.forEach(record => {
+      quarterlyELOMap.set(record.user.toString(), record.startELO);
+    });
+
+    // Get all games in this quarter
+    const quarterGames = await Game.find({
+      createdAt: { $gte: quarterStart, $lte: quarterEnd }
+    });
+
+    // Calculate stats for each user
+    const userStats = [];
+
+    for (const user of users) {
+      const userId = user._id.toString();
+      const startELO = quarterlyELOMap.get(userId) || user.eloRating;
+      const eloImprovement = user.eloRating - startELO;
+
+      // Count games in quarter
+      let quarterlyGames = 0;
+      quarterGames.forEach(game => {
+        const inTeam1 = game.team1.some(p => p.player.toString() === userId);
+        const inTeam2 = game.team2.some(p => p.player.toString() === userId);
+        if (inTeam1 || inTeam2) {
+          quarterlyGames++;
+        }
+      });
+
+      userStats.push({
+        user,
+        eloImprovement,
+        quarterlyGames,
+        currentElo: user.eloRating
+      });
+    }
+
+    // Find winners for each category
+    const awardsToGrant = [];
+
+    // 1. Best Improvement (highest positive ELO change)
+    const bestImprovement = userStats
+      .filter(s => s.eloImprovement > 0 && s.quarterlyGames > 0)
+      .sort((a, b) => b.eloImprovement - a.eloImprovement)[0];
+
+    if (bestImprovement) {
+      awardsToGrant.push({
+        user: bestImprovement.user,
+        type: 'best_improvement',
+        value: bestImprovement.eloImprovement
+      });
+    }
+
+    // 2. Most Games
+    const mostGames = userStats
+      .filter(s => s.quarterlyGames > 0)
+      .sort((a, b) => b.quarterlyGames - a.quarterlyGames)[0];
+
+    if (mostGames) {
+      awardsToGrant.push({
+        user: mostGames.user,
+        type: 'most_games',
+        value: mostGames.quarterlyGames
+      });
+    }
+
+    // 3. Best ELO (highest ELO at end of quarter)
+    const bestElo = userStats
+      .filter(s => s.quarterlyGames > 0) // Only players who played at least 1 game
+      .sort((a, b) => b.currentElo - a.currentElo)[0];
+
+    if (bestElo) {
+      awardsToGrant.push({
+        user: bestElo.user,
+        type: 'best_elo',
+        value: bestElo.currentElo
+      });
+    }
+
+    // Grant awards
+    for (const award of awardsToGrant) {
+      // Check if user already has this award for this quarter
+      const existingAward = award.user.awards?.find(
+        a => a.type === award.type && a.quarter === quarterLabel && a.year === year
+      );
+
+      if (!existingAward) {
+        if (!award.user.awards) {
+          award.user.awards = [];
+        }
+
+        award.user.awards.push({
+          type: award.type,
+          quarter: quarterLabel,
+          year: year,
+          awardedAt: new Date()
+        });
+
+        await award.user.save();
+
+        const awardInfo = getAwardInfo(award.type);
+        console.log(`Awarded "${awardInfo.name}" to ${award.user.username} (${award.value}) for ${quarterLabel}/${year}`);
+      } else {
+        console.log(`${award.user.username} already has ${award.type} award for ${quarterLabel}/${year}`);
+      }
+    }
+
+    console.log(`Award distribution for ${quarterLabel}/${year} completed`);
+  } catch (error) {
+    console.error('Error distributing quarterly awards:', error);
+  }
+};
+
+/**
+ * Send quarterly report email to admin
+ * @param {Object} quarterInfo - Object with year and quarter
+ */
+const sendQuarterlyReport = async (quarterInfo) => {
+  try {
+    const { year, quarter } = quarterInfo;
+    console.log(`Generating quarterly report for Q${quarter + 1}/${year}`);
+
+    // Get report data
+    const reportData = await getQuarterlyReportData(year, quarter);
+
+    if (reportData.players.length === 0) {
+      console.log(`No players found for Q${quarter + 1}/${year}, skipping report email`);
+      return;
+    }
+
+    // Send email to admin
+    await sendQuarterlyReportEmail(reportData);
+    console.log(`Quarterly report email sent for Q${quarter + 1}/${year}`);
+  } catch (error) {
+    console.error('Error sending quarterly report:', error);
   }
 };
 
@@ -262,5 +422,8 @@ function recalculateGameELO(playersInfo, score) {
 
 module.exports = {
   initCronJobs,
-  recalculateQuarterlyELO  // Export this so it can be used by the admin controller
+  recalculateQuarterlyELO,      // Export this so it can be used by the admin controller
+  sendQuarterlyReport,          // Export for manual triggering by admin
+  getPreviousQuarter,           // Export for use in admin controller
+  distributeQuarterlyAwards     // Export for manual triggering by admin
 };

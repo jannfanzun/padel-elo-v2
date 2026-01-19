@@ -6,9 +6,67 @@ const GameReport = require('../models/GameReport');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const PadelSchedule = require('../models/PadelSchedule');
 const moment = require('moment-timezone');
-const { sendRegistrationApprovedEmail } = require('../config/email');
-const { recalculateQuarterlyELO } = require('../utils/cronJobs');
+const { sendRegistrationApprovedEmail, sendScheduleNotificationEmail } = require('../config/email');
+const { recalculateQuarterlyELO, distributeQuarterlyAwards } = require('../utils/cronJobs');
+const { getShirtLevel, SHIRT_LEVELS } = require('../utils/shirtLevelUtils');
+const { getAllAwardTypes, getAvailableQuarters, getAwardInfo } = require('../utils/awardUtils');
 
+
+/**
+ * Lädt die Anzahl der gespielten Spiele für eine Liste von Spielern
+ * @param {Array} playerIds - Array von Spieler-IDs
+ * @returns {Object} - Map von Spieler-ID zu Anzahl Spiele
+ */
+async function getPlayersGamesCount(playerIds) {
+  const gamesCountMap = {};
+
+  // Initialisiere alle mit 0
+  playerIds.forEach(id => {
+    gamesCountMap[id.toString()] = 0;
+  });
+
+  // Zähle Spiele für jeden Spieler einzeln (einfach und zuverlässig)
+  for (const playerId of playerIds) {
+    const count = await Game.countDocuments({
+      $or: [
+        { 'team1.player': playerId },
+        { 'team2.player': playerId }
+      ]
+    });
+    gamesCountMap[playerId.toString()] = count;
+  }
+
+  return gamesCountMap;
+}
+
+/**
+ * Sortiert Spieler für den Spielplan:
+ * - Normale Spieler: Nach ELO (höchste zuerst)
+ * - Neue Spieler (0 Spiele): Werden ans Ende sortiert (in die schlechteste Gruppe)
+ * @param {Array} players - Array von Spieler-Objekten mit _id und eloRating
+ * @param {Object} gamesCountMap - Map von Spieler-ID zu Anzahl Spiele
+ * @returns {Array} - Sortiertes Array von Spielern
+ */
+function sortPlayersForSchedule(players, gamesCountMap) {
+  return [...players].sort((a, b) => {
+    const aId = a._id.toString();
+    const bId = b._id.toString();
+    const aGames = gamesCountMap[aId] || 0;
+    const bGames = gamesCountMap[bId] || 0;
+
+    // Wenn beide neu sind (0 Spiele), sortiere nach ELO untereinander
+    if (aGames === 0 && bGames === 0) {
+      return b.eloRating - a.eloRating;
+    }
+
+    // Neue Spieler (0 Spiele) kommen ans Ende
+    if (aGames === 0) return 1;
+    if (bGames === 0) return -1;
+
+    // Normale Sortierung nach ELO (höchste zuerst)
+    return b.eloRating - a.eloRating;
+  });
+}
 
 // @desc    Admin dashboard
 // @route   GET /admin/dashboard
@@ -57,16 +115,16 @@ exports.getDashboard = async (req, res) => {
 exports.manageUsers = async (req, res) => {
   try {
     // Get query parameters
-    const { search, page = 1, limit = 10 } = req.query;
-    
+    const { search, page = 1, limit = 10, shirtLevel } = req.query;
+
     // Convert page and limit to numbers
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     const skip = (pageNum - 1) * limitNum;
-    
+
     // Build query
     let query = { isAdmin: false };
-    
+
     if (search) {
       query = {
         ...query,
@@ -76,23 +134,46 @@ exports.manageUsers = async (req, res) => {
         ]
       };
     }
-    
-    // Count total documents for pagination
-    const total = await User.countDocuments(query);
-    
+
+    // Get all matching users first (for shirt level filtering)
+    let allUsers = await User.find(query).sort({ username: 1 });
+
+    // Load games count for all users
+    const userIds = allUsers.map(u => u._id);
+    const gamesCountMap = await getPlayersGamesCount(userIds);
+
+    // Add shirt level info to each user
+    allUsers = allUsers.map(user => {
+      const gamesPlayed = gamesCountMap[user._id.toString()] || 0;
+      const shirtLevelInfo = getShirtLevel(gamesPlayed);
+      return {
+        ...user.toObject(),
+        gamesPlayed,
+        shirtLevel: shirtLevelInfo.level,
+        shirtColor: shirtLevelInfo.color
+      };
+    });
+
+    // Filter by shirt level if specified
+    if (shirtLevel && shirtLevel !== 'all') {
+      allUsers = allUsers.filter(user => user.shirtLevel === shirtLevel);
+    }
+
+    // Count total after filtering
+    const total = allUsers.length;
+
     // Calculate total pages
     const totalPages = Math.ceil(total / limitNum);
-    
-    // Get users with pagination
-    const users = await User.find(query)
-      .sort({ username: 1 })
-      .skip(skip)
-      .limit(limitNum);
-    
+
+    // Apply pagination
+    const users = allUsers.slice(skip, skip + limitNum);
+
     res.render('admin/users', {
       title: 'Spieler verwalten',
       users,
       search,
+      shirtLevel: shirtLevel || 'all',
+      shirtLevels: SHIRT_LEVELS,
       moment,
       success: req.query.success || null,
       error: req.query.error || null,
@@ -104,7 +185,7 @@ exports.manageUsers = async (req, res) => {
     });
   } catch (error) {
     console.error('Manage users error:', error);
-    res.status(500).render('error', { 
+    res.status(500).render('error', {
       title: 'Server Error',
       message: 'An error occurred while loading the users'
     });
@@ -148,6 +229,69 @@ exports.deleteUser = async (req, res) => {
   } catch (error) {
     console.error('Delete user error:', error);
     res.redirect('/admin/users?error=Server error');
+  }
+};
+
+// @desc    Toggle shirt distributed status for a user
+// @route   POST /admin/users/:id/toggle-shirt
+// @access  Private (Admin only)
+exports.toggleShirtDistributed = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { level } = req.body;
+
+    if (!level) {
+      return res.status(400).json({
+        success: false,
+        message: 'Trikotlevel ist erforderlich'
+      });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Benutzer nicht gefunden'
+      });
+    }
+
+    // Initialize shirtsDistributed if it doesn't exist
+    if (!user.shirtsDistributed) {
+      user.shirtsDistributed = [];
+    }
+
+    // Check if this level was already distributed
+    const existingIndex = user.shirtsDistributed.findIndex(s => s.level === level);
+
+    if (existingIndex >= 0) {
+      // Remove the distributed record (toggle off)
+      user.shirtsDistributed.splice(existingIndex, 1);
+      await user.save();
+      return res.json({
+        success: true,
+        distributed: false,
+        message: `${level}-Trikot wurde als nicht ausgeteilt markiert`
+      });
+    } else {
+      // Add the distributed record (toggle on)
+      user.shirtsDistributed.push({
+        level: level,
+        distributedAt: new Date()
+      });
+      await user.save();
+      return res.json({
+        success: true,
+        distributed: true,
+        message: `${level}-Trikot wurde als ausgeteilt markiert`
+      });
+    }
+  } catch (error) {
+    console.error('Toggle shirt distributed error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
   }
 };
 
@@ -693,29 +837,64 @@ exports.getEmailExport = async (req, res) => {
 exports.getPadelSchedule = async (req, res) => {
   try {
     // Get all users für Spieler-Auswahl
-    const allUsers = await User.find({ isAdmin: false }).sort({ username: 1 });
+    const allUsers = await User.find({ isAdmin: false }).sort({ eloRating: -1 });
 
-    // Get the latest schedule (entweder veröffentlicht oder nur erstellt)
-    const schedule = await PadelSchedule.findOne()
-      .sort({ createdAt: -1 })
-      .populate('players', 'username')
-      .populate('createdBy publishedBy', 'username');
+    // Get the latest schedule - erst ohne populate um die originale ID-Reihenfolge zu erhalten
+    const scheduleRaw = await PadelSchedule.findOne()
+      .sort({ createdAt: -1 });
 
-    // Prüfe ob veröffentlichter Schedule 3h alt ist
-    if (schedule && schedule.isPublished && schedule.publishedAt) {
+    let schedule = null;
+    if (scheduleRaw) {
+      // Speichere die originale Reihenfolge der Spieler-IDs
+      const originalPlayerOrder = scheduleRaw.players.map(id => id.toString());
+
+      // Jetzt mit populate laden
+      schedule = await PadelSchedule.findById(scheduleRaw._id)
+        .populate('players', 'username eloRating')
+        .populate('createdBy publishedBy', 'username');
+
+      // WICHTIG: Stelle die originale Reihenfolge der Spieler wieder her
+      // (Mongoose populate garantiert nicht die Reihenfolge!)
+      if (schedule.players && schedule.players.length > 0) {
+        const playersMap = new Map(schedule.players.map(p => [p._id.toString(), p]));
+        schedule.players = originalPlayerOrder
+          .map(id => playersMap.get(id))
+          .filter(p => p); // Filter out any undefined
+      }
+    }
+
+    // Prüfe ob veröffentlichter Schedule abgelaufen ist (3h nach Startzeit ODER nach 23:00 am Spieltag)
+    if (schedule && schedule.isPublished && schedule.startTime) {
       const now = new Date();
-      const publishedTime = new Date(schedule.publishedAt);
-      const threeHoursLater = new Date(publishedTime.getTime() + 3 * 60 * 60 * 1000);
+      const startTime = new Date(schedule.startTime);
 
-      if (now > threeHoursLater) {
+      // Spieltag Ende: 23:00 Uhr am Tag der Startzeit
+      const gameDay = new Date(startTime);
+      gameDay.setHours(23, 0, 0, 0);
+
+      // Deaktiviere 3 Stunden nach Startzeit ODER nach 23:00 am Spieltag
+      const threeHoursAfterStart = new Date(startTime.getTime() + 3 * 60 * 60 * 1000);
+      const deactivationTime = new Date(Math.min(threeHoursAfterStart.getTime(), gameDay.getTime()));
+
+      if (now > deactivationTime) {
         schedule.isPublished = false;
         await schedule.save();
       }
     }
 
+    // Generiere die Matchups wenn ein Schedule existiert
+    let scheduleCourts = null;
+    if (schedule && schedule.players && schedule.players.length >= 4) {
+      // Lade die Anzahl der Spiele für jeden Spieler (neue Spieler kommen in die schlechteste Gruppe)
+      const playerIds = schedule.players.map(p => p._id);
+      const gamesCountMap = await getPlayersGamesCount(playerIds);
+      scheduleCourts = generateScheduleMatchups(schedule.players, schedule.courtNames, gamesCountMap, schedule.manualOrder || false);
+    }
+
     res.render('admin/scheduleManagement', {
       title: 'Padel Spielplan',
       schedule: schedule || null,
+      scheduleCourts: scheduleCourts,
       allUsers,
       moment,
       success: req.query.success || null,
@@ -730,12 +909,83 @@ exports.getPadelSchedule = async (req, res) => {
   }
 };
 
+/**
+ * Generate matchups für einen gespeicherten Schedule
+ * @param {Array} players - Array von populated User-Objekten
+ * @param {Array} courtNames - Array von Court-Namen
+ * @param {Object} gamesCountMap - Map von Spieler-ID zu Anzahl Spiele (optional)
+ * @param {Boolean} manualOrder - Wenn true, wird die Spieler-Reihenfolge beibehalten (keine Sortierung)
+ * @returns {Array} - Array von Court-Assignments
+ */
+function generateScheduleMatchups(players, courtNames = [], gamesCountMap = null, manualOrder = false) {
+  if (!players || players.length < 4 || players.length % 4 !== 0) {
+    return null;
+  }
+
+  let orderedPlayers;
+
+  if (manualOrder) {
+    // Behalte die manuelle Reihenfolge bei
+    // Format: [Court1_Team1_P1, Court1_Team1_P2, Court1_Team2_P1, Court1_Team2_P2, Court2_Team1_P1, ...]
+    orderedPlayers = [...players];
+  } else {
+    // Sortiere Spieler: Normale nach ELO, neue Spieler (0 Spiele) ans Ende
+    if (gamesCountMap) {
+      orderedPlayers = sortPlayersForSchedule(players, gamesCountMap);
+    } else {
+      // Fallback: Einfache ELO-Sortierung wenn keine gamesCountMap vorhanden
+      orderedPlayers = [...players].sort((a, b) => b.eloRating - a.eloRating);
+    }
+  }
+
+  const courts = [];
+  const numCourts = orderedPlayers.length / 4;
+
+  for (let courtIndex = 0; courtIndex < numCourts; courtIndex++) {
+    const courtPlayers = orderedPlayers.slice(courtIndex * 4, (courtIndex + 1) * 4);
+
+    let team1, team2;
+    if (manualOrder) {
+      // Bei manueller Reihenfolge: [0,1] = Team 1, [2,3] = Team 2
+      team1 = [courtPlayers[0], courtPlayers[1]];
+      team2 = [courtPlayers[2], courtPlayers[3]];
+    } else {
+      // Bei automatischer Sortierung: Stärkster+Schwächster vs Mitte
+      team1 = [courtPlayers[0], courtPlayers[3]];
+      team2 = [courtPlayers[1], courtPlayers[2]];
+    }
+
+    const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
+    const team2Elo = Math.round((team2[0].eloRating + team2[1].eloRating) / 2);
+
+    courts.push({
+      courtNumber: courtIndex + 1,
+      courtName: courtNames[courtIndex] || `Platz ${courtIndex + 1}`,
+      team1: team1.map(player => ({
+        username: player.username,
+        elo: player.eloRating,
+        isNewPlayer: gamesCountMap ? (gamesCountMap[player._id.toString()] || 0) === 0 : false
+      })),
+      team2: team2.map(player => ({
+        username: player.username,
+        elo: player.eloRating,
+        isNewPlayer: gamesCountMap ? (gamesCountMap[player._id.toString()] || 0) === 0 : false
+      })),
+      team1Elo,
+      team2Elo,
+      eloDifference: Math.abs(team1Elo - team2Elo)
+    });
+  }
+
+  return courts;
+}
+
 // @desc    Create or update padel schedule
 // @route   POST /admin/padel-schedule/save
 // @access  Private (Admin only)
 exports.savePadelSchedule = async (req, res) => {
   try {
-    const { players, startTime } = req.body;
+    const { players, startTime, manualOrder } = req.body;
 
     // Validate
     if (!players || !Array.isArray(players) || players.length === 0) {
@@ -769,12 +1019,14 @@ exports.savePadelSchedule = async (req, res) => {
         startTime: startDate,
         createdBy: req.user._id,
         isPublished: false,
-        courtNames: courtNames || []
+        courtNames: courtNames || [],
+        manualOrder: manualOrder || false
       });
     } else {
       schedule.players = players;
       schedule.startTime = startDate;
       schedule.courtNames = courtNames || [];
+      schedule.manualOrder = manualOrder || false;
       schedule.updatedAt = new Date();
     }
 
@@ -835,44 +1087,97 @@ exports.publishPadelSchedule = async (req, res) => {
 // @access  Public
 exports.getActiveScheduleAPI = async (req, res) => {
   try {
-    const schedule = await PadelSchedule.findOne({ isPublished: true })
+    // Erst ohne populate laden um die originale ID-Reihenfolge zu erhalten
+    const scheduleRaw = await PadelSchedule.findOne({ isPublished: true });
+
+    if (!scheduleRaw) {
+      return res.json({ isPublished: false, schedule: null });
+    }
+
+    // Speichere die originale Reihenfolge der Spieler-IDs
+    const originalPlayerOrder = scheduleRaw.players.map(id => id.toString());
+
+    // Jetzt mit populate laden
+    const schedule = await PadelSchedule.findById(scheduleRaw._id)
       .populate('players', 'username eloRating profileImage')
       .populate('createdBy publishedBy', 'username');
 
-    if (!schedule) {
-      return res.json({ isPublished: false, schedule: null });
+    // WICHTIG: Stelle die originale Reihenfolge der Spieler wieder her
+    // (Mongoose populate garantiert nicht die Reihenfolge!)
+    if (schedule.players && schedule.players.length > 0) {
+      const playersMap = new Map(schedule.players.map(p => [p._id.toString(), p]));
+      schedule.players = originalPlayerOrder
+        .map(id => playersMap.get(id))
+        .filter(p => p); // Filter out any undefined
     }
 
     const now = new Date();
     const startTime = new Date(schedule.startTime);
+    const publishedAt = schedule.publishedAt ? new Date(schedule.publishedAt) : now;
 
-    // Berechne Zeitfenster: 15 Min vor Start bis 3 Stunden nach Start
-    const displayStartTime = new Date(startTime.getTime() - 15 * 60 * 1000);     // 15 Min vor Start
-    const displayEndTime = new Date(startTime.getTime() + 3 * 60 * 60 * 1000);   // 3 Stunden nach Start
+    // Spieltag: Datum des Spielstarts (nur Datum, ohne Uhrzeit)
+    const gameDay = new Date(startTime);
+    gameDay.setHours(0, 0, 0, 0);
+
+    // Tag der Veröffentlichung (nur Datum, ohne Uhrzeit)
+    const publishDay = new Date(publishedAt);
+    publishDay.setHours(0, 0, 0, 0);
+
+    // Ende ist immer 23:00 Uhr am Spieltag
+    const displayEndTime = new Date(gameDay);
+    displayEndTime.setHours(23, 0, 0, 0);
+
+    // Start-Zeitpunkt bestimmen:
+    // - Wenn am Spieltag veröffentlicht: Sofort (publishedAt)
+    // - Wenn am Vortag oder früher veröffentlicht: 9:00 Uhr am Spieltag
+    let displayStartTime;
+    if (publishDay.getTime() >= gameDay.getTime()) {
+      // Am Spieltag (oder später) veröffentlicht -> sofort
+      displayStartTime = publishedAt;
+    } else {
+      // Vor dem Spieltag veröffentlicht -> 9:00 Uhr am Spieltag
+      displayStartTime = new Date(gameDay);
+      displayStartTime.setHours(9, 0, 0, 0);
+    }
+
+    // Deaktivierungszeit: Immer 23:00 Uhr am Spieltag
+    const deactivationTime = displayEndTime;
 
     // Prüfe ob wir im Zeitfenster sind
-    if (now < displayStartTime || now > displayEndTime) {
-      // Außerhalb des Zeitfensters - deaktiviere
-      if (now > displayEndTime) {
+    if (now < displayStartTime || now > deactivationTime) {
+      // Außerhalb des Zeitfensters - deaktiviere wenn Zeit abgelaufen
+      if (now > deactivationTime) {
         schedule.isPublished = false;
         await schedule.save();
       }
       return res.json({ isPublished: false, schedule: null });
     }
 
+    // Spieler sortieren oder manuelle Reihenfolge beibehalten
+    const playerIds = schedule.players.map(p => p._id);
+    const gamesCountMap = await getPlayersGamesCount(playerIds);
+
+    // Wenn manualOrder true ist, behalte die gespeicherte Reihenfolge bei
+    // Format: [Court1_Team1_P1, Court1_Team1_P2, Court1_Team2_P1, Court1_Team2_P2, ...]
+    const orderedPlayers = schedule.manualOrder
+      ? [...schedule.players]  // Manuelle Reihenfolge beibehalten
+      : sortPlayersForSchedule(schedule.players, gamesCountMap);  // Nach ELO sortieren
+
     res.json({
       isPublished: true,
       schedule: {
         _id: schedule._id,
         startTime: schedule.startTime,
-        players: schedule.players.map(p => ({
+        players: orderedPlayers.map(p => ({
           username: p.username,
           eloRating: p.eloRating,
-          profileImage: p.profileImage
+          profileImage: p.profileImage,
+          isNewPlayer: (gamesCountMap[p._id.toString()] || 0) === 0
         })),
         publishedAt: schedule.publishedAt,
         publishedBy: schedule.publishedBy?.username,
-        courtNames: schedule.courtNames || []
+        courtNames: schedule.courtNames || [],
+        manualOrder: schedule.manualOrder || false
       }
     });
   } catch (error) {
@@ -908,6 +1213,341 @@ exports.deletePadelSchedule = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Fehler beim Löschen des Spielplans: ' + error.message
+    });
+  }
+};
+
+// @desc    Update padel schedule start time
+// @route   PUT /admin/padel-schedule/:id/start-time
+// @access  Private (Admin only)
+exports.updatePadelScheduleStartTime = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { startTime } = req.body;
+
+    if (!startTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bitte geben Sie eine Startzeit an'
+      });
+    }
+
+    const schedule = await PadelSchedule.findById(id);
+
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: 'Spielplan nicht gefunden'
+      });
+    }
+
+    // Konvertiere startTime zu Date-Objekt (aus Schweizer Zeitzone)
+    const startDate = moment.tz(startTime, 'Europe/Zurich').toDate();
+
+    schedule.startTime = startDate;
+    schedule.updatedAt = new Date();
+
+    // Wenn veröffentlicht, aktualisiere auch publishedAt für korrektes Zeitfenster
+    if (schedule.isPublished) {
+      schedule.publishedAt = new Date();
+    }
+
+    await schedule.save();
+
+    res.json({
+      success: true,
+      message: 'Startzeit erfolgreich aktualisiert',
+      newStartTime: moment(startDate).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm')
+    });
+  } catch (error) {
+    console.error('Update padel schedule start time error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Aktualisieren der Startzeit: ' + error.message
+    });
+  }
+};
+
+// @desc    Delete all past padel schedules (startTime in the past and not published)
+// @route   DELETE /admin/padel-schedule/past
+// @access  Private (Admin only)
+exports.deletePastPadelSchedules = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Lösche alle Spielpläne, deren Startzeit in der Vergangenheit liegt
+    // und die nicht mehr veröffentlicht sind
+    const result = await PadelSchedule.deleteMany({
+      startTime: { $lt: now },
+      isPublished: false
+    });
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} vergangene Spielpläne erfolgreich gelöscht`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete past padel schedules error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Löschen vergangener Spielpläne: ' + error.message
+    });
+  }
+};
+
+// @desc    Send notification email to all players in the schedule
+// @route   POST /admin/padel-schedule/notify
+// @access  Private (Admin only)
+exports.sendScheduleNotification = async (req, res) => {
+  try {
+    // Erst ohne populate laden um die originale ID-Reihenfolge zu erhalten
+    const scheduleRaw = await PadelSchedule.findOne()
+      .sort({ createdAt: -1 });
+
+    if (!scheduleRaw || !scheduleRaw.players || scheduleRaw.players.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kein Spielplan mit Spielern gefunden'
+      });
+    }
+
+    // Speichere die originale Reihenfolge der Spieler-IDs
+    const originalPlayerOrder = scheduleRaw.players.map(id => id.toString());
+
+    // Jetzt mit populate laden
+    const schedule = await PadelSchedule.findById(scheduleRaw._id)
+      .populate('players', 'username eloRating email');
+
+    // WICHTIG: Stelle die originale Reihenfolge der Spieler wieder her
+    // (Mongoose populate garantiert nicht die Reihenfolge!)
+    if (schedule.players && schedule.players.length > 0) {
+      const playersMap = new Map(schedule.players.map(p => [p._id.toString(), p]));
+      schedule.players = originalPlayerOrder
+        .map(id => playersMap.get(id))
+        .filter(p => p); // Filter out any undefined
+    }
+
+    // Generate matchups for the email - respektiere manuelle Reihenfolge!
+    const playerIds = schedule.players.map(p => p._id);
+    const gamesCountMap = await getPlayersGamesCount(playerIds);
+
+    // Verwende generateScheduleMatchups um konsistente Ergebnisse zu erhalten
+    const courts = generateScheduleMatchups(
+      schedule.players,
+      schedule.courtNames || [],
+      gamesCountMap,
+      schedule.manualOrder || false
+    );
+
+    if (!courts) {
+      return res.status(400).json({
+        success: false,
+        message: 'Fehler beim Generieren der Spielpaarungen für E-Mail'
+      });
+    }
+
+    // Send emails
+    await sendScheduleNotificationEmail(schedule, courts);
+
+    res.json({
+      success: true,
+      message: `E-Mail erfolgreich an ${schedule.players.length} Spieler gesendet`
+    });
+  } catch (error) {
+    console.error('Send schedule notification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Senden der Benachrichtigungen: ' + error.message
+    });
+  }
+};
+
+// ===========================
+// AWARD MANAGEMENT FUNCTIONS
+// ===========================
+
+// @desc    Get awards management page
+// @route   GET /admin/awards
+// @access  Private (Admin only)
+exports.getAwardsPage = async (req, res) => {
+  try {
+    // Get all users with their awards
+    const users = await User.find({ isAdmin: false })
+      .select('username awards')
+      .sort({ username: 1 });
+
+    // Get award types and available quarters
+    const awardTypes = getAllAwardTypes();
+    const availableQuarters = getAvailableQuarters();
+
+    res.render('admin/awards', {
+      title: 'Awards verwalten',
+      users,
+      awardTypes,
+      availableQuarters,
+      getAwardInfo,
+      moment,
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (error) {
+    console.error('Get awards page error:', error);
+    res.status(500).render('error', {
+      title: 'Server Error',
+      message: 'Fehler beim Laden der Awards-Seite'
+    });
+  }
+};
+
+// @desc    Grant an award to a user
+// @route   POST /admin/awards/grant
+// @access  Private (Admin only)
+exports.grantAward = async (req, res) => {
+  try {
+    const { userId, awardType, quarter, year } = req.body;
+
+    if (!userId || !awardType || !quarter || !year) {
+      return res.status(400).json({
+        success: false,
+        message: 'Alle Felder sind erforderlich'
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Benutzer nicht gefunden'
+      });
+    }
+
+    // Check if user already has this award for this quarter/year
+    const existingAward = user.awards.find(
+      a => a.type === awardType && a.quarter === quarter && a.year === parseInt(year)
+    );
+
+    if (existingAward) {
+      return res.status(400).json({
+        success: false,
+        message: `${user.username} hat diesen Award für ${quarter} ${year} bereits erhalten`
+      });
+    }
+
+    // Add the award
+    user.awards.push({
+      type: awardType,
+      quarter: quarter,
+      year: parseInt(year),
+      awardedAt: new Date()
+    });
+
+    await user.save();
+
+    const awardInfo = getAwardInfo(awardType);
+
+    res.json({
+      success: true,
+      message: `${awardInfo.name} wurde an ${user.username} vergeben`,
+      award: {
+        type: awardType,
+        quarter,
+        year: parseInt(year),
+        userName: user.username
+      }
+    });
+  } catch (error) {
+    console.error('Grant award error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Vergeben des Awards'
+    });
+  }
+};
+
+// @desc    Auto-distribute awards for a quarter
+// @route   POST /admin/awards/auto-distribute
+// @access  Private (Admin only)
+exports.autoDistributeAwards = async (req, res) => {
+  try {
+    const { quarter, year } = req.body;
+
+    if (!quarter || !year) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quartal und Jahr sind erforderlich'
+      });
+    }
+
+    // Convert quarter string (Q1, Q2, Q3, Q4) to number (0, 1, 2, 3)
+    const quarterNum = parseInt(quarter.replace('Q', '')) - 1;
+
+    // Call the distribute function
+    await distributeQuarterlyAwards({ year: parseInt(year), quarter: quarterNum });
+
+    res.json({
+      success: true,
+      message: `Awards für ${quarter} ${year} wurden automatisch verteilt`
+    });
+  } catch (error) {
+    console.error('Auto distribute awards error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler bei der automatischen Award-Verteilung'
+    });
+  }
+};
+
+// @desc    Remove an award from a user
+// @route   POST /admin/awards/remove
+// @access  Private (Admin only)
+exports.removeAward = async (req, res) => {
+  try {
+    const { userId, awardType, quarter, year } = req.body;
+
+    if (!userId || !awardType || !quarter || !year) {
+      return res.status(400).json({
+        success: false,
+        message: 'Alle Felder sind erforderlich'
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Benutzer nicht gefunden'
+      });
+    }
+
+    // Find and remove the award
+    const awardIndex = user.awards.findIndex(
+      a => a.type === awardType && a.quarter === quarter && a.year === parseInt(year)
+    );
+
+    if (awardIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Award nicht gefunden'
+      });
+    }
+
+    user.awards.splice(awardIndex, 1);
+    await user.save();
+
+    const awardInfo = getAwardInfo(awardType);
+
+    res.json({
+      success: true,
+      message: `${awardInfo.name} wurde von ${user.username} entfernt`
+    });
+  } catch (error) {
+    console.error('Remove award error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Entfernen des Awards'
     });
   }
 };
