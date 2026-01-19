@@ -22,7 +22,7 @@ const sendRegistrationRequestEmail = async (request) => {
     const mailOptions = {
         from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
         to: process.env.ADMIN_EMAIL,
-        subject: '🥎 Neue Registrierungsanfrage',
+        subject: '🎾 Neue Registrierungsanfrage',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
             <h2 style="color: #0d6efd;">Neue Registrierungsanfrage</h2>
@@ -104,7 +104,7 @@ const mailOptions = {
         
         <p><strong>Wichtig:</strong> Nach jedem Spiel trägst du das Ergebnis im padELO System ein. So wird dein Ranking berechnet!</p>
         
-        <p>Viel Spass beim Spielen!🥎</p>
+        <p>Viel Spass beim Spielen!🎾</p>
         
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
         <p style="color: #6c757d; font-size: 0.9em; text-align: center;">
@@ -399,11 +399,285 @@ const sendGameNotificationEmail = async (game) => {
   }
 };
 
+/**
+ * Send quarterly ELO report email to admin
+ * @param {Object} reportData - Report data containing quarter info and player stats
+ */
+const sendQuarterlyReportEmail = async (reportData) => {
+  try {
+    const transporter = createTransporter();
+
+    const { year, quarter, players, totalGames } = reportData;
+    const quarterNames = ['Q1 (Jan-Mär)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Okt-Dez)'];
+    const quarterName = quarterNames[quarter];
+
+    // Build player ranking table rows
+    let playerRows = '';
+    players.forEach((player, index) => {
+      const eloChangeColor = player.eloChange >= 0 ? '#198754' : '#dc3545';
+      const eloChangePrefix = player.eloChange >= 0 ? '+' : '';
+
+      playerRows += `
+        <tr style="border-bottom: 1px solid #e0e0e0;">
+          <td style="padding: 10px; text-align: center;">${index + 1}</td>
+          <td style="padding: 10px;">${player.username}</td>
+          <td style="padding: 10px; text-align: center;">${player.startELO}</td>
+          <td style="padding: 10px; text-align: center;">${player.endELO}</td>
+          <td style="padding: 10px; text-align: center; color: ${eloChangeColor}; font-weight: bold;">${eloChangePrefix}${player.eloChange}</td>
+          <td style="padding: 10px; text-align: center;">${player.gamesPlayed}</td>
+        </tr>
+      `;
+    });
+
+    // Find top performers
+    const topGainer = players.reduce((prev, current) => (prev.eloChange > current.eloChange) ? prev : current, players[0]);
+    const mostActive = players.reduce((prev, current) => (prev.gamesPlayed > current.gamesPlayed) ? prev : current, players[0]);
+
+    // Email content
+    const mailOptions = {
+      from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: `📊 Quarterly ELO Report - ${quarterName} ${year}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #0d6efd; text-align: center;">📊 Quarterly ELO Report</h2>
+          <h3 style="text-align: center; color: #6c757d;">${quarterName} ${year}</h3>
+
+          <div style="background-color: #e7f1ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h4 style="margin-top: 0;">Quartalsübersicht</h4>
+            <p><strong>Aktive Spieler:</strong> ${players.length}</p>
+            <p><strong>Gespielte Spiele:</strong> ${totalGames}</p>
+            ${topGainer ? `<p><strong>Grösster Aufsteiger:</strong> ${topGainer.username} (${topGainer.eloChange >= 0 ? '+' : ''}${topGainer.eloChange} ELO)</p>` : ''}
+            ${mostActive ? `<p><strong>Aktivster Spieler:</strong> ${mostActive.username} (${mostActive.gamesPlayed} Spiele)</p>` : ''}
+          </div>
+
+          <h4>Rangliste nach End-ELO</h4>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+              <tr style="background-color: #0d6efd; color: white;">
+                <th style="padding: 12px; text-align: center;">Rang</th>
+                <th style="padding: 12px; text-align: left;">Spieler</th>
+                <th style="padding: 12px; text-align: center;">Start ELO</th>
+                <th style="padding: 12px; text-align: center;">End ELO</th>
+                <th style="padding: 12px; text-align: center;">Änderung</th>
+                <th style="padding: 12px; text-align: center;">Spiele</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${playerRows}
+            </tbody>
+          </table>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.SITE_URL}/ranking" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Zum aktuellen Ranking
+            </a>
+          </div>
+
+          <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px; text-align: center;">
+            Dies ist eine automatische Nachricht von padELO Ranking.<br>
+            Generiert am ${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      `
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+    console.log(`Quarterly report email sent to admin for ${quarterName} ${year}`);
+
+  } catch (error) {
+    console.error('Error sending quarterly report email:', error);
+  }
+};
+
+/**
+ * Send shirt level up notification email to admin
+ * @param {Object} user - User who leveled up
+ * @param {Object} levelUpInfo - Level up details (oldLevel, newLevel, etc.)
+ */
+const sendShirtLevelUpEmail = async (user, levelUpInfo) => {
+  try {
+    const transporter = createTransporter();
+
+    const { oldLevel, oldColor, newLevel, newColor, gamesPlayed } = levelUpInfo;
+
+    // Color mapping for display
+    const colorNames = {
+      '#bebebe': 'Grau',
+      'white': 'Weiss',
+      'yellow': 'Gelb',
+      'orange': 'Orange',
+      'green': 'Grün',
+      'blue': 'Blau',
+      'purple': 'Lila',
+      'black': 'Schwarz'
+    };
+
+    const colorStyles = {
+      '#bebebe': '#bebebe; color: #212529; border: 1px solid #dee2e6',
+      'white': 'white; color: #212529; border: 1px solid #dee2e6',
+      'yellow': '#ffc107; color: #212529',
+      'orange': '#fd7e14; color: white',
+      'green': '#198754; color: white',
+      'blue': '#0d6efd; color: white',
+      'purple': '#6f42c1; color: white',
+      'black': '#212529; color: white'
+    };
+
+    // Email content
+    const mailOptions = {
+      from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: `👕 Neues Shirt Level: ${user.username} ist jetzt ${newLevel}!`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #0d6efd; text-align: center;">👕 Neues Shirt Level erreicht!</h2>
+
+          <div style="text-align: center; margin: 20px 0;">
+            <p style="font-size: 18px; margin-bottom: 15px;"><strong>${user.username}</strong> hat ein neues Shirt Level erreicht!</p>
+          </div>
+
+          <div style="display: flex; justify-content: center; align-items: center; margin: 30px 0;">
+            <div style="text-align: center; padding: 15px;">
+              <span style="display: inline-block; padding: 10px 20px; border-radius: 5px; background-color: ${colorStyles[oldColor]};">
+                ${oldLevel}
+              </span>
+              <p style="color: #6c757d; margin-top: 10px; font-size: 14px;">${colorNames[oldColor]}</p>
+            </div>
+            <div style="padding: 0 20px; font-size: 24px;">→</div>
+            <div style="text-align: center; padding: 15px;">
+              <span style="display: inline-block; padding: 10px 20px; border-radius: 5px; background-color: ${colorStyles[newColor]};">
+                ${newLevel}
+              </span>
+              <p style="color: #6c757d; margin-top: 10px; font-size: 14px;">${colorNames[newColor]}</p>
+            </div>
+          </div>
+
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center;">
+            <p style="margin: 0;"><strong>Gespielte Spiele:</strong> ${gamesPlayed}</p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.SITE_URL}/ranking" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Zum Ranking
+            </a>
+          </div>
+
+          <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px; text-align: center;">
+            Dies ist eine automatische Nachricht von padELO Ranking.
+          </p>
+        </div>
+      `
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+    console.log(`Shirt level up email sent to admin for user: ${user.username} (${oldLevel} -> ${newLevel})`);
+
+  } catch (error) {
+    console.error('Error sending shirt level up email:', error);
+  }
+};
+
+/**
+ * Send schedule notification email to all players in the schedule
+ * @param {Object} schedule - Populated schedule object with players
+ * @param {Array} courts - Array of court assignments with matchups
+ */
+const sendScheduleNotificationEmail = async (schedule, courts) => {
+  try {
+    const transporter = createTransporter();
+
+    // Format start time
+    const moment = require('moment-timezone');
+    const startTime = moment(schedule.startTime).tz('Europe/Zurich');
+    const dateStr = startTime.format('DD.MM.YYYY');
+    const timeStr = startTime.format('HH:mm');
+
+    // Build courts HTML
+    let courtsHTML = '';
+    courts.forEach((court) => {
+      courtsHTML += `
+        <div style="background-color: #f8f9fa; border-left: 4px solid #0d6efd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+          <h4 style="color: #0d6efd; margin-top: 0;">${court.courtName}</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1; text-align: center;">
+              <strong>Team 1</strong><br>
+              ${court.team1[0].username} (${court.team1[0].elo})<br>
+              ${court.team1[1].username} (${court.team1[1].elo})<br>
+              <small style="color: #6c757d;">Ø ${court.team1Elo} ELO</small>
+            </div>
+            <div style="padding: 0 15px; font-weight: bold; color: #6c757d;">VS</div>
+            <div style="flex: 1; text-align: center;">
+              <strong>Team 2</strong><br>
+              ${court.team2[0].username} (${court.team2[0].elo})<br>
+              ${court.team2[1].username} (${court.team2[1].elo})<br>
+              <small style="color: #6c757d;">Ø ${court.team2Elo} ELO</small>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    // Send email to each player
+    for (const player of schedule.players) {
+      const mailOptions = {
+        from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
+        to: player.email,
+        subject: `🎾 padELO Spielplan - Heute um ${timeStr} Uhr`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+            <h2 style="color: #0d6efd; text-align: center;">🎾 padELO Spielplan</h2>
+
+            <p>Hallo ${player.username},</p>
+
+            <p>Der Spielplan für heute ist verfügbar. Du bist dabei! 🙌</p>
+
+            <p style="font-size: 18px; text-align: center; margin: 25px 0;">
+              📅 <strong>${dateStr} um ${timeStr} Uhr</strong>
+            </p>
+
+            <h3 style="border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; color: #333;">🏟️ Spielplan</h3>
+            ${courtsHTML}
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.SITE_URL}/dashboard" style="background-color: #0d6efd; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Zum Dashboard
+              </a>
+            </div>
+
+            <p style="text-align: center; color: #333;">Bis gleich auf dem Platz! 🎾💪</p>
+
+            <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+            <p style="color: #6c757d; font-size: 0.9em; text-align: center;">
+              Dies ist eine automatische Nachricht von padELO Ranking.
+            </p>
+          </div>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`Schedule notification email sent to ${player.email}`);
+    }
+
+    console.log(`Schedule notification emails sent to ${schedule.players.length} players`);
+    return { success: true, count: schedule.players.length };
+
+  } catch (error) {
+    console.error('Error sending schedule notification emails:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendRegistrationRequestEmail,
   sendRegistrationApprovedEmail,
   sendPasswordResetEmail,
   sendGameReportEmail,
   sendInactivityPenaltyEmail,
-  sendGameNotificationEmail // Export the new function
+  sendGameNotificationEmail,
+  sendQuarterlyReportEmail,
+  sendShirtLevelUpEmail,
+  sendScheduleNotificationEmail
 };

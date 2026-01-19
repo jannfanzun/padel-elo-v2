@@ -231,7 +231,14 @@ router.get('/about', (req, res) => {
   });
 });
 
-router.get('/dashboardTV', async (req, res) => {
+router.get('/dashboardtv', async (req, res) => {
+  // Prevent browser caching to ensure display always shows latest version
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+
   try {
     // Get all users sorted by ELO rating (descending) - include awards
     const users = await User.find({ isAdmin: false }).sort({ eloRating: -1 }).select('username eloRating lastActivity profileImage awards');

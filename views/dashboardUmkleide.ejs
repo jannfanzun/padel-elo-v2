@@ -12,6 +12,12 @@
       <link href="/css/style.css" rel="stylesheet" />
       <link rel="icon" type="image/x-icon" href="/img/favicon.png" />
       <style>
+         * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+         }
+
          body {
             transform: rotate(-90deg);
             transform-origin: center center;
@@ -22,45 +28,86 @@
             left: 50%;
             margin-top: -50vw;
             margin-left: -50vh;
-            overflow-x: auto;
-            overflow-y: hidden;
-            background: #fff;
+            overflow: hidden;
+            background: #000;
             font-family: "Inter", sans-serif;
          }
 
-         .font-family-lobster {
-            font-family: "Lobster", cursive;
+         /* Webtree Top Banner - pill shaped with glass effect */
+         .webtree-banner {
+            position: absolute;
+            top: 0.8rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            width: 90%;
+            padding: 0.6rem 2.5rem;
+            border-radius: 50px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
          }
 
-         .tv-header {
-            background: linear-gradient(to bottom, #0d6efd, transparent) !important;
-            padding: 0.5rem 0;
-            margin-bottom: 0.5rem;
+         .webtree-banner .logo {
+            height: 1.3rem;
          }
 
-         .tv-logo {
-            height: 50px;
-            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+         .webtree-banner .divider {
+            width: 1px;
+            height: 1.2rem;
+            background: rgba(255, 255, 255, 0.2);
          }
 
-         .tv-title {
-            font-size: 3rem;
-            color: white;
-            margin: 0;
-            line-height: 1;
+         .webtree-banner .text-section {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
          }
 
-         /* Main content area */
+         .webtree-banner .tagline {
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 500;
+         }
+
+         .webtree-banner .website {
+            color: #22c55e;
+            font-size: 0.8rem;
+            font-weight: 600;
+         }
+
+         .webtree-banner .stars {
+            color: #fbbf24;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+         }
+
+         .webtree-banner .qr-code {
+            width: 1.8rem;
+            height: 1.8rem;
+            border-radius: 6px;
+            background: #fff;
+         }
+
+         /* Main content area - fullscreen image */
          .content-area {
-            min-height: calc(100vh - 250px);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fff;
-            padding: 2rem;
+            background: #000;
          }
 
-         /* Image display */
          .image-container {
             width: 100%;
             height: 100%;
@@ -70,67 +117,30 @@
          }
 
          .display-image {
-            max-width: 90%;
-            object-fit: contain;
-         }
-
-         /* Webtree Footer Banner */
-         .webtree-banner {
-            background: rgb(39, 39, 39);
-            border: none;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            padding: 1.5rem 2rem;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
          }
       </style>
    </head>
    <body>
-      <!-- Main Content Area -->
-      <div class="content-area">
-         <div class="image-container">
-            <img src="/img/padelcamp-promotion.jpg" alt="Padel Sports Club" class="display-image" />
+      <!-- Webtree Banner - pill shaped glass effect -->
+      <div class="webtree-banner">
+         <img src="/img/logo-white-webtree.svg" alt="Webtree" class="logo" />
+         <div class="divider"></div>
+         <div class="text-section">
+            <span class="tagline">Moderne Weblösungen / Websites für KMU</span>
+            <span class="stars">★★★★★</span>
+            <span class="website">webtree.ch</span>
          </div>
+         <div class="divider"></div>
+         <img src="/img/qr-code-webtree.png" alt="QR Code" class="qr-code" />
       </div>
 
-      <!-- Webtree Banner (from dashboardTV) -->
-      <div class="container-fluid px-4">
-         <div class="row">
-            <div class="col-lg-12">
-               <div class="card section-card webtree-banner">
-                  <div class="pt-3 px-3">
-                     <div class="row align-items-center">
-                        <div class="col-lg-9 col-md-9 mb-4 mb-lg-0">
-                           <img src="/img/logo-white-webtree.svg" alt="Webtree Logo" style="height: 2rem;" class="mb-2" />
-                           <h3 class="text-white fw-bold mb-2" style="line-height: 1;">
-                              Wir sind Deine Webagentur im Züri-Oberland
-                           </h3>
-                           <p class="text-white-50 mb-2" style="font-size: 1rem;">
-                              Verkaufsstarke Websites, optimiert für Google mit Schweizer Hosting – in max.
-                              <span class="text-success fw-bold">4 Wochen</span>
-                           </p>
-                           <div class="d-flex align-items-center justify-content-between flex-wrap">
-                              <div>
-                                 <span class="text-white fw-bold" style="font-size: 1rem;">www.webtree.ch</span>
-                                 <div class="text-success" style="font-size: 0.75rem;">⭐⭐⭐⭐⭐ 24+ zufriedene Kunden</div>
-                              </div>
-                           </div>
-                        </div>
-                        <div class="col-lg-3 col-md-3 text-center">
-                           <div class="position-relative">
-                              <div class="bg-white rounded d-inline-block">
-                                 <img src="/img/qr-code-webtree.png" alt="QR Code webtree.ch" style="width: 4rem; border-radius: 8px;" />
-                              </div>
-                              <div class="mt-2">
-                                 <div class="text-success fw-bold" style="font-size: 1rem;">Jetzt scannen!</div>
-                                 <div class="mt-1 text-warning fw-bold" style="font-size: 0.9rem;">
-                                    Mit Code <span class="text-white">"psc"</span> –10% auf dein nächstes Projekt
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
+      <!-- Main Content Area - Fullscreen Image -->
+      <div class="content-area">
+         <div class="image-container">
+            <img src="/img/padelcamp-promotion.jpeg" alt="Padel Sports Club" class="display-image" />
          </div>
       </div>
 

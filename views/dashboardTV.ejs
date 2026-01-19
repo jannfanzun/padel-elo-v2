@@ -513,11 +513,11 @@
                               <ul class="feature-list">
                                  <li class="feature-item">
                                     <i class="fas fa-clock feature-icon"></i>
-                                    <span>Dienstag: <strong>17:30 – 19:00</strong></span>
+                                    <span>Dienstag: <strong>17:00 – 18:30</strong></span>
                                  </li>
                                  <li class="feature-item">
                                     <i class="fas fa-clock feature-icon"></i>
-                                    <span>Freitag: <strong>17:30 – 19:00</strong></span>
+                                    <span>Donnerstag: <strong>11:30 – 13:00</strong></span>
                                  </li>
                                  <li class="feature-item">
                                     <i class="fas fa-clock feature-icon"></i>
@@ -594,7 +594,7 @@
 
                if (data.isPublished && data.schedule) {
                   // Backend hat bereits geprüft ob wir im Zeitfenster sind
-                  // (15 Min vor Start bis 1 Min nach Start)
+                  // (Ab Veröffentlichung am Spieltag / 9:00 Uhr wenn vorher veröffentlicht, bis 23:00 Uhr am Spieltag)
                   renderSchedule(data.schedule);
                   startRotation();
                } else {
@@ -726,8 +726,18 @@
             // Erstelle Platz-Karten (wie in Schritt 3)
             for (let courtIndex = 0; courtIndex < courtCount; courtIndex++) {
                const playersOnCourt = schedule.players.slice(courtIndex * 4, (courtIndex + 1) * 4);
-               const team1 = playersOnCourt.slice(0, 2);
-               const team2 = playersOnCourt.slice(2, 4);
+
+               // Team-Zuweisung abhängig von manualOrder:
+               // - manualOrder=true: Reihenfolge [0,1] = Team1, [2,3] = Team2 (manuell angeordnet)
+               // - manualOrder=false: Reihenfolge [0,3] = Team1, [1,2] = Team2 (ELO-basiert)
+               let team1, team2;
+               if (schedule.manualOrder) {
+                  team1 = [playersOnCourt[0], playersOnCourt[1]];
+                  team2 = [playersOnCourt[2], playersOnCourt[3]];
+               } else {
+                  team1 = [playersOnCourt[0], playersOnCourt[3]];
+                  team2 = [playersOnCourt[1], playersOnCourt[2]];
+               }
 
                // Berechne Team-ELO Durchschnitt
                const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
@@ -759,12 +769,13 @@
                   const profileImageHtml = player.profileImage
                      ? `<img src="${player.profileImage}" alt="${player.username}" style="width: ${profileImageSize}; height: ${profileImageSize}; border-radius: 50%; object-fit: cover; margin-right: 0.3rem;" />`
                      : `<i class="fas fa-user-circle text-primary" style="font-size: ${iconSize}; margin-right: 0.3rem;"></i>`;
+                  const newPlayerTag = player.isNewPlayer ? ' <span style="color: #6c757d;">(N)</span>' : '';
 
                   scheduleHTML += `
                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
                         <div style="display: flex; align-items: center;">
                            ${profileImageHtml}
-                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}</span>
+                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}${newPlayerTag}</span>
                         </div>
                         <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
                      </div>
@@ -791,12 +802,13 @@
                   const profileImageHtml = player.profileImage
                      ? `<img src="${player.profileImage}" alt="${player.username}" style="width: ${profileImageSize}; height: ${profileImageSize}; border-radius: 50%; object-fit: cover; margin-right: 0.3rem;" />`
                      : `<i class="fas fa-user-circle text-primary" style="font-size: ${iconSize}; margin-right: 0.3rem;"></i>`;
+                  const newPlayerTag = player.isNewPlayer ? ' <span style="color: #6c757d;">(N)</span>' : '';
 
                   scheduleHTML += `
                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
                         <div style="display: flex; align-items: center;">
                            ${profileImageHtml}
-                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}</span>
+                           <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}${newPlayerTag}</span>
                         </div>
                         <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
                      </div>
@@ -827,7 +839,7 @@
             checkAndDisplaySchedule();
 
             // Prüfe alle 10 Sekunden, ob ein neuer Spielplan im Zeitfenster ist
-            // (15 Min vor Start bis 1 Min nach Start)
+            // (Ab Veröffentlichung am Spieltag / 9:00 Uhr wenn vorher veröffentlicht, bis 23:00 Uhr am Spieltag)
             checkInterval = setInterval(() => {
                checkAndDisplaySchedule();
             }, 10000); // 10 Sekunden für schnellere Reaktion

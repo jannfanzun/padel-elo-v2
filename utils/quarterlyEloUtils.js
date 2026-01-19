@@ -2,6 +2,7 @@
 
 const QuarterlyELO = require('../models/QuarterlyELO');
 const User = require('../models/User');
+const Game = require('../models/Game');
 
 /**
  * Get or create quarterly ELO record for a user
@@ -87,8 +88,68 @@ const ensureAllUsersHaveQuarterlyRecords = async (date = new Date()) => {
   await Promise.all(promises);
 };
 
+/**
+ * Get quarterly report data for a specific quarter
+ * @param {number} year - Year
+ * @param {number} quarter - Quarter (0-3)
+ * @returns {Promise<Object>} - Report data with player stats
+ */
+const getQuarterlyReportData = async (year, quarter) => {
+  // Calculate quarter start and end dates
+  const quarterStart = new Date(year, quarter * 3, 1);
+  const quarterEnd = new Date(year, (quarter + 1) * 3, 0, 23, 59, 59); // Last day of the quarter
+
+  // Get all quarterly ELO records for this quarter
+  const quarterlyRecords = await QuarterlyELO.find({
+    year,
+    quarter
+  }).populate('user', 'username eloRating');
+
+  // Get all games in this quarter
+  const games = await Game.find({
+    createdAt: { $gte: quarterStart, $lte: quarterEnd }
+  });
+
+  // Count games per player
+  const gamesPerPlayer = new Map();
+  games.forEach(game => {
+    [...game.team1, ...game.team2].forEach(playerData => {
+      const playerId = playerData.player.toString();
+      gamesPerPlayer.set(playerId, (gamesPerPlayer.get(playerId) || 0) + 1);
+    });
+  });
+
+  // Build player stats
+  const players = quarterlyRecords
+    .filter(record => record.user && !record.user.isAdmin)
+    .map(record => {
+      const playerId = record.user._id.toString();
+      const endELO = record.user.eloRating;
+      const startELO = record.startELO;
+      const eloChange = endELO - startELO;
+      const gamesPlayed = gamesPerPlayer.get(playerId) || 0;
+
+      return {
+        username: record.user.username,
+        startELO,
+        endELO,
+        eloChange,
+        gamesPlayed
+      };
+    })
+    .sort((a, b) => b.endELO - a.endELO); // Sort by end ELO descending
+
+  return {
+    year,
+    quarter,
+    players,
+    totalGames: games.length
+  };
+};
+
 module.exports = {
   getOrCreateQuarterlyELO,
   getCurrentQuarterELORecords,
-  ensureAllUsersHaveQuarterlyRecords
+  ensureAllUsersHaveQuarterlyRecords,
+  getQuarterlyReportData
 };

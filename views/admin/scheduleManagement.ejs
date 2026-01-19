@@ -1,5 +1,8 @@
 <%- include('../partials/header') %>
 
+<!-- SortableJS for drag-and-drop player management -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 <div class="row justify-content-center">
   <div class="col-lg-10">
     <div class="card shadow border-0">
@@ -31,6 +34,13 @@
           </div>
         <% } %>
 
+        <!-- Button zum Löschen vergangener Spielpläne -->
+        <div class="mb-4">
+          <button class="btn btn-outline-danger" id="deletePastSchedulesBtn">
+            <i class="fas fa-broom me-2"></i>Alle vergangenen Spielpläne löschen
+          </button>
+        </div>
+
         <!-- Existing Schedule Info (if exists) -->
         <% if (schedule) { %>
           <div class="card mb-4 border">
@@ -38,17 +48,43 @@
               <h5 class="mb-0">
                 <i class="fas fa-calendar-check me-2"></i>Aktueller Spielplan
               </h5>
-              <button class="btn btn-danger btn-sm" id="deleteScheduleBtn" data-schedule-id="<%= schedule._id %>">
-                <i class="fas fa-trash me-1"></i>Löschen
-              </button>
+              <div>
+                <button class="btn btn-outline-primary btn-sm me-2" id="editScheduleBtn"
+                        data-schedule-id="<%= schedule._id %>"
+                        data-players="<%= JSON.stringify(schedule.players.map(p => ({ _id: p._id, username: p.username, eloRating: p.eloRating }))) %>"
+                        data-start-time="<%= moment(schedule.startTime).tz('Europe/Zurich').format('YYYY-MM-DDTHH:mm') %>"
+                        data-court-names="<%= JSON.stringify(schedule.courtNames || []) %>">
+                  <i class="fas fa-users me-1"></i>Spieler ändern
+                </button>
+                <button class="btn btn-danger btn-sm" id="deleteScheduleBtn" data-schedule-id="<%= schedule._id %>">
+                  <i class="fas fa-trash me-1"></i>Löschen
+                </button>
+              </div>
             </div>
             <div class="card-body">
               <div class="row">
                 <div class="col-md-6">
-                  <p class="mb-2">
+                  <div class="mb-2">
                     <strong><i class="fas fa-clock me-2"></i>Startzeit:</strong>
-                    <%= moment(schedule.startTime).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr
-                  </p>
+                    <span id="startTimeDisplay"><%= moment(schedule.startTime).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr</span>
+                    <button class="btn btn-sm btn-outline-primary ms-2" id="editStartTimeBtn">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                  </div>
+                  <div id="startTimeEditForm" class="d-none mb-2">
+                    <div class="input-group">
+                      <input type="datetime-local"
+                             id="editStartTimeInput"
+                             class="form-control"
+                             value="<%= moment(schedule.startTime).tz('Europe/Zurich').format('YYYY-MM-DDTHH:mm') %>">
+                      <button class="btn btn-success" id="saveStartTimeBtn">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button class="btn btn-secondary" id="cancelStartTimeBtn">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
                   <p class="mb-2">
                     <strong><i class="fas fa-users me-2"></i>Spieler:</strong>
                     <%= schedule.players.length %> Spieler (<%= schedule.players.length / 4 %> Plätze)
@@ -57,20 +93,96 @@
                 <div class="col-md-6">
                   <p class="mb-2">
                     <strong><i class="fas fa-info-circle me-2"></i>Status:</strong>
-                    <% if (schedule.isPublished) { %>
-                      <span class="badge bg-success">Veröffentlicht</span>
+                    <%
+                      const now = new Date();
+                      const startTime = new Date(schedule.startTime);
+                      const isUpcoming = startTime > now;
+                      const gameDay = new Date(startTime);
+                      gameDay.setHours(23, 0, 0, 0);
+                      const isPast = now > gameDay;
+
+                      if (schedule.isPublished && isUpcoming) {
+                    %>
+                      <span class="badge bg-primary">Bevorstehend (veröffentlicht)</span>
+                    <% } else if (schedule.isPublished && !isPast) { %>
+                      <span class="badge bg-success">Live / Aktiv</span>
+                    <% } else if (schedule.isPublished && isPast) { %>
+                      <span class="badge bg-secondary">Abgeschlossen</span>
+                    <% } else if (!schedule.isPublished && isPast) { %>
+                      <span class="badge bg-dark">Abgeschlossen (nicht veröffentlicht)</span>
                     <% } else { %>
-                      <span class="badge bg-secondary">Entwurf oder abgeschlossen</span>
+                      <span class="badge bg-warning text-dark">Entwurf</span>
                     <% } %>
                   </p>
                   <% if (schedule.publishedAt) { %>
-                    <p class="mb-0">
-                      <strong><i class="fas fa-user me-2"></i>Veröffentlicht:</strong>
+                    <p class="mb-2">
+                      <strong><i class="fas fa-calendar-check me-2"></i>Veröffentlicht:</strong>
                       <%= moment(schedule.publishedAt).tz('Europe/Zurich').format('DD.MM.YYYY HH:mm') %> Uhr
                     </p>
                   <% } %>
+                  <% if (!schedule.isPublished && !isPast) { %>
+                    <button class="btn btn-success btn-sm" id="republishScheduleBtn" data-schedule-id="<%= schedule._id %>">
+                      <i class="fas fa-paper-plane me-1"></i>Jetzt veröffentlichen
+                    </button>
+                  <% } else if (schedule.isPublished && isUpcoming) { %>
+                    <button class="btn btn-outline-success btn-sm" id="republishScheduleBtn" data-schedule-id="<%= schedule._id %>">
+                      <i class="fas fa-sync me-1"></i>Erneut veröffentlichen
+                    </button>
+                  <% } %>
+                  <% if (schedule.isPublished) { %>
+                    <button class="btn btn-info btn-sm ms-2" id="notifyPlayersBtn" data-schedule-id="<%= schedule._id %>">
+                      <i class="fas fa-envelope me-1"></i>Spieler benachrichtigen
+                    </button>
+                  <% } %>
                 </div>
               </div>
+
+              <!-- Spielplan Matchups anzeigen (aufklappbar) -->
+              <% if (scheduleCourts && scheduleCourts.length > 0) { %>
+                <hr class="my-3">
+                <div class="d-grid">
+                  <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#scheduleMatchupsCollapse">
+                    <i class="fas fa-list me-2"></i>Spielpaarungen anzeigen
+                    <i class="fas fa-chevron-down ms-2"></i>
+                  </button>
+                </div>
+                <div class="collapse mt-3" id="scheduleMatchupsCollapse">
+                  <div class="row">
+                    <% scheduleCourts.forEach(court => { %>
+                      <div class="col-md-6 mb-3">
+                        <div class="card court-card">
+                          <div class="card-header bg-light">
+                            <strong><i class="fas fa-map-marker-alt me-2"></i><%= court.courtName %></strong>
+                          </div>
+                          <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                              <div class="flex-fill">
+                                <div class="mb-1">
+                                  <small class="text-muted">Team 1</small><br>
+                                  <strong><%= court.team1[0].username %></strong><% if (court.team1[0].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team1[0].elo %></span><br>
+                                  <strong><%= court.team1[1].username %></strong><% if (court.team1[1].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team1[1].elo %></span>
+                                </div>
+                                <small class="text-muted">Ø <%= court.team1Elo %> ELO</small>
+                              </div>
+                              <div class="px-2">
+                                <span class="badge bg-secondary">VS</span>
+                              </div>
+                              <div class="flex-fill">
+                                <div class="mb-1">
+                                  <small class="text-muted">Team 2</small><br>
+                                  <strong><%= court.team2[0].username %></strong><% if (court.team2[0].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team2[0].elo %></span><br>
+                                  <strong><%= court.team2[1].username %></strong><% if (court.team2[1].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team2[1].elo %></span>
+                                </div>
+                                <small class="text-muted">Ø <%= court.team2Elo %> ELO</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
             </div>
           </div>
         <% } %>
@@ -81,8 +193,8 @@
             Wie viele Spieler nehmen teil?
           </h3>
           <div class="row g-3">
-            <% [4, 8, 12, 16, 20, 24].forEach((count, index) => { %>
-              <div class="col-md-4 col-6">
+            <% [4, 8, 12, 16, 20, 24, 28, 32].forEach((count, index) => { %>
+              <div class="col-md-3 col-6">
                 <div class="card player-count-card h-100 text-center border-2"
                      data-count="<%= count %>"
                      style="cursor: pointer;">
@@ -299,6 +411,73 @@
     border-radius: 20px;
     font-weight: bold;
   }
+
+  /* Drag-and-Drop Styles */
+  .draggable-player {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .draggable-player:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+  }
+
+  .draggable-player:active {
+    cursor: grabbing;
+  }
+
+  .draggable-player.sortable-ghost {
+    opacity: 0.4;
+    background: #e7f1ff;
+  }
+
+  .draggable-player.sortable-chosen {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+  }
+
+  .draggable-player .drag-handle {
+    color: #adb5bd;
+    margin-right: 8px;
+  }
+
+  .team-dropzone {
+    min-height: 80px;
+    border: 2px dashed transparent;
+    border-radius: 8px;
+    padding: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .team-dropzone.sortable-drag-over {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+  }
+
+  .drag-hint {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .elo-warning {
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .elo-balanced {
+    color: #198754;
+  }
 </style>
 
 <script>
@@ -346,6 +525,219 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Server-Fehler beim Löschen des Spielplans');
                 this.innerHTML = originalText;
                 this.disabled = false;
+            }
+        });
+    }
+
+    // Republish Schedule Button Handler
+    const republishScheduleBtn = document.getElementById('republishScheduleBtn');
+    if (republishScheduleBtn) {
+        republishScheduleBtn.addEventListener('click', async function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Veröffentliche...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/admin/padel-schedule/publish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Spielplan erfolgreich veröffentlicht!');
+                    window.location.href = '/admin/padel-schedule';
+                } else {
+                    alert('Fehler beim Veröffentlichen: ' + data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error publishing schedule:', error);
+                alert('Server-Fehler beim Veröffentlichen des Spielplans');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Notify Players Button Handler
+    const notifyPlayersBtn = document.getElementById('notifyPlayersBtn');
+    if (notifyPlayersBtn) {
+        notifyPlayersBtn.addEventListener('click', async function() {
+            if (!confirm('Möchtest du eine E-Mail an alle Spieler im Spielplan senden?')) {
+                return;
+            }
+
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sende E-Mails...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/admin/padel-schedule/notify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                } else {
+                    alert('Fehler: ' + data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error sending notifications:', error);
+                alert('Server-Fehler beim Senden der Benachrichtigungen');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Delete Past Schedules Button Handler
+    const deletePastSchedulesBtn = document.getElementById('deletePastSchedulesBtn');
+    if (deletePastSchedulesBtn) {
+        deletePastSchedulesBtn.addEventListener('click', async function() {
+            if (!confirm('Bist du sicher, dass du alle vergangenen Spielpläne löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+                return;
+            }
+
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Löschen...';
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/admin/padel-schedule/past', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    window.location.href = '/admin/padel-schedule';
+                } else {
+                    alert('Fehler beim Löschen: ' + data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error deleting past schedules:', error);
+                alert('Server-Fehler beim Löschen vergangener Spielpläne');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Edit Schedule Button Handler (für Spieler-Bearbeitung)
+    const editScheduleBtn = document.getElementById('editScheduleBtn');
+    if (editScheduleBtn) {
+        editScheduleBtn.addEventListener('click', function() {
+            const playersData = JSON.parse(this.dataset.players);
+            const startTime = this.dataset.startTime;
+            const courtNames = JSON.parse(this.dataset.courtNames);
+
+            // Setze die Spieleranzahl
+            selectedPlayerCount = playersData.length;
+
+            // Wähle die passende Karte für Spielerzahl
+            document.querySelectorAll('.player-count-card').forEach(card => {
+                if (parseInt(card.dataset.count) === selectedPlayerCount) {
+                    card.classList.add('selected');
+                }
+            });
+
+            // Lade die vorhandenen Spieler
+            selectedPlayers = playersData.map(p => ({
+                username: p.username,
+                elo: p.eloRating,
+                userId: p._id
+            }));
+
+            // Speichere Court-Namen und Startzeit für später
+            window.editModeCourtNames = courtNames;
+            window.editModeStartTime = startTime;
+
+            // Zeige Step 2
+            showStep(2);
+            document.getElementById('maxPlayers').textContent = selectedPlayerCount;
+            updateSelectedPlayersDisplay();
+            updateAvailablePlayersVisibility();
+        });
+    }
+
+    // Edit Start Time Handler (Inline-Bearbeitung)
+    const editStartTimeBtn = document.getElementById('editStartTimeBtn');
+    const startTimeDisplay = document.getElementById('startTimeDisplay');
+    const startTimeEditForm = document.getElementById('startTimeEditForm');
+    const editStartTimeInput = document.getElementById('editStartTimeInput');
+    const saveStartTimeBtn = document.getElementById('saveStartTimeBtn');
+    const cancelStartTimeBtn = document.getElementById('cancelStartTimeBtn');
+
+    if (editStartTimeBtn) {
+        editStartTimeBtn.addEventListener('click', function() {
+            startTimeDisplay.classList.add('d-none');
+            editStartTimeBtn.classList.add('d-none');
+            startTimeEditForm.classList.remove('d-none');
+        });
+
+        cancelStartTimeBtn.addEventListener('click', function() {
+            startTimeDisplay.classList.remove('d-none');
+            editStartTimeBtn.classList.remove('d-none');
+            startTimeEditForm.classList.add('d-none');
+        });
+
+        saveStartTimeBtn.addEventListener('click', async function() {
+            const newStartTime = editStartTimeInput.value;
+            if (!newStartTime) {
+                alert('Bitte wähle eine Startzeit!');
+                return;
+            }
+
+            const scheduleId = document.getElementById('deleteScheduleBtn').dataset.scheduleId;
+
+            saveStartTimeBtn.disabled = true;
+            saveStartTimeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch(`/admin/padel-schedule/${scheduleId}/start-time`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ startTime: newStartTime })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    startTimeDisplay.textContent = data.newStartTime + ' Uhr';
+                    startTimeDisplay.classList.remove('d-none');
+                    editStartTimeBtn.classList.remove('d-none');
+                    startTimeEditForm.classList.add('d-none');
+                } else {
+                    alert('Fehler: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error updating start time:', error);
+                alert('Server-Fehler beim Aktualisieren der Startzeit');
+            } finally {
+                saveStartTimeBtn.disabled = false;
+                saveStartTimeBtn.innerHTML = '<i class="fas fa-check"></i>';
             }
         });
     }
@@ -552,6 +944,10 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedPlayers = [];
         selectedPlayerCount = 0;
 
+        // Bearbeiten-Modus zurücksetzen
+        window.editModeCourtNames = null;
+        window.editModeStartTime = null;
+
         document.querySelectorAll('.player-count-card').forEach(card =>
             card.classList.remove('selected'));
         document.querySelectorAll('.available-player-item').forEach(item => {
@@ -597,19 +993,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 generatedTournament = data.courts;
                 displayTournamentResults(data.courts);
 
-                const now = new Date();
-                now.setMinutes(now.getMinutes() + 30);
+                // Prüfe ob im Bearbeiten-Modus - verwende gespeicherte Startzeit
+                if (window.editModeStartTime) {
+                    document.getElementById('scheduleStartTime').value = window.editModeStartTime;
+                } else {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 30);
 
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
 
-                document.getElementById('scheduleStartTime').value =
-                    `${year}-${month}-${day}T${hours}:${minutes}`;
+                    document.getElementById('scheduleStartTime').value =
+                        `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
 
                 showStep(3);
+
+                // Setze Court-Namen wenn im Bearbeiten-Modus
+                if (window.editModeCourtNames && window.editModeCourtNames.length > 0) {
+                    setTimeout(() => {
+                        document.querySelectorAll('.court-name-selector').forEach((selector, index) => {
+                            if (window.editModeCourtNames[index]) {
+                                selector.value = window.editModeCourtNames[index];
+                            }
+                        });
+                    }, 100);
+                }
             } else {
                 alert('Fehler beim Generieren: ' + data.message);
             }
@@ -671,71 +1083,191 @@ document.addEventListener('DOMContentLoaded', function() {
         // Generiere Court-Name-Selektoren
         generateCourtNameSelectors(courts.length);
 
-        const html = courts.map((court, index) => {
-            const courtNameInput = document.querySelector(`[data-court-index="${index}"]`);
-            const courtName = courtNameInput ? courtNameInput.value : '';
-            const displayName = courtName || `Platz ${index + 1}`;
-
-            const team1PlayersHTML = court.team1.map(player => `
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span><strong>${player.username}</strong></span>
-                    <span class="badge bg-primary">${player.elo} ELO</span>
-                </div>
-            `).join('');
-
-            const team2PlayersHTML = court.team2.map(player => `
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span><strong>${player.username}</strong></span>
-                    <span class="badge bg-primary">${player.elo} ELO</span>
-                </div>
-            `).join('');
-
-            return `
-            <div class="card court-card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-map-marker-alt me-2"></i>
-                        ${displayName}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-5">
-                            <div class="team-section">
-                                <h6 class="text-primary mb-2">Team 1</h6>
-                                ${team1PlayersHTML}
-                                <div class="mt-2 text-center">
-                                    <span class="badge bg-primary">Ø ${court.team1Elo} ELO</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-2 text-center">
-                            <div class="vs-badge">VS</div>
-                        </div>
-
-                        <div class="col-md-5">
-                            <div class="team-section">
-                                <h6 class="text-primary mb-2">Team 2</h6>
-                                ${team2PlayersHTML}
-                                <div class="mt-2 text-center">
-                                    <span class="badge bg-primary">Ø ${court.team2Elo} ELO</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center mt-3">
-                        <small class="text-muted">
-                            ELO-Differenz: ${Math.abs(court.team1Elo - court.team2Elo)} Punkte
-                        </small>
-                    </div>
-                </div>
+        const html = `
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Tipp:</strong> Du kannst Spieler per Drag & Drop zwischen Teams und Plätzen verschieben.
             </div>
-            `;
-        }).join('');
+            ${courts.map((court, index) => {
+                const team1PlayersHTML = court.team1.map(player => `
+                    <div class="draggable-player"
+                         data-username="${player.username}"
+                         data-elo="${player.elo}"
+                         data-userid="${player.userId || ''}"
+                         data-is-new="${player.isNewPlayer || false}">
+                        <div>
+                            <i class="fas fa-grip-vertical drag-handle"></i>
+                            <strong>${player.username}</strong>
+                            ${player.isNewPlayer ? '<span class="text-muted ms-1">(N)</span>' : ''}
+                        </div>
+                        <span class="badge bg-primary">${player.elo}</span>
+                    </div>
+                `).join('');
+
+                const team2PlayersHTML = court.team2.map(player => `
+                    <div class="draggable-player"
+                         data-username="${player.username}"
+                         data-elo="${player.elo}"
+                         data-userid="${player.userId || ''}"
+                         data-is-new="${player.isNewPlayer || false}">
+                        <div>
+                            <i class="fas fa-grip-vertical drag-handle"></i>
+                            <strong>${player.username}</strong>
+                            ${player.isNewPlayer ? '<span class="text-muted ms-1">(N)</span>' : ''}
+                        </div>
+                        <span class="badge bg-primary">${player.elo}</span>
+                    </div>
+                `).join('');
+
+                return `
+                <div class="card court-card mb-3" data-court-index="${index}">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Platz ${index + 1}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-stretch">
+                            <div class="col-md-5">
+                                <div class="team-section h-100">
+                                    <h6 class="text-primary mb-2">Team 1</h6>
+                                    <div class="team-dropzone" id="court-${index}-team1" data-court="${index}" data-team="team1">
+                                        ${team1PlayersHTML}
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team1-elo">Ø ${court.team1Elo} ELO</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2 text-center d-flex align-items-center justify-content-center">
+                                <div class="vs-badge">VS</div>
+                            </div>
+
+                            <div class="col-md-5">
+                                <div class="team-section h-100">
+                                    <h6 class="text-primary mb-2">Team 2</h6>
+                                    <div class="team-dropzone" id="court-${index}-team2" data-court="${index}" data-team="team2">
+                                        ${team2PlayersHTML}
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team2-elo">Ø ${court.team2Elo} ELO</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <small class="elo-diff-display" id="court-${index}-diff">
+                                ELO-Differenz: <span class="${Math.abs(court.team1Elo - court.team2Elo) > 100 ? 'elo-warning' : 'elo-balanced'}">${Math.abs(court.team1Elo - court.team2Elo)} Punkte</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('')}
+        `;
 
         container.innerHTML = html;
+
+        // Initialize Sortable for all team dropzones
+        initializeDragAndDrop();
+    }
+
+    // Initialize drag-and-drop functionality
+    function initializeDragAndDrop() {
+        const dropzones = document.querySelectorAll('.team-dropzone');
+
+        dropzones.forEach(dropzone => {
+            new Sortable(dropzone, {
+                group: 'players', // Allow dragging between all dropzones
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                handle: '.draggable-player', // The whole element is draggable
+                onEnd: function(evt) {
+                    // Update the tournament data and recalculate ELOs
+                    updateTournamentFromDOM();
+                }
+            });
+        });
+    }
+
+    // Update generatedTournament from current DOM state and recalculate ELOs
+    function updateTournamentFromDOM() {
+        if (!generatedTournament) return;
+
+        generatedTournament.forEach((court, courtIndex) => {
+            const team1Zone = document.getElementById(`court-${courtIndex}-team1`);
+            const team2Zone = document.getElementById(`court-${courtIndex}-team2`);
+
+            if (team1Zone && team2Zone) {
+                // Get players from team 1
+                court.team1 = Array.from(team1Zone.querySelectorAll('.draggable-player')).map(el => ({
+                    username: el.dataset.username,
+                    elo: parseInt(el.dataset.elo),
+                    userId: el.dataset.userid,
+                    isNewPlayer: el.dataset.isNew === 'true'
+                }));
+
+                // Get players from team 2
+                court.team2 = Array.from(team2Zone.querySelectorAll('.draggable-player')).map(el => ({
+                    username: el.dataset.username,
+                    elo: parseInt(el.dataset.elo),
+                    userId: el.dataset.userid,
+                    isNewPlayer: el.dataset.isNew === 'true'
+                }));
+
+                // Recalculate ELO averages
+                court.team1Elo = court.team1.length > 0
+                    ? Math.round(court.team1.reduce((sum, p) => sum + p.elo, 0) / court.team1.length)
+                    : 0;
+                court.team2Elo = court.team2.length > 0
+                    ? Math.round(court.team2.reduce((sum, p) => sum + p.elo, 0) / court.team2.length)
+                    : 0;
+
+                // Update ELO displays
+                const team1EloBadge = document.getElementById(`court-${courtIndex}-team1-elo`);
+                const team2EloBadge = document.getElementById(`court-${courtIndex}-team2-elo`);
+                const diffDisplay = document.getElementById(`court-${courtIndex}-diff`);
+
+                if (team1EloBadge) team1EloBadge.textContent = `Ø ${court.team1Elo} ELO`;
+                if (team2EloBadge) team2EloBadge.textContent = `Ø ${court.team2Elo} ELO`;
+
+                const eloDiff = Math.abs(court.team1Elo - court.team2Elo);
+                if (diffDisplay) {
+                    diffDisplay.innerHTML = `ELO-Differenz: <span class="${eloDiff > 100 ? 'elo-warning' : 'elo-balanced'}">${eloDiff} Punkte</span>`;
+                }
+            }
+        });
+
+        // Also update the selectedPlayers array to match the new arrangement
+        updateSelectedPlayersFromTournament();
+    }
+
+    // Sync selectedPlayers with current tournament state
+    function updateSelectedPlayersFromTournament() {
+        if (!generatedTournament) return;
+
+        selectedPlayers = [];
+        generatedTournament.forEach(court => {
+            court.team1.forEach(p => {
+                selectedPlayers.push({
+                    username: p.username,
+                    elo: p.elo,
+                    userId: p.userId
+                });
+            });
+            court.team2.forEach(p => {
+                selectedPlayers.push({
+                    username: p.username,
+                    elo: p.elo,
+                    userId: p.userId
+                });
+            });
+        });
     }
 
     function resetTournament() {
@@ -760,6 +1292,32 @@ document.addEventListener('DOMContentLoaded', function() {
             courtNames.push(value);
         });
 
+        // Extrahiere Spieler-IDs aus dem DOM in der richtigen Reihenfolge
+        // Format: [Court1_Team1_P1, Court1_Team1_P2, Court1_Team2_P1, Court1_Team2_P2, Court2_Team1_P1, ...]
+        const orderedPlayerIds = [];
+        if (generatedTournament && generatedTournament.length > 0) {
+            generatedTournament.forEach((court, courtIndex) => {
+                const team1Zone = document.getElementById(`court-${courtIndex}-team1`);
+                const team2Zone = document.getElementById(`court-${courtIndex}-team2`);
+
+                if (team1Zone && team2Zone) {
+                    // Hole Team 1 Spieler
+                    Array.from(team1Zone.querySelectorAll('.draggable-player')).forEach(el => {
+                        orderedPlayerIds.push(el.dataset.userid);
+                    });
+                    // Hole Team 2 Spieler
+                    Array.from(team2Zone.querySelectorAll('.draggable-player')).forEach(el => {
+                        orderedPlayerIds.push(el.dataset.userid);
+                    });
+                }
+            });
+        }
+
+        // Fallback auf selectedPlayers wenn DOM nicht verfügbar
+        const playerIds = orderedPlayerIds.length > 0
+            ? orderedPlayerIds
+            : selectedPlayers.map(p => p.userId);
+
         const publishBtn = document.getElementById('publishScheduleBtn');
         const originalText = publishBtn.innerHTML;
         publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Veröffentliche...';
@@ -772,9 +1330,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    players: selectedPlayers.map(p => p.userId),
+                    players: playerIds,
                     startTime: startTimeInput.value,
-                    courtNames: courtNames
+                    courtNames: courtNames,
+                    manualOrder: true // Spieler wurden manuell angeordnet
                 })
             });
 
