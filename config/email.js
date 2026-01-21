@@ -253,56 +253,6 @@ const sendGameReportEmail = async (user, game, reason, details) => {
   }
 };
 
-const sendInactivityPenaltyEmail = async (user, oldElo, newElo) => {
-  console.log(`Inactivity penalty email DISABLED for: ${user.email}`);
-  return; // Early return to prevent sending the email
-  
-  /*
-  try {
-    const transporter = createTransporter();
-    
-    // Email content
-    const mailOptions = {
-      from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
-      to: user.email,
-      subject: '⚠️ Inaktivitätsstrafe - padELO Ranking',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-          <h2 style="color: #dc3545;">Inaktivitätsstrafe angewendet</h2>
-          <p>Hallo ${user.username},</p>
-          
-          <p>Wir haben festgestellt, dass du in den letzten 7 Tagen keine Spiele in unserem Padel-Ranking-System gespielt hast. Gemäss unseren Regeln wurde eine Inaktivitätsstrafe angewendet:</p>
-          
-          <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 15px 0;">
-            <p style="margin: 0;"><strong>ELO-Punkte reduziert:</strong> ${oldElo} → ${newElo} (-10 Punkte)</p>
-          </div>
-          
-          <p>Um weitere Strafen zu vermeiden und deine Rangliste zu verbessern, empfehlen wir dir, bald wieder zu spielen und deine Spiele im System einzutragen.</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.SITE_URL}/game/add" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-              Spiel eintragen
-            </a>
-          </div>
-          
-          <p>Denke daran, dass du alle 7 Tage mindestens ein Spiel spielen solltest, um Inaktivitätsstrafen zu vermeiden.</p>
-          
-          <p style="color: #6c757d; font-size: 0.9em; margin-top: 30px;">Dies ist eine automatische Nachricht des padELO Ranking Systems.</p>
-        </div>
-      `
-    };
-    
-    // Send email
-    await transporter.sendMail(mailOptions);
-    console.log(`Inactivity penalty email sent to: ${user.email}`);
-    
-  } catch (error) {
-    console.error('Error sending inactivity penalty email:', error);
-    throw error; // Re-throw to be handled by the caller
-  }
-  */
-};
-  
 /**
  * Send game notification email to all players involved in a game
  * @param {Object} game - Fully populated game object with player details
@@ -675,7 +625,6 @@ module.exports = {
   sendRegistrationApprovedEmail,
   sendPasswordResetEmail,
   sendGameReportEmail,
-  sendInactivityPenaltyEmail,
   sendGameNotificationEmail,
   sendQuarterlyReportEmail,
   sendShirtLevelUpEmail,

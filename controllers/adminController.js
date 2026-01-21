@@ -670,12 +670,11 @@ exports.resetSystem = async (req, res) => {
       // 1. Reset all user ELO ratings to 500 and set lastActivity to current date
       const usersResult = await User.updateMany(
         { isAdmin: false }, // Only reset players, not admins
-        { 
-          $set: { 
+        {
+          $set: {
             eloRating: 500,
-            lastActivity: currentDate, // Setze lastActivity auf aktuelles Datum
-            lastInactivityPenalty: null // Setze lastInactivityPenalty zurück
-          } 
+            lastActivity: currentDate
+          }
         },
         { session }
       );
@@ -707,12 +706,11 @@ exports.resetSystem = async (req, res) => {
       // 1. Reset all user ELO ratings to 500 and lastActivity to current date
       const usersResult = await User.updateMany(
         { isAdmin: false },
-        { 
-          $set: { 
+        {
+          $set: {
             eloRating: 500,
-            lastActivity: currentDate, // Setze lastActivity auf aktuelles Datum
-            lastInactivityPenalty: null // Setze lastInactivityPenalty zurück
-          } 
+            lastActivity: currentDate
+          }
         }
       );
       console.log(`Reset ELO ratings and activity for ${usersResult.modifiedCount} users`);
