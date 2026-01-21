@@ -135,43 +135,58 @@ const distributeQuarterlyAwards = async (quarterInfo) => {
 
     const awardsToGrant = [];
 
-    // Best Improvement
-    const bestImprovement = userStats
+    // Best Improvement - alle mit gleichem Bestwert
+    const improvementCandidates = userStats
       .filter(s => s.eloImprovement > 0 && s.quarterlyGames > 0)
-      .sort((a, b) => b.eloImprovement - a.eloImprovement)[0];
+      .sort((a, b) => b.eloImprovement - a.eloImprovement);
 
-    if (bestImprovement) {
-      awardsToGrant.push({
-        user: bestImprovement.user,
-        type: 'best_improvement',
-        value: bestImprovement.eloImprovement
-      });
+    if (improvementCandidates.length > 0) {
+      const bestValue = improvementCandidates[0].eloImprovement;
+      improvementCandidates
+        .filter(s => s.eloImprovement === bestValue)
+        .forEach(s => {
+          awardsToGrant.push({
+            user: s.user,
+            type: 'best_improvement',
+            value: s.eloImprovement
+          });
+        });
     }
 
-    // Most Games
-    const mostGames = userStats
+    // Most Games - alle mit gleichem Bestwert
+    const gamesCandidates = userStats
       .filter(s => s.quarterlyGames > 0)
-      .sort((a, b) => b.quarterlyGames - a.quarterlyGames)[0];
+      .sort((a, b) => b.quarterlyGames - a.quarterlyGames);
 
-    if (mostGames) {
-      awardsToGrant.push({
-        user: mostGames.user,
-        type: 'most_games',
-        value: mostGames.quarterlyGames
-      });
+    if (gamesCandidates.length > 0) {
+      const bestValue = gamesCandidates[0].quarterlyGames;
+      gamesCandidates
+        .filter(s => s.quarterlyGames === bestValue)
+        .forEach(s => {
+          awardsToGrant.push({
+            user: s.user,
+            type: 'most_games',
+            value: s.quarterlyGames
+          });
+        });
     }
 
-    // Best ELO
-    const bestElo = userStats
+    // Best ELO - alle mit gleichem Bestwert
+    const eloCandidates = userStats
       .filter(s => s.quarterlyGames > 0)
-      .sort((a, b) => b.currentElo - a.currentElo)[0];
+      .sort((a, b) => b.currentElo - a.currentElo);
 
-    if (bestElo) {
-      awardsToGrant.push({
-        user: bestElo.user,
-        type: 'best_elo',
-        value: bestElo.currentElo
-      });
+    if (eloCandidates.length > 0) {
+      const bestValue = eloCandidates[0].currentElo;
+      eloCandidates
+        .filter(s => s.currentElo === bestValue)
+        .forEach(s => {
+          awardsToGrant.push({
+            user: s.user,
+            type: 'best_elo',
+            value: s.currentElo
+          });
+        });
     }
 
     // Grant awards
