@@ -140,6 +140,10 @@ exports.getRankings = async (req, res) => {
   try {
     // Get ranking type from query (default to 'elo')
     const rankingType = req.query.type || 'elo';
+
+    // Pagination settings
+    const itemsPerPage = 10;
+    const page = parseInt(req.query.page) || 1;
     
     // Get current date
     const now = new Date();
@@ -304,7 +308,14 @@ exports.getRankings = async (req, res) => {
       ...item,
       rank: index + 1
     }));
-    
+
+    // Pagination
+    const totalItems = rankings.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedRankings = rankings.slice(startIndex, endIndex);
+
     // Format quarter name for display
     const quarterStartMonths = ['Januar', 'April', 'Juli', 'Oktober'];
     const quarterEndMonths = ['März', 'Juni', 'September', 'Dezember'];
@@ -314,11 +325,17 @@ exports.getRankings = async (req, res) => {
     
     res.render('user/rankings', {
       title: 'Spieler Rankings',
-      rankings,
+      rankings: paginatedRankings,
       rankingType,
       quarterName,
       user: req.user,
-      getAwardInfo
+      getAwardInfo,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage
+      }
     });
   } catch (error) {
     console.error('Get rankings error:', error);

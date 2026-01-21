@@ -181,6 +181,39 @@
 </table>
           </div>
         <% } %>
+
+        <% if (pagination.totalPages > 1) { %>
+        <div class="card-body border-top">
+          <nav aria-label="Rangliste Navigation">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="?type=<%= rankingType %>&page=<%= pagination.currentPage - 1 %>" aria-label="Zurück">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                <% if (i === 1 || i === pagination.totalPages || (i >= pagination.currentPage - 2 && i <= pagination.currentPage + 2)) { %>
+                  <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                    <a class="page-link" href="?type=<%= rankingType %>&page=<%= i %>"><%= i %></a>
+                  </li>
+                <% } else if (i === pagination.currentPage - 3 || i === pagination.currentPage + 3) { %>
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                <% } %>
+              <% } %>
+              <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="?type=<%= rankingType %>&page=<%= pagination.currentPage + 1 %>" aria-label="Weiter">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <p class="text-center text-muted small mt-2 mb-0">
+            Zeige <%= (pagination.currentPage - 1) * pagination.itemsPerPage + 1 %> - <%= Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems) %> von <%= pagination.totalItems %> Spielern
+          </p>
+        </div>
+        <% } %>
       </div>
       <div class="card-footer bg-white">
         <small class="text-muted d-block mb-2">
