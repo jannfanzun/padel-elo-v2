@@ -11,53 +11,21 @@
   </div>
 </div>
 
-<!-- Automatische Award-Verteilung -->
-<div class="row mb-4">
-  <div class="col-md-12">
-    <div class="card shadow-sm border-primary">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Automatische Award-Verteilung</h5>
-      </div>
-      <div class="card-body">
-        <p class="text-muted mb-3">
-          Verteilt automatisch die Awards für ein Quartal basierend auf: Beste ELO-Verbesserung, Meiste Spiele, Beste ELO-Wertung.
-          <br><small>Die automatische Verteilung erfolgt normalerweise am 1. Tag jedes neuen Quartals.</small>
-        </p>
-        <form id="autoDistributeForm" class="row g-3">
-          <div class="col-md-4">
-            <label for="autoQuarterYear" class="form-label">Quartal wählen</label>
-            <select class="form-select" id="autoQuarterYear" name="autoQuarterYear" required>
-              <% availableQuarters.forEach(q => { %>
-                <option value="<%= q.quarter %>|<%= q.year %>"><%= q.label %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">
-              <i class="fas fa-bolt me-2"></i>Awards automatisch verteilen
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Award manuell vergeben -->
-<div class="row mb-4">
+<div class="row mb-4" style="position: relative; z-index: 10;">
   <div class="col-md-12">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm" style="overflow: visible;">
       <div class="card-header bg-white">
         <h5 class="mb-0"><i class="fas fa-award me-2"></i>Award manuell vergeben</h5>
       </div>
-      <div class="card-body">
+      <div class="card-body" style="overflow: visible;">
         <form id="grantAwardForm" class="row g-3">
           <div class="col-md-3">
             <label for="playerSearch" class="form-label">Spieler suchen</label>
             <div class="position-relative">
               <input type="text" class="form-control" id="playerSearch" placeholder="Name eingeben..." autocomplete="off">
               <input type="hidden" id="userId" name="userId" required>
-              <div id="playerSearchResults" class="list-group position-absolute w-100 shadow" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
+              <div id="playerSearchResults" class="list-group position-absolute w-100 shadow" style="z-index: 9999; display: none; max-height: 200px; overflow-y: auto; background: white;"></div>
             </div>
           </div>
           <div class="col-md-3">
@@ -247,41 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('click', function(e) {
     if (!playerSearch.contains(e.target) && !playerSearchResults.contains(e.target)) {
       playerSearchResults.style.display = 'none';
-    }
-  });
-
-  // Auto distribute form
-  document.getElementById('autoDistributeForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const quarterYear = document.getElementById('autoQuarterYear').value.split('|');
-    const quarter = quarterYear[0];
-    const year = quarterYear[1];
-
-    if (!confirm(`Awards für ${quarter} ${year} automatisch verteilen?\n\nDies vergibt Awards an:\n- Beste ELO-Verbesserung\n- Meiste Spiele\n- Beste ELO-Wertung`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch('/admin/awards/auto-distribute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ quarter, year })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert(data.message);
-        location.reload();
-      } else {
-        alert('Fehler: ' + data.message);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Ein Fehler ist aufgetreten');
     }
   });
 

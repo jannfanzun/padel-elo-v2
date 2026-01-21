@@ -72,7 +72,8 @@ app.set('views', path.join(__dirname, 'views'));
 const moment = require('moment-timezone');
 app.locals.moment = moment;
 
-// initCronJobs(app);
+// Initialize cron jobs for quarterly awards
+initCronJobs(app);
 
 app.use('/', require('./routes/publicRoutes'));
 app.use('/auth', require('./routes/authRoutes'));
