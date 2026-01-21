@@ -1,5 +1,14 @@
-<!-- views/user/rankings.ejs - Komplette Aktualisierung -->
 <%- include('../partials/header') %>
+<%
+  const now = new Date();
+  let lastQuarterNum = Math.floor(now.getMonth() / 3);
+  let lastQuarterYear = now.getFullYear();
+  if (lastQuarterNum === 0) {
+    lastQuarterNum = 4;
+    lastQuarterYear--;
+  }
+  const lastQuarter = `Q${lastQuarterNum}`;
+%>
 
 <div class="row mb-4">
   <div class="col-md-12">
@@ -103,12 +112,14 @@
     <!-- Username and Badges -->
     <div>
       <strong><%= ranking.user.username %></strong><% if (ranking.alltimeGames === 0) { %> <span class="text-muted">(N)</span><% } %>
-      <% if (ranking.user.awards && ranking.user.awards.length > 0) { %>
+      <%
+        const lastQuarterAwards = (ranking.user.awards || []).filter(a => a.quarter === lastQuarter && a.year === lastQuarterYear);
+        if (lastQuarterAwards.length > 0) { %>
         <span class="ms-1">
-          <% ranking.user.awards.forEach(award => {
+          <% lastQuarterAwards.forEach(award => {
             const info = getAwardInfo(award.type);
             if (info) { %>
-              <span class="badge" style="background-color: <%= info.color %>; font-size: 0.7rem; padding: 2px 4px;" title="<%= info.name %> - <%= award.quarter %> <%= award.year %>">
+              <span class="badge" style="background-color: <%= info.color %>; font-size: 0.65rem; padding: 2px 4px;" title="<%= info.name %> - <%= award.quarter %> <%= award.year %>">
                 <i class="fas <%= info.icon %>"></i>
               </span>
           <% }
@@ -172,31 +183,27 @@
         <% } %>
       </div>
       <div class="card-footer bg-white">
+        <small class="text-muted d-block mb-2">
+          <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
+        </small>
+        <small class="text-muted d-block mb-2">
+          <strong>Awards (<%= lastQuarter %> <%= lastQuarterYear %>):</strong>
+          <span class="badge ms-1" style="background-color: #28a745; font-size: 0.65rem;"><i class="fas fa-chart-line"></i></span> Beste Verbesserung
+          <span class="badge ms-1" style="background-color: #007bff; font-size: 0.65rem;"><i class="fas fa-gamepad"></i></span> Meiste Spiele
+          <span class="badge ms-1" style="background-color: #ffc107; font-size: 0.65rem;"><i class="fas fa-crown"></i></span> Beste ELO
+        </small>
         <% if (rankingType === 'alltime-games') { %>
-          <div class="row">
-            <div class="col-12">
-              <small class="text-muted d-block mb-2">
-                <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
-              </small>
-              <small class="text-muted">
-                <strong>Shirt Levels:</strong>
-                <span class="badge ms-1" style="background-color: #bebebe; color: #212529; border: 1px solid #dee2e6">Rookie (0-29)</span>
-                <span class="badge bg-light text-dark ms-1">Beginner (30-89)</span>
-                <span class="badge ms-1" style="background-color: #ffc107; color: #212529">Intermediate (90-149)</span>
-                <span class="badge ms-1" style="background-color: #fd7e14; color: white">Experienced (150-299)</span>
-                <span class="badge ms-1" style="background-color: #198754; color: white">Advanced (300-499)</span>
-                <span class="badge ms-1" style="background-color: #0d6efd; color: white">Expert (500-749)</span>
-                <span class="badge ms-1" style="background-color: #6f42c1; color: white">Master (750-999)</span>
-                <span class="badge bg-dark ms-1">Legend (1000+)</span>
-              </small>
-            </div>
-          </div>
-        <% } else { %>
-          <div class="d-flex justify-content-between">
-            <small class="text-muted">
-              <span class="badge bg-warning text-dark me-1">Inaktiv</span> Keine Spiele in den letzten 7 Tagen
-            </small>
-          </div>
+          <small class="text-muted">
+            <strong>Shirt Levels:</strong>
+            <span class="badge ms-1" style="background-color: #bebebe; color: #212529; border: 1px solid #dee2e6">Rookie (0-29)</span>
+            <span class="badge bg-light text-dark ms-1">Beginner (30-89)</span>
+            <span class="badge ms-1" style="background-color: #ffc107; color: #212529">Intermediate (90-149)</span>
+            <span class="badge ms-1" style="background-color: #fd7e14; color: white">Experienced (150-299)</span>
+            <span class="badge ms-1" style="background-color: #198754; color: white">Advanced (300-499)</span>
+            <span class="badge ms-1" style="background-color: #0d6efd; color: white">Expert (500-749)</span>
+            <span class="badge ms-1" style="background-color: #6f42c1; color: white">Master (750-999)</span>
+            <span class="badge bg-dark ms-1">Legend (1000+)</span>
+          </small>
         <% } %>
       </div>
     </div>

@@ -111,18 +111,14 @@
         <!-- Awards Section -->
         <% if (user.awards && user.awards.length > 0) { %>
         <div class="mb-3">
-          <h4 class="h5 mb-2">Awards</h4>
-          <div class="d-flex flex-wrap justify-content-center gap-2">
+          <h4 class="h6 mb-2">Awards</h4>
+          <div class="d-flex flex-wrap justify-content-center gap-1">
             <% user.awards.forEach(award => {
               const info = getAwardInfo(award.type);
               if (info) { %>
-                <div class="text-center" style="min-width: 60px;">
-                  <span class="badge d-block mb-1" style="background-color: <%= info.color %>; font-size: 1.5rem; padding: 8px;">
-                    <i class="fas <%= info.icon %>"></i>
-                  </span>
-                  <small class="text-muted d-block" style="font-size: 0.7rem;"><%= info.name %></small>
-                  <small class="text-muted d-block" style="font-size: 0.65rem;"><%= award.quarter %> <%= award.year %></small>
-                </div>
+                <span class="badge" style="background-color: <%= info.color %>; font-size: 0.7rem;" title="<%= info.name %> - <%= award.quarter %> <%= award.year %>">
+                  <i class="fas <%= info.icon %> me-1"></i><%= award.quarter %> <%= award.year %>
+                </span>
             <% }
             }) %>
           </div>
