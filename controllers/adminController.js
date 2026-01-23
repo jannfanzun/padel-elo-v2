@@ -192,6 +192,77 @@ exports.manageUsers = async (req, res) => {
   }
 };
 
+// @desc    Update user email
+// @route   POST /admin/users/:id/update-email
+// @access  Private (Admin only)
+exports.updateUserEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+
+    if (!email || email.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'E-Mail-Adresse ist erforderlich'
+      });
+    }
+
+    // E-Mail-Format validieren
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bitte geben Sie eine gültige E-Mail-Adresse ein'
+      });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Benutzer nicht gefunden'
+      });
+    }
+
+    if (user.isAdmin) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin-E-Mail kann nicht geändert werden'
+      });
+    }
+
+    // Prüfe, ob die E-Mail bereits von jemand anderem verwendet wird
+    const existingEmail = await User.findOne({
+      email: email.trim().toLowerCase(),
+      _id: { $ne: id }
+    });
+
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Diese E-Mail-Adresse wird bereits verwendet'
+      });
+    }
+
+    // Update der E-Mail
+    user.email = email.trim().toLowerCase();
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: `E-Mail erfolgreich zu ${user.email} geändert`,
+      newEmail: user.email
+    });
+  } catch (error) {
+    console.error('Update user email error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
 // @desc    Delete user
 // @route   POST /admin/users/:id/delete
 // @access  Private (Admin only)

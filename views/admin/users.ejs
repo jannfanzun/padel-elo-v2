@@ -87,7 +87,18 @@
                     %>
                     <tr>
                       <td><%= user.username %></td>
-                      <td><%= user.email %></td>
+                      <td>
+                        <span class="user-email-<%= user._id %>"><%= user.email %></span>
+                        <button class="btn btn-sm btn-outline-secondary ms-1 edit-email-btn"
+                          data-bs-toggle="modal"
+                          data-bs-target="#editEmailModal"
+                          data-id="<%= user._id %>"
+                          data-email="<%= user.email %>"
+                          data-username="<%= user.username %>"
+                          title="E-Mail bearbeiten">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </td>
                       <td><%= user.eloRating %></td>
                       <td><%= user.gamesPlayed %></td>
                       <td>
@@ -227,6 +238,35 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- E-Mail bearbeiten Modal -->
+  <div class="modal fade" id="editEmailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">E-Mail bearbeiten</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+        </div>
+        <div class="modal-body">
+          <p>E-Mail-Adresse von <strong id="userToEditEmail"></strong> ändern:</p>
+          <div class="mb-3">
+            <label for="newEmail" class="form-label">Neue E-Mail-Adresse</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+              <input type="email" class="form-control" id="newEmail" required>
+            </div>
+          </div>
+          <div id="emailUpdateError" class="alert alert-danger d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+          <button type="button" class="btn btn-primary" id="saveEmailBtn">
+            <i class="fas fa-save me-2"></i>Speichern
+          </button>
+        </div>
+      </div>
+    </div>
   </div>  
 
 <script>
@@ -242,6 +282,75 @@
 
       const form = document.getElementById('deleteUserForm');
       form.action = `/admin/users/${userId}/delete`;
+    });
+
+    // Edit email modal
+    const editEmailModal = document.getElementById('editEmailModal');
+    let currentEditUserId = null;
+
+    editEmailModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      currentEditUserId = button.getAttribute('data-id');
+      const email = button.getAttribute('data-email');
+      const username = button.getAttribute('data-username');
+
+      document.getElementById('userToEditEmail').textContent = username;
+      document.getElementById('newEmail').value = email;
+      document.getElementById('emailUpdateError').classList.add('d-none');
+    });
+
+    document.getElementById('saveEmailBtn').addEventListener('click', async function() {
+      const newEmail = document.getElementById('newEmail').value.trim();
+      const errorDiv = document.getElementById('emailUpdateError');
+      const saveBtn = this;
+
+      // Reset error
+      errorDiv.classList.add('d-none');
+
+      if (!newEmail) {
+        errorDiv.textContent = 'Bitte geben Sie eine E-Mail-Adresse ein';
+        errorDiv.classList.remove('d-none');
+        return;
+      }
+
+      // Disable button during request
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Speichern...';
+
+      try {
+        const response = await fetch(`/admin/users/${currentEditUserId}/update-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: newEmail })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update the email in the table
+          document.querySelector(`.user-email-${currentEditUserId}`).textContent = data.newEmail;
+          // Update the data attribute on the edit button
+          const editBtn = document.querySelector(`.edit-email-btn[data-id="${currentEditUserId}"]`);
+          if (editBtn) {
+            editBtn.setAttribute('data-email', data.newEmail);
+          }
+          // Close the modal
+          bootstrap.Modal.getInstance(editEmailModal).hide();
+        } else {
+          errorDiv.textContent = data.message || 'Ein Fehler ist aufgetreten';
+          errorDiv.classList.remove('d-none');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorDiv.textContent = 'Ein Fehler ist aufgetreten';
+        errorDiv.classList.remove('d-none');
+      } finally {
+        // Re-enable button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Speichern';
+      }
     });
 
     // Toggle shirt distributed buttons

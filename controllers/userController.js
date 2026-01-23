@@ -408,37 +408,37 @@ exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     const { username } = req.body;
-    
+
     // Validierung
     if (!username || username.trim().length === 0) {
       return res.redirect('/user/profile?error=Benutzername ist erforderlich');
     }
-    
+
     if (username.trim().length > 30) {
       return res.redirect('/user/profile?error=Benutzername darf nicht länger als 30 Zeichen sein');
     }
-    
+
     // Prüfe, ob der Benutzername bereits von jemand anderem verwendet wird
-    const existingUser = await User.findOne({ 
+    const existingUser = await User.findOne({
       username: username,
       _id: { $ne: userId }
     });
-    
+
     if (existingUser) {
       return res.redirect('/user/profile?error=Benutzername wird bereits verwendet');
     }
-    
+
     // Update object for user
     const updateData = { username: username.trim() };
-    
+
     // Add profile image if processed
     if (req.processedImage) {
       updateData.profileImage = req.processedImage.path;
     }
-    
+
     // Aktualisiere den Benutzer
     await User.findByIdAndUpdate(userId, updateData);
-    
+
     res.redirect('/user/profile?success=Profil erfolgreich aktualisiert');
   } catch (error) {
     console.error('Update profile error:', error);
