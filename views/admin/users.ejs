@@ -286,72 +286,95 @@
 
     // Edit email modal
     const editEmailModal = document.getElementById('editEmailModal');
+    const saveEmailBtn = document.getElementById('saveEmailBtn');
     let currentEditUserId = null;
 
-    editEmailModal.addEventListener('show.bs.modal', function(event) {
-      const button = event.relatedTarget;
-      currentEditUserId = button.getAttribute('data-id');
-      const email = button.getAttribute('data-email');
-      const username = button.getAttribute('data-username');
+    if (editEmailModal) {
+      editEmailModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        currentEditUserId = button.getAttribute('data-id');
+        const email = button.getAttribute('data-email');
+        const username = button.getAttribute('data-username');
 
-      document.getElementById('userToEditEmail').textContent = username;
-      document.getElementById('newEmail').value = email;
-      document.getElementById('emailUpdateError').classList.add('d-none');
-    });
+        const userToEditEmail = document.getElementById('userToEditEmail');
+        const newEmailInput = document.getElementById('newEmail');
+        const errorDiv = document.getElementById('emailUpdateError');
 
-    document.getElementById('saveEmailBtn').addEventListener('click', async function() {
-      const newEmail = document.getElementById('newEmail').value.trim();
-      const errorDiv = document.getElementById('emailUpdateError');
-      const saveBtn = this;
+        if (userToEditEmail) userToEditEmail.textContent = username;
+        if (newEmailInput) newEmailInput.value = email;
+        if (errorDiv) errorDiv.classList.add('d-none');
+      });
+    }
 
-      // Reset error
-      errorDiv.classList.add('d-none');
+    if (saveEmailBtn) {
+      saveEmailBtn.addEventListener('click', async function() {
+        const newEmailInput = document.getElementById('newEmail');
+        const errorDiv = document.getElementById('emailUpdateError');
+        const saveBtn = this;
+        const newEmail = newEmailInput ? newEmailInput.value.trim() : '';
 
-      if (!newEmail) {
-        errorDiv.textContent = 'Bitte geben Sie eine E-Mail-Adresse ein';
-        errorDiv.classList.remove('d-none');
-        return;
-      }
+        // Reset error
+        if (errorDiv) errorDiv.classList.add('d-none');
 
-      // Disable button during request
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Speichern...';
-
-      try {
-        const response = await fetch(`/admin/users/${currentEditUserId}/update-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email: newEmail })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          // Update the email in the table
-          document.querySelector(`.user-email-${currentEditUserId}`).textContent = data.newEmail;
-          // Update the data attribute on the edit button
-          const editBtn = document.querySelector(`.edit-email-btn[data-id="${currentEditUserId}"]`);
-          if (editBtn) {
-            editBtn.setAttribute('data-email', data.newEmail);
+        if (!newEmail) {
+          if (errorDiv) {
+            errorDiv.textContent = 'Bitte geben Sie eine E-Mail-Adresse ein';
+            errorDiv.classList.remove('d-none');
           }
-          // Close the modal
-          bootstrap.Modal.getInstance(editEmailModal).hide();
-        } else {
-          errorDiv.textContent = data.message || 'Ein Fehler ist aufgetreten';
-          errorDiv.classList.remove('d-none');
+          return;
         }
-      } catch (error) {
-        console.error('Error:', error);
-        errorDiv.textContent = 'Ein Fehler ist aufgetreten';
-        errorDiv.classList.remove('d-none');
-      } finally {
-        // Re-enable button
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Speichern';
-      }
-    });
+
+        // Disable button during request
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Speichern...';
+
+        try {
+          const response = await fetch(`/admin/users/${currentEditUserId}/update-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: newEmail })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Update the email in the table
+            const emailSpan = document.querySelector(`.user-email-${currentEditUserId}`);
+            if (emailSpan) emailSpan.textContent = data.newEmail;
+            // Update the data attribute on the edit button
+            const editBtn = document.querySelector(`.edit-email-btn[data-id="${currentEditUserId}"]`);
+            if (editBtn) {
+              editBtn.setAttribute('data-email', data.newEmail);
+            }
+            // Close the modal
+            if (editEmailModal) {
+              bootstrap.Modal.getInstance(editEmailModal).hide();
+            }
+          } else {
+            if (errorDiv) {
+              errorDiv.textContent = data.message || 'Ein Fehler ist aufgetreten';
+              errorDiv.classList.remove('d-none');
+            } else {
+              alert(data.message || 'Ein Fehler ist aufgetreten');
+            }
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          if (errorDiv) {
+            errorDiv.textContent = 'Ein Fehler ist aufgetreten';
+            errorDiv.classList.remove('d-none');
+          } else {
+            alert('Ein Fehler ist aufgetreten');
+          }
+        } finally {
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Speichern';
+        }
+      });
+    }
 
     // Toggle shirt distributed buttons
     document.querySelectorAll('.toggle-shirt-btn').forEach(button => {
