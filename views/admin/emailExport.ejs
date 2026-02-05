@@ -17,18 +17,48 @@
       <div class="card-header bg-white">
         <div class="d-flex justify-content-between align-items-center">
           <h3 class="h5 mb-0">Alle E-Mail-Adressen</h3>
-          <span class="badge bg-primary"><%= emailCount %> E-Mail-Adressen</span>
+          <span class="badge bg-primary"><%= emailCount %> Spieler</span>
         </div>
       </div>
       <div class="card-body">
         <p class="text-muted mb-3">
           <i class="fas fa-info-circle me-2"></i>
-          Hier findest du alle E-Mail-Adressen der registrierten Spieler, getrennt durch Kommas. Klicke auf "Kopieren", um die Liste in die Zwischenablage zu kopieren.
+          Wähle das Export-Format und klicke auf "Kopieren", um die Liste in die Zwischenablage zu kopieren.
         </p>
 
-        <div class="mb-3">
-          <label for="emailList" class="form-label fw-bold">E-Mail-Adressen (kommasepariert):</label>
-          <textarea class="form-control font-monospace" id="emailList" rows="8" readonly><%= emailList %></textarea>
+        <!-- Export Format Selection -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">Export-Format:</label>
+          <div class="btn-group d-flex" role="group">
+            <input type="radio" class="btn-check" name="exportFormat" id="emailOnly" value="emailOnly" checked>
+            <label class="btn btn-outline-primary" for="emailOnly">
+              <i class="fas fa-envelope me-2"></i>Nur E-Mail
+            </label>
+
+            <input type="radio" class="btn-check" name="exportFormat" id="nameEmail" value="nameEmail">
+            <label class="btn btn-outline-primary" for="nameEmail">
+              <i class="fas fa-user me-2"></i>Name + E-Mail
+            </label>
+          </div>
+        </div>
+
+        <!-- Email Only Export -->
+        <div id="emailOnlySection">
+          <div class="mb-3">
+            <label for="emailList" class="form-label fw-bold">E-Mail-Adressen (kommasepariert):</label>
+            <textarea class="form-control font-monospace" id="emailList" rows="8" readonly><%= emailList %></textarea>
+          </div>
+        </div>
+
+        <!-- Name + Email Export -->
+        <div id="nameEmailSection" class="d-none">
+          <div class="mb-3">
+            <label for="nameEmailList" class="form-label fw-bold">Name + E-Mail (CSV-Format):</label>
+            <textarea class="form-control font-monospace" id="nameEmailList" rows="8" readonly><%= nameEmailList %></textarea>
+          </div>
+          <p class="text-muted small mb-3">
+            <i class="fas fa-lightbulb me-2"></i>Format: Name, E-Mail (jeder Spieler in einer eigenen Zeile)
+          </p>
         </div>
 
         <div class="d-flex gap-2">
@@ -47,16 +77,42 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const copyButton = document.getElementById('copyButton');
-    const emailList = document.getElementById('emailList');
     const copySuccess = document.getElementById('copySuccess');
+    const emailOnlyRadio = document.getElementById('emailOnly');
+    const nameEmailRadio = document.getElementById('nameEmail');
+    const emailOnlySection = document.getElementById('emailOnlySection');
+    const nameEmailSection = document.getElementById('nameEmailSection');
+    const emailList = document.getElementById('emailList');
+    const nameEmailList = document.getElementById('nameEmailList');
+
+    // Toggle sections based on selected format
+    function updateSections() {
+      if (emailOnlyRadio.checked) {
+        emailOnlySection.classList.remove('d-none');
+        nameEmailSection.classList.add('d-none');
+      } else {
+        emailOnlySection.classList.add('d-none');
+        nameEmailSection.classList.remove('d-none');
+      }
+    }
+
+    emailOnlyRadio.addEventListener('change', updateSections);
+    nameEmailRadio.addEventListener('change', updateSections);
+
+    // Get current active textarea
+    function getActiveTextarea() {
+      return emailOnlyRadio.checked ? emailList : nameEmailList;
+    }
 
     copyButton.addEventListener('click', function() {
+      const activeTextarea = getActiveTextarea();
+
       // Select the text
-      emailList.select();
-      emailList.setSelectionRange(0, 99999); // For mobile devices
+      activeTextarea.select();
+      activeTextarea.setSelectionRange(0, 99999); // For mobile devices
 
       // Copy to clipboard
-      navigator.clipboard.writeText(emailList.value).then(function() {
+      navigator.clipboard.writeText(activeTextarea.value).then(function() {
         // Show success message
         copySuccess.classList.remove('d-none');
         copyButton.innerHTML = '<i class="fas fa-check me-2"></i>Kopiert!';

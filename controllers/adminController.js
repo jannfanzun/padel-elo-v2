@@ -874,16 +874,21 @@ function recalculateGameELO(playersInfo, score) {
 // @access  Private (Admin only)
 exports.getEmailExport = async (req, res) => {
   try {
-    // Get all non-admin users
-    const users = await User.find({ isAdmin: false }).select('email').sort({ email: 1 });
+    // Get all non-admin users with username and email
+    const users = await User.find({ isAdmin: false }).select('username email').sort({ username: 1 });
 
-    // Extract emails and join with comma
+    // Extract emails only (comma separated)
     const emailList = users.map(user => user.email).join(', ');
+
+    // Extract name + email (CSV format, one per line)
+    const nameEmailList = users.map(user => `${user.username}, ${user.email}`).join('\n');
+
     const emailCount = users.length;
 
     res.render('admin/emailExport', {
       title: 'E-Mail Export',
       emailList,
+      nameEmailList,
       emailCount,
       pendingRequestsCount: await RegistrationRequest.countDocuments({ status: 'pending' })
     });
