@@ -33,6 +33,7 @@ const {
   getUmkleideDisplay,
   uploadUmkleideImages,
   deleteUmkleideImage,
+  deleteAllUmkleideImages,
   toggleUmkleideImage,
   updateUmkleideInterval
 } = require('../controllers/adminController');
@@ -87,6 +88,7 @@ router.post('/awards/auto-distribute', autoDistributeAwards);
 // Umkleide Display routes
 router.get('/umkleide-display', getUmkleideDisplay);
 router.post('/umkleide-display/upload', umkleideUpload.array('images', 10), uploadUmkleideImages);
+router.delete('/umkleide-display/all', deleteAllUmkleideImages);
 router.post('/umkleide-display/:id/toggle', toggleUmkleideImage);
 router.delete('/umkleide-display/:id', deleteUmkleideImage);
 router.put('/umkleide-display/interval', updateUmkleideInterval);

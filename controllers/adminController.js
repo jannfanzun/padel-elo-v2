@@ -1657,7 +1657,15 @@ exports.uploadUmkleideImages = async (req, res) => {
       return res.redirect('/admin/umkleide-display?error=Keine Dateien ausgewählt');
     }
     const settings = await UmkleideSetting.getSettings();
+    const existingNames = settings.images.map(img => img.originalName);
+    const skipped = [];
+
     for (const file of req.files) {
+      if (existingNames.includes(file.originalname)) {
+        skipped.push(file.originalname);
+        continue;
+      }
+
       const processedBuffer = await sharp(file.buffer)
         .resize(1080, 1920, {
           fit: 'cover',
@@ -1676,8 +1684,13 @@ exports.uploadUmkleideImages = async (req, res) => {
         originalName: file.originalname,
         active: true
       });
+      existingNames.push(file.originalname);
     }
     await settings.save();
+
+    if (skipped.length > 0) {
+      return res.redirect('/admin/umkleide-display?error=Übersprungen (bereits vorhanden): ' + skipped.join(', '));
+    }
     res.redirect('/admin/umkleide-display?success=Bilder erfolgreich hochgeladen');
   } catch (error) {
     console.error('Upload umkleide images error:', error);
@@ -1697,6 +1710,18 @@ exports.deleteUmkleideImage = async (req, res) => {
     res.json({ success: true, message: 'Bild gelöscht' });
   } catch (error) {
     console.error('Delete umkleide image error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Löschen' });
+  }
+};
+
+exports.deleteAllUmkleideImages = async (req, res) => {
+  try {
+    const settings = await UmkleideSetting.getSettings();
+    settings.images = [];
+    await settings.save();
+    res.json({ success: true, message: 'Alle Bilder gelöscht' });
+  } catch (error) {
+    console.error('Delete all umkleide images error:', error);
     res.status(500).json({ success: false, message: 'Fehler beim Löschen' });
   }
 };
