@@ -6,8 +6,7 @@ const GameReport = require('../models/GameReport');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const PadelSchedule = require('../models/PadelSchedule');
 const UmkleideSetting = require('../models/UmkleideSetting');
-const fs = require('fs');
-const path = require('path');
+const sharp = require('sharp');
 const moment = require('moment-timezone');
 const { sendRegistrationApprovedEmail, sendScheduleNotificationEmail } = require('../config/email');
 const { recalculateQuarterlyELO, distributeQuarterlyAwards } = require('../utils/cronJobs');
@@ -1659,8 +1658,21 @@ exports.uploadUmkleideImages = async (req, res) => {
     }
     const settings = await UmkleideSetting.getSettings();
     for (const file of req.files) {
+      const processedBuffer = await sharp(file.buffer)
+        .resize(1080, 1920, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .webp({
+          quality: 80,
+          effort: 6
+        })
+        .toBuffer();
+
+      const base64Image = `data:image/webp;base64,${processedBuffer.toString('base64')}`;
+
       settings.images.push({
-        filename: file.filename,
+        imageData: base64Image,
         originalName: file.originalname,
         active: true
       });
@@ -1679,10 +1691,6 @@ exports.deleteUmkleideImage = async (req, res) => {
     const image = settings.images.id(req.params.id);
     if (!image) {
       return res.status(404).json({ success: false, message: 'Bild nicht gefunden' });
-    }
-    const filePath = path.join(__dirname, '..', 'public', 'img', 'umkleide', image.filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
     }
     settings.images.pull({ _id: req.params.id });
     await settings.save();
@@ -1730,7 +1738,7 @@ exports.getUmkleideImagesAPI = async (req, res) => {
     const settings = await UmkleideSetting.getSettings();
     const activeImages = settings.images
       .filter(img => img.active)
-      .map(img => '/img/umkleide/' + img.filename);
+      .map(img => img.imageData);
     res.json({ images: activeImages, interval: settings.interval });
   } catch (error) {
     console.error('Get umkleide images API error:', error);

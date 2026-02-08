@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const UmkleideSettingSchema = new mongoose.Schema({
   images: [{
-    filename: String,
+    imageData: String,
     originalName: String,
     active: { type: Boolean, default: true }
   }],
