@@ -5,6 +5,9 @@ const RegistrationRequest = require('../models/RegistrationRequest');
 const GameReport = require('../models/GameReport');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const PadelSchedule = require('../models/PadelSchedule');
+const UmkleideSetting = require('../models/UmkleideSetting');
+const fs = require('fs');
+const path = require('path');
 const moment = require('moment-timezone');
 const { sendRegistrationApprovedEmail, sendScheduleNotificationEmail } = require('../config/email');
 const { recalculateQuarterlyELO, distributeQuarterlyAwards } = require('../utils/cronJobs');
@@ -1623,5 +1626,114 @@ exports.removeAward = async (req, res) => {
       success: false,
       message: 'Fehler beim Entfernen des Awards'
     });
+  }
+};
+
+// ==================== Umkleide Display ====================
+
+exports.getUmkleideDisplay = async (req, res) => {
+  try {
+    const settings = await UmkleideSetting.getSettings();
+    const pendingRequestsCount = await RegistrationRequest.countDocuments({ status: 'pending' });
+    res.render('admin/umkleideDisplay', {
+      title: 'Umkleide Display',
+      settings,
+      user: req.user,
+      pendingRequestsCount,
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (error) {
+    console.error('Get umkleide display error:', error);
+    res.status(500).render('error', {
+      title: 'Server Error',
+      message: 'Fehler beim Laden der Umkleide-Einstellungen'
+    });
+  }
+};
+
+exports.uploadUmkleideImages = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.redirect('/admin/umkleide-display?error=Keine Dateien ausgewählt');
+    }
+    const settings = await UmkleideSetting.getSettings();
+    for (const file of req.files) {
+      settings.images.push({
+        filename: file.filename,
+        originalName: file.originalname,
+        active: true
+      });
+    }
+    await settings.save();
+    res.redirect('/admin/umkleide-display?success=Bilder erfolgreich hochgeladen');
+  } catch (error) {
+    console.error('Upload umkleide images error:', error);
+    res.redirect('/admin/umkleide-display?error=Fehler beim Hochladen');
+  }
+};
+
+exports.deleteUmkleideImage = async (req, res) => {
+  try {
+    const settings = await UmkleideSetting.getSettings();
+    const image = settings.images.id(req.params.id);
+    if (!image) {
+      return res.status(404).json({ success: false, message: 'Bild nicht gefunden' });
+    }
+    const filePath = path.join(__dirname, '..', 'public', 'img', 'umkleide', image.filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    settings.images.pull({ _id: req.params.id });
+    await settings.save();
+    res.json({ success: true, message: 'Bild gelöscht' });
+  } catch (error) {
+    console.error('Delete umkleide image error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Löschen' });
+  }
+};
+
+exports.toggleUmkleideImage = async (req, res) => {
+  try {
+    const settings = await UmkleideSetting.getSettings();
+    const image = settings.images.id(req.params.id);
+    if (!image) {
+      return res.status(404).json({ success: false, message: 'Bild nicht gefunden' });
+    }
+    image.active = !image.active;
+    await settings.save();
+    res.json({ success: true, active: image.active });
+  } catch (error) {
+    console.error('Toggle umkleide image error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Umschalten' });
+  }
+};
+
+exports.updateUmkleideInterval = async (req, res) => {
+  try {
+    const { interval } = req.body;
+    if (!interval || interval < 1) {
+      return res.status(400).json({ success: false, message: 'Ungültiges Intervall' });
+    }
+    const settings = await UmkleideSetting.getSettings();
+    settings.interval = parseInt(interval);
+    await settings.save();
+    res.json({ success: true, interval: settings.interval });
+  } catch (error) {
+    console.error('Update umkleide interval error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Aktualisieren' });
+  }
+};
+
+exports.getUmkleideImagesAPI = async (req, res) => {
+  try {
+    const settings = await UmkleideSetting.getSettings();
+    const activeImages = settings.images
+      .filter(img => img.active)
+      .map(img => '/img/umkleide/' + img.filename);
+    res.json({ images: activeImages, interval: settings.interval });
+  } catch (error) {
+    console.error('Get umkleide images API error:', error);
+    res.status(500).json({ images: [], interval: 10 });
   }
 };

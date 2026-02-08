@@ -5,7 +5,7 @@ const Game = require('../models/Game');
 const QuarterlyELO = require('../models/QuarterlyELO');
 const { protect } = require('../middleware/authMiddleware');
 const { ensureAllUsersHaveQuarterlyRecords } = require('../utils/quarterlyEloUtils');
-const { getActiveScheduleAPI } = require('../controllers/adminController');
+const { getActiveScheduleAPI, getUmkleideImagesAPI } = require('../controllers/adminController');
 const { getAwardInfo } = require('../utils/awardUtils');
 
 // @desc    Home page with rankings
@@ -463,5 +463,6 @@ router.get('/dashboardUmkleide', async (req, res) => {
  * @access  Public
  */
 router.get('/api/padel-schedule', getActiveScheduleAPI);
+router.get('/api/umkleide-images', getUmkleideImagesAPI);
 
 module.exports = router;

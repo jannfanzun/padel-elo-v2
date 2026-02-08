@@ -1,0 +1,182 @@
+<%- include('../partials/header') %>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2><i class="fas fa-tv me-2"></i>Umkleide Display</h2>
+      <a href="/admin/dashboard" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Zum Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<% if (success) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fas fa-check-circle me-2"></i><%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fas fa-exclamation-circle me-2"></i><%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<!-- Intervall -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Wechselintervall</h5>
+      </div>
+      <div class="card-body">
+        <div class="input-group">
+          <input type="number" class="form-control" id="intervalInput" value="<%= settings.interval %>" min="1" max="300">
+          <span class="input-group-text">Sekunden</span>
+          <button class="btn btn-primary" id="saveIntervalBtn">
+            <i class="fas fa-save me-1"></i>Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload -->
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Bilder hochladen</h5>
+      </div>
+      <div class="card-body">
+        <form action="/admin/umkleide-display/upload" method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <input type="file" class="form-control" name="images" multiple accept="image/jpeg,image/png,image/webp">
+            <div class="form-text">JPEG, PNG oder WebP. Max 10MB pro Datei. Empfohlen: 9:16 Format.</div>
+          </div>
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-cloud-upload-alt me-1"></i>Hochladen
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Vorhandene Bilder -->
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-images me-2"></i>Vorhandene Bilder</h5>
+          <span class="badge bg-primary"><%= settings.images.length %> Bilder</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <% if (settings.images.length === 0) { %>
+          <p class="text-muted mb-0">Noch keine Bilder hochgeladen.</p>
+        <% } else { %>
+          <div class="row g-3">
+            <% settings.images.forEach(function(image) { %>
+              <div class="col-6 col-md-4 col-lg-3" id="image-<%= image._id %>">
+                <div class="card h-100 <%= image.active ? '' : 'opacity-50' %>">
+                  <img src="/img/umkleide/<%= image.filename %>" class="card-img-top" alt="<%= image.originalName %>" style="height: 200px; object-fit: cover;">
+                  <div class="card-body p-2 text-center">
+                    <small class="text-muted d-block text-truncate mb-2" title="<%= image.originalName %>"><%= image.originalName %></small>
+                    <div class="btn-group btn-group-sm w-100">
+                      <button class="btn <%= image.active ? 'btn-success' : 'btn-outline-secondary' %> toggle-btn" data-id="<%= image._id %>">
+                        <i class="fas <%= image.active ? 'fa-eye' : 'fa-eye-slash' %>"></i>
+                        <%= image.active ? 'Aktiv' : 'Inaktiv' %>
+                      </button>
+                      <button class="btn btn-outline-danger delete-btn" data-id="<%= image._id %>">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Intervall speichern
+    document.getElementById('saveIntervalBtn').addEventListener('click', async function() {
+      const interval = document.getElementById('intervalInput').value;
+      try {
+        const res = await fetch('/admin/umkleide-display/interval', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ interval: parseInt(interval) })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.innerHTML = '<i class="fas fa-check me-1"></i>Gespeichert';
+          this.classList.remove('btn-primary');
+          this.classList.add('btn-success');
+          setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-save me-1"></i>Speichern';
+            this.classList.remove('btn-success');
+            this.classList.add('btn-primary');
+          }, 2000);
+        }
+      } catch (err) {
+        alert('Fehler beim Speichern');
+      }
+    });
+
+    // Toggle Bild aktiv/inaktiv
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        try {
+          const res = await fetch('/admin/umkleide-display/' + id + '/toggle', { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+            const card = document.getElementById('image-' + id);
+            const innerCard = card.querySelector('.card');
+            if (data.active) {
+              innerCard.classList.remove('opacity-50');
+              this.className = 'btn btn-success toggle-btn';
+              this.innerHTML = '<i class="fas fa-eye"></i> Aktiv';
+            } else {
+              innerCard.classList.add('opacity-50');
+              this.className = 'btn btn-outline-secondary toggle-btn';
+              this.innerHTML = '<i class="fas fa-eye-slash"></i> Inaktiv';
+            }
+          }
+        } catch (err) {
+          alert('Fehler beim Umschalten');
+        }
+      });
+    });
+
+    // Bild löschen
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Bild wirklich löschen?')) return;
+        const id = this.dataset.id;
+        try {
+          const res = await fetch('/admin/umkleide-display/' + id, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            document.getElementById('image-' + id).remove();
+          }
+        } catch (err) {
+          alert('Fehler beim Löschen');
+        }
+      });
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

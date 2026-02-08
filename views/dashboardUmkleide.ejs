@@ -50,22 +50,80 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
          }
 
          .display-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+         }
+
+         .display-image.active {
+            opacity: 1;
          }
       </style>
    </head>
    <body>
       <div class="content-area">
-         <div class="image-container">
-            <img src="/img/padelcamp-promotion.jpeg" alt="Padel Sports Club" class="display-image" />
+         <div class="image-container" id="imageContainer">
+            <img src="/img/padelcamp-promotion.jpeg" alt="Padel Sports Club" class="display-image active" id="fallbackImage" />
          </div>
       </div>
 
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+      <script>
+         (async function() {
+            try {
+               const res = await fetch('/api/umkleide-images');
+               const data = await res.json();
+
+               if (!data.images || data.images.length === 0) return;
+
+               const container = document.getElementById('imageContainer');
+               const fallback = document.getElementById('fallbackImage');
+
+               // Preload all images
+               const loaded = [];
+               for (const src of data.images) {
+                  const img = await new Promise((resolve, reject) => {
+                     const el = new Image();
+                     el.onload = () => resolve(el);
+                     el.onerror = () => reject();
+                     el.src = src;
+                     el.className = 'display-image';
+                     el.alt = 'Umkleide Display';
+                  });
+                  loaded.push(img);
+               }
+
+               if (loaded.length === 0) return;
+
+               // Remove fallback, add loaded images
+               fallback.remove();
+               loaded.forEach(img => container.appendChild(img));
+
+               // Show first image
+               let current = 0;
+               loaded[0].classList.add('active');
+
+               if (loaded.length === 1) return;
+
+               // Cycle through images
+               setInterval(() => {
+                  loaded[current].classList.remove('active');
+                  current = (current + 1) % loaded.length;
+                  loaded[current].classList.add('active');
+               }, data.interval * 1000);
+            } catch (e) {
+               // Fallback image stays visible
+            }
+         })();
+      </script>
    </body>
 </html>
