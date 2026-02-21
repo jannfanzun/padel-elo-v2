@@ -60,15 +60,14 @@
           <% } else if (rankingType === 'alltime-games') { %>
             <h3 class="h5 mb-0">All Time padELO Spiele - Shirt Ranking</h3>
           <% } %>
-          <form method="get" class="d-flex align-items-center mb-0">
-            <input type="hidden" name="type" value="<%= rankingType %>">
+          <div class="d-flex align-items-center">
             <label for="perPageSelect" class="form-label mb-0 me-2 text-muted small text-nowrap">Spieler pro Seite:</label>
-            <select id="perPageSelect" name="perPage" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+            <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
               <% [10, 20, 50, 100, 500].forEach(function(n) { %>
                 <option value="<%= n %>" <%= pagination.itemsPerPage === n ? 'selected' : '' %>><%= n %></option>
               <% }) %>
             </select>
-          </form>
+          </div>
         </div>
       </div>
       <div class="card-body p-0">

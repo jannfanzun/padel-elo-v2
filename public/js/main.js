@@ -49,4 +49,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // Per-page selector for rankings
+    var perPageSelect = document.getElementById('perPageSelect');
+    if (perPageSelect) {
+      perPageSelect.addEventListener('change', function() {
+        var params = new URLSearchParams(window.location.search);
+        params.set('perPage', this.value);
+        params.delete('page');
+        window.location.search = params.toString();
+      });
+    }
   });
