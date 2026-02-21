@@ -58,7 +58,7 @@
         <% } %>
         <div class="d-flex align-items-center">
           <label for="perPageSelect" class="form-label mb-0 me-2 text-muted small text-nowrap">Spieler pro Seite:</label>
-          <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;" onchange="window.location.href='?type=<%= rankingType %>&perPage=' + this.value">
+          <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;" onchange="var u=new URL(window.location);u.searchParams.set('perPage',this.value);u.searchParams.set('page','1');window.location.href=u.toString();">
             <% [10, 20, 50, 100, 500].forEach(function(n) { %>
               <option value="<%= n %>" <%= pagination.itemsPerPage === n ? 'selected' : '' %>><%= n %></option>
             <% }) %>
