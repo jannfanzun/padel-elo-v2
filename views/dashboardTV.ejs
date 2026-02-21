@@ -255,7 +255,7 @@
       <!-- Titel mittig -->
       <div class="col-4">
         <h1 class="tv-title mb-0">
-          <span class="font-family-lobster">pad</span>ELO
+          <span class="font-family-lobster">pad</span>padELO
         </h1>
       </div>
       
@@ -359,7 +359,7 @@
                                  <th scope="col">Spieler</th>
                                  <th scope="col" class="text-start">Spiele</th>
                                  <th scope="col" class="text-start">Shirt</th>
-                                 <th scope="col" class="text-start">ELO</th>
+                                 <th scope="col" class="text-start">padELO</th>
                               </tr>
                            </thead>
                            <tbody>
@@ -425,7 +425,7 @@
                         <strong>Awards (<%= lastQuarter %> <%= lastQuarterYear %>):</strong>
                         <span class="badge ms-1" style="background-color: #28a745; font-size: 0.6rem;"><i class="fas fa-chart-line"></i></span> Beste Verbesserung
                         <span class="badge ms-1" style="background-color: #007bff; font-size: 0.6rem;"><i class="fas fa-gamepad"></i></span> Meiste Spiele
-                        <span class="badge ms-1" style="background-color: #ffc107; font-size: 0.6rem;"><i class="fas fa-crown"></i></span> Beste ELO
+                        <span class="badge ms-1" style="background-color: #ffc107; font-size: 0.6rem;"><i class="fas fa-crown"></i></span> Beste padELO
                         </small>
                         <small class="text-muted">
                         <strong>Shirts:</strong>
@@ -480,7 +480,7 @@
                   </div>
                   <div class="card-body">
                      <div class="padelo-info">
-                        <p class="mb-2"><strong>padELO</strong> ist unser intelligentes Ranking-System für Padel-Spieler basierend auf dem ELO-Rating-System.</p>
+                        <p class="mb-2"><strong>padELO</strong> ist unser intelligentes Ranking-System für Padel-Spieler basierend auf dem padELO-Rating-System.</p>
                         <div class="divider-line"></div>
                         <div class="row align-items-start">
                            <div class="col-6">
@@ -747,7 +747,7 @@
 
                // Team-Zuweisung abhängig von manualOrder:
                // - manualOrder=true: Reihenfolge [0,1] = Team1, [2,3] = Team2 (manuell angeordnet)
-               // - manualOrder=false: Reihenfolge [0,3] = Team1, [1,2] = Team2 (ELO-basiert)
+               // - manualOrder=false: Reihenfolge [0,3] = Team1, [1,2] = Team2 (padELO-basiert)
                let team1, team2;
                if (schedule.manualOrder) {
                   team1 = [playersOnCourt[0], playersOnCourt[1]];
@@ -757,7 +757,7 @@
                   team2 = [playersOnCourt[1], playersOnCourt[2]];
                }
 
-               // Berechne Team-ELO Durchschnitt
+               // Berechne Team-padELO Durchschnitt
                const team1Elo = Math.round((team1[0].eloRating + team1[1].eloRating) / 2);
                const team2Elo = Math.round((team2[0].eloRating + team2[1].eloRating) / 2);
 
@@ -795,14 +795,14 @@
                            ${profileImageHtml}
                            <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}${newPlayerTag}</span>
                         </div>
-                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
+                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} padELO</span>
                      </div>
                   `;
                });
 
                scheduleHTML += `
                               <div style="margin-top: 0.3rem; text-align: center;">
-                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">Ø ${team1Elo} ELO</span>
+                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">Ø ${team1Elo} padELO</span>
                               </div>
                            </div>
 
@@ -828,14 +828,14 @@
                            ${profileImageHtml}
                            <span style="font-weight: 600; color: #212529; font-size: ${playerNameSize};">${player.username}${newPlayerTag}</span>
                         </div>
-                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} ELO</span>
+                        <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">${player.eloRating} padELO</span>
                      </div>
                   `;
                });
 
                scheduleHTML += `
                               <div style="margin-top: 0.3rem; text-align: center;">
-                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">Ø ${team2Elo} ELO</span>
+                                 <span class="badge bg-primary" style="background-color: #0d6efd; color: white; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-size: ${eloFontSize};">Ø ${team2Elo} padELO</span>
                               </div>
                            </div>
                         </div>

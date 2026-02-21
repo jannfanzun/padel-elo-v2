@@ -162,7 +162,7 @@
                                   <strong><%= court.team1[0].username %></strong><% if (court.team1[0].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team1[0].elo %></span><br>
                                   <strong><%= court.team1[1].username %></strong><% if (court.team1[1].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team1[1].elo %></span>
                                 </div>
-                                <small class="text-muted">Ø <%= court.team1Elo %> ELO</small>
+                                <small class="text-muted">Ø <%= court.team1Elo %> padELO</small>
                               </div>
                               <div class="px-2">
                                 <span class="badge bg-secondary">VS</span>
@@ -173,7 +173,7 @@
                                   <strong><%= court.team2[0].username %></strong><% if (court.team2[0].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team2[0].elo %></span><br>
                                   <strong><%= court.team2[1].username %></strong><% if (court.team2[1].isNewPlayer) { %> <span class="text-muted">(N)</span><% } %> <span class="badge bg-primary badge-sm"><%= court.team2[1].elo %></span>
                                 </div>
-                                <small class="text-muted">Ø <%= court.team2Elo %> ELO</small>
+                                <small class="text-muted">Ø <%= court.team2Elo %> padELO</small>
                               </div>
                             </div>
                           </div>
@@ -224,7 +224,7 @@
               <div class="card">
                 <div class="card-header bg-primary text-white">
                   <h5 class="mb-2">Verfügbare Spieler</h5>
-                  <p class="small mb-2">Sortiert nach ELO-Rating (höchste zuerst)</p>
+                  <p class="small mb-2">Sortiert nach padELO-Rating (höchste zuerst)</p>
 
                   <!-- Suchfeld für Spieler -->
                   <div class="input-group">
@@ -250,7 +250,7 @@
                            data-user-id="<%= user._id %>">
                         <div>
                           <strong class="player-name"><%= user.username %></strong>
-                          <span class="badge bg-primary ms-2"><%= user.eloRating %> ELO</span>
+                          <span class="badge bg-primary ms-2"><%= user.eloRating %> padELO</span>
                         </div>
                         <button class="btn btn-sm btn-outline-primary add-player-btn">
                           <i class="fas fa-plus"></i>
@@ -908,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div>
                         <span class="badge bg-secondary me-2">${index + 1}</span>
                         <strong>${player.username}</strong>
-                        <span class="badge bg-success ms-2">${player.elo} ELO</span>
+                        <span class="badge bg-success ms-2">${player.elo} padELO</span>
                     </div>
                     <button class="btn btn-sm btn-outline-danger remove-player-btn">
                         <i class="fas fa-times"></i>
@@ -1136,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         ${team1PlayersHTML}
                                     </div>
                                     <div class="mt-2 text-center">
-                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team1-elo">Ø ${court.team1Elo} ELO</span>
+                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team1-elo">Ø ${court.team1Elo} padELO</span>
                                     </div>
                                 </div>
                             </div>
@@ -1152,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         ${team2PlayersHTML}
                                     </div>
                                     <div class="mt-2 text-center">
-                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team2-elo">Ø ${court.team2Elo} ELO</span>
+                                        <span class="badge bg-primary team-elo-badge" id="court-${index}-team2-elo">Ø ${court.team2Elo} padELO</span>
                                     </div>
                                 </div>
                             </div>
@@ -1160,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <div class="text-center mt-3">
                             <small class="elo-diff-display" id="court-${index}-diff">
-                                ELO-Differenz: <span class="${Math.abs(court.team1Elo - court.team2Elo) > 100 ? 'elo-warning' : 'elo-balanced'}">${Math.abs(court.team1Elo - court.team2Elo)} Punkte</span>
+                                padELO-Differenz: <span class="${Math.abs(court.team1Elo - court.team2Elo) > 100 ? 'elo-warning' : 'elo-balanced'}">${Math.abs(court.team1Elo - court.team2Elo)} Punkte</span>
                             </small>
                         </div>
                     </div>
@@ -1188,14 +1188,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 dragClass: 'sortable-drag',
                 handle: '.draggable-player', // The whole element is draggable
                 onEnd: function(evt) {
-                    // Update the tournament data and recalculate ELOs
+                    // Update the tournament data and recalculate padELOs
                     updateTournamentFromDOM();
                 }
             });
         });
     }
 
-    // Update generatedTournament from current DOM state and recalculate ELOs
+    // Update generatedTournament from current DOM state and recalculate padELOs
     function updateTournamentFromDOM() {
         if (!generatedTournament) return;
 
@@ -1220,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     isNewPlayer: el.dataset.isNew === 'true'
                 }));
 
-                // Recalculate ELO averages
+                // Recalculate padELO averages
                 court.team1Elo = court.team1.length > 0
                     ? Math.round(court.team1.reduce((sum, p) => sum + p.elo, 0) / court.team1.length)
                     : 0;
@@ -1228,17 +1228,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     ? Math.round(court.team2.reduce((sum, p) => sum + p.elo, 0) / court.team2.length)
                     : 0;
 
-                // Update ELO displays
+                // Update padELO displays
                 const team1EloBadge = document.getElementById(`court-${courtIndex}-team1-elo`);
                 const team2EloBadge = document.getElementById(`court-${courtIndex}-team2-elo`);
                 const diffDisplay = document.getElementById(`court-${courtIndex}-diff`);
 
-                if (team1EloBadge) team1EloBadge.textContent = `Ø ${court.team1Elo} ELO`;
-                if (team2EloBadge) team2EloBadge.textContent = `Ø ${court.team2Elo} ELO`;
+                if (team1EloBadge) team1EloBadge.textContent = `Ø ${court.team1Elo} padELO`;
+                if (team2EloBadge) team2EloBadge.textContent = `Ø ${court.team2Elo} padELO`;
 
                 const eloDiff = Math.abs(court.team1Elo - court.team2Elo);
                 if (diffDisplay) {
-                    diffDisplay.innerHTML = `ELO-Differenz: <span class="${eloDiff > 100 ? 'elo-warning' : 'elo-balanced'}">${eloDiff} Punkte</span>`;
+                    diffDisplay.innerHTML = `padELO-Differenz: <span class="${eloDiff > 100 ? 'elo-warning' : 'elo-balanced'}">${eloDiff} Punkte</span>`;
                 }
             }
         });

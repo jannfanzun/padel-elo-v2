@@ -24,12 +24,12 @@
     <ul class="nav nav-tabs d-flex flex-column flex-md-row">
       <li class="nav-item">
         <a class="nav-link w-100 w-md-auto <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo&perPage=<%= pagination.itemsPerPage %>">
-          <i class="fas fa-trophy me-2"></i>ELO Rangliste
+          <i class="fas fa-trophy me-2"></i>padELO Rangliste
         </a>
       </li>
       <li class="nav-item">
         <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement&perPage=<%= pagination.itemsPerPage %>">
-          <i class="fas fa-chart-line me-2"></i>Quartal: ELO-Verbesserung
+          <i class="fas fa-chart-line me-2"></i>Quartal: padELO-Verbesserung
         </a>
       </li>
       <li class="nav-item">
@@ -54,7 +54,7 @@
           <% if (rankingType === 'elo') { %>
             <h3 class="h5 mb-0">Aktuelle Rangliste</h3>
           <% } else if (rankingType === 'quarterly-improvement') { %>
-            <h3 class="h5 mb-0">ELO-Verbesserung (<%= quarterName %>)</h3>
+            <h3 class="h5 mb-0">padELO-Verbesserung (<%= quarterName %>)</h3>
           <% } else if (rankingType === 'quarterly-games') { %>
             <h3 class="h5 mb-0">Anzahl Spiele (<%= quarterName %>)</h3>
           <% } else if (rankingType === 'alltime-games') { %>
@@ -83,18 +83,18 @@
       <th>#</th>
       <th>Spieler</th>
       <% if (rankingType === 'elo') { %>
-        <th>ELO Punkte</th>
+        <th>padELO Punkte</th>
       <% } else if (rankingType === 'quarterly-improvement') { %>
-        <th>ELO Verbesserung</th>
-        <th>Start ELO</th>
-        <th>Aktuell ELO</th>
+        <th>padELO Verbesserung</th>
+        <th>Start padELO</th>
+        <th>Aktuell padELO</th>
       <% } else if (rankingType === 'quarterly-games') { %>
         <th>Anzahl Spiele</th>
-        <th>ELO Punkte</th>
+        <th>padELO Punkte</th>
       <% } else if (rankingType === 'alltime-games') { %>
         <th>Gesamt Spiele</th>
         <th>Shirt Level</th>
-        <th>ELO Punkte</th>
+        <th>padELO Punkte</th>
       <% } %>
       <th>Status</th>
     </tr>
@@ -230,7 +230,7 @@
           <strong>Awards (<%= lastQuarter %> <%= lastQuarterYear %>):</strong>
           <span class="badge ms-1" style="background-color: #28a745; font-size: 0.65rem;"><i class="fas fa-chart-line"></i></span> Beste Verbesserung
           <span class="badge ms-1" style="background-color: #007bff; font-size: 0.65rem;"><i class="fas fa-gamepad"></i></span> Meiste Spiele
-          <span class="badge ms-1" style="background-color: #ffc107; font-size: 0.65rem;"><i class="fas fa-crown"></i></span> Beste ELO
+          <span class="badge ms-1" style="background-color: #ffc107; font-size: 0.65rem;"><i class="fas fa-crown"></i></span> Beste padELO
         </small>
         <% if (rankingType === 'alltime-games') { %>
           <small class="text-muted">

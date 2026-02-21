@@ -90,8 +90,8 @@
           <button class="btn btn-danger w-100 w-md-auto text-start" data-bs-toggle="modal" data-bs-target="#resetSystemModal">
             <i class="fas fa-sync-alt me-2"></i>System zurücksetzen
           </button>
-          <button class="btn btn-primary w-100 w-md-auto text-start" data-bs-toggle="modal" data-bs-target="#recalculateELOModal">
-            <i class="fas fa-sync-alt me-2"></i>ELO-Wertungen neu berechnen
+          <button class="btn btn-primary w-100 w-md-auto text-start" data-bs-toggle="modal" data-bs-target="#recalculatepadELOModal">
+            <i class="fas fa-sync-alt me-2"></i>padELO-Wertungen neu berechnen
           </button>
         </div>
       </div>
@@ -99,20 +99,20 @@
   </div>
 </div>
 
-<div class="modal fade" id="recalculateELOModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="recalculatepadELOModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">ELO-Neuberechnung bestätigen</h5>
+        <h5 class="modal-title">padELO-Neuberechnung bestätigen</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p><strong>Möchtest du die ELO-Werte für das aktuelle Quartal neu berechnen?</strong></p>
+        <p><strong>Möchtest du die padELO-Werte für das aktuelle Quartal neu berechnen?</strong></p>
         <p>Dies wird:</p>
         <ul>
-          <li>Alle Spieler-ELO-Werte auf ihren Quartalsstartpunkt zurücksetzen</li>
+          <li>Alle Spieler-padELO-Werte auf ihren Quartalsstartpunkt zurücksetzen</li>
           <li>Alle Spiele in chronologischer Reihenfolge neu berechnen</li>
-          <li>Die aktuellen ELO-Werte entsprechend aktualisieren</li>
+          <li>Die aktuellen padELO-Werte entsprechend aktualisieren</li>
         </ul>
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
@@ -121,9 +121,9 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-        <form id="recalculateELOForm" method="POST" action="/admin/recalculate-elo">
+        <form id="recalculatepadELOForm" method="POST" action="/admin/recalculate-elo">
           <button type="submit" class="btn btn-primary">
-            <i class="fas fa-sync-alt me-2"></i>ELO-Werte neu berechnen
+            <i class="fas fa-sync-alt me-2"></i>padELO-Werte neu berechnen
           </button>
         </form>
       </div>
@@ -142,7 +142,7 @@
       <div class="modal-body">
         <p><strong>Bist du wirklich sicher?</strong> Diese Aktion wird:</p>
         <ul>
-          <li>Alle ELO-Wertungen auf 500 zurücksetzen</li>
+          <li>Alle padELO-Wertungen auf 500 zurücksetzen</li>
           <li>Alle Spiele unwiderruflich löschen</li>
           <li>Alle spielbezogenen Statistiken zurücksetzen</li>
         </ul>
@@ -245,7 +245,7 @@
                 <tr>
                   <th>Benutzername</th>
                   <th>Email</th>
-                  <th>ELO</th>
+                  <th>padELO</th>
                   <th>Registrierung</th>
                   <th>Aktionen</th>
                 </tr>
@@ -282,7 +282,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p>Bist du sicher, dass du dieses Spiel löschen möchtest? Diese Aktion setzt die ELO-Änderungen zurück und kann nicht rückgängig gemacht werden.</p>
+        <p>Bist du sicher, dass du dieses Spiel löschen möchtest? Diese Aktion setzt die padELO-Änderungen zurück und kann nicht rückgängig gemacht werden.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>

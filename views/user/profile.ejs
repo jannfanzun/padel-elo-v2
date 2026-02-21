@@ -62,7 +62,7 @@
         </div>
         
         <div class="mb-3">
-          <h4 class="h5 mb-2">ELO Rating</h4>
+          <h4 class="h5 mb-2">padELO Rating</h4>
           <span class="display-6 fw-bold text-primary"><%= user.eloRating %></span>
         </div>
         
@@ -207,7 +207,7 @@
                 <th>Mitspieler</th>
                 <th>Gegner</th>
                 <th>Ergebnis</th>
-                <th>ELO Änderung</th>
+                <th>padELO Änderung</th>
               </tr>
             </thead>
             <tbody>
@@ -249,7 +249,7 @@
                     </td>
                     <td>
                       <% 
-                        // Finde die ELO-Änderung des Benutzers
+                        // Finde die padELO-Änderung des Benutzers
                         let eloChange = 0;
                         let playerTeam = '';
                         

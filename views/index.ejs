@@ -4,7 +4,7 @@
     <div class="col-md-12">
       <div class="jumbotron bg-primary text-white rounded p-4">
         <h1 class="display-4">Padel-Rangliste</h1>
-        <p class="lead">Willkommen im offiziellen Padel-Ranglistensystem. Verfolge deine ELO-Wertung und tritt gegen andere Spieler an.</p>
+        <p class="lead">Willkommen im offiziellen Padel-Ranglistensystem. Verfolge deine padELO-Wertung und tritt gegen andere Spieler an.</p>
         
         <% if (!user) { %>
           <hr class="my-4">
@@ -21,12 +21,12 @@
     <ul class="nav nav-tabs d-flex flex-column flex-md-row">
       <li class="nav-item">
         <a class="nav-link w-100 w-md-auto <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo&perPage=<%= pagination.itemsPerPage %>">
-          <i class="fas fa-trophy me-2"></i>ELO Rangliste
+          <i class="fas fa-trophy me-2"></i>padELO Rangliste
         </a>
       </li>
       <li class="nav-item">
         <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement&perPage=<%= pagination.itemsPerPage %>">
-          <i class="fas fa-chart-line me-2"></i>Quartal: ELO-Verbesserung
+          <i class="fas fa-chart-line me-2"></i>Quartal: padELO-Verbesserung
         </a>
       </li>
       <li class="nav-item">
@@ -50,7 +50,7 @@
         <% if (rankingType === 'elo') { %>
           <h2 class="h5 mb-0">Aktuelle Rangliste</h2>
         <% } else if (rankingType === 'quarterly-improvement') { %>
-          <h2 class="h5 mb-0">ELO-Verbesserung (<%= quarterName %>)</h2>
+          <h2 class="h5 mb-0">padELO-Verbesserung (<%= quarterName %>)</h2>
         <% } else if (rankingType === 'quarterly-games') { %>
           <h2 class="h5 mb-0">Anzahl Spiele (<%= quarterName %>)</h2>
         <% } else if (rankingType === 'alltime-games') { %>
@@ -73,17 +73,17 @@
                 <th scope="col">#</th>
                 <th scope="col">Spieler</th>
                 <% if (rankingType === 'elo') { %>
-                  <th scope="col" class="text-start">ELO Punkte</th>
+                  <th scope="col" class="text-start">padELO Punkte</th>
                 <% } else if (rankingType === 'quarterly-improvement') { %>
-                  <th scope="col" class="text-start">ELO Verbesserung</th>
-                  <th scope="col" class="text-start">Start → Aktuelle ELO</th>
+                  <th scope="col" class="text-start">padELO Verbesserung</th>
+                  <th scope="col" class="text-start">Start → Aktuelle padELO</th>
                 <% } else if (rankingType === 'quarterly-games') { %>
                   <th scope="col" class="text-start">Anzahl Spiele</th>
-                  <th scope="col" class="text-start">ELO Punkte</th>
+                  <th scope="col" class="text-start">padELO Punkte</th>
                 <% } else if (rankingType === 'alltime-games') { %>
                   <th scope="col" class="text-start">Gesamt Spiele</th>
                   <th scope="col" class="text-start">Shirt Level</th>
-                  <th scope="col" class="text-start">ELO Punkte</th>
+                  <th scope="col" class="text-start">padELO Punkte</th>
                 <% } %>
               </tr>
             </thead>

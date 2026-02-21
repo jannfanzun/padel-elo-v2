@@ -9,7 +9,7 @@
           <i class="fas fa-trophy me-2"></i>
           Spieltag Generator
         </h1>
-        <p class="mb-0">Erstelle automatisch ausbalancierte Turniere basierend auf ELO-Bewertungen</p>
+        <p class="mb-0">Erstelle automatisch ausbalancierte Turniere basierend auf padELO-Bewertungen</p>
         <div class="mt-3">
           <span class="badge bg-light text-primary px-3 py-2" id="stepIndicator">
             Schritt 1: Spieleranzahl wählen
@@ -55,7 +55,7 @@
               <div class="card">
                 <div class="card-header bg-primary text-white">
                   <h5 class="mb-2">Verfügbare Spieler</h5>
-                  <p class="small mb-2">Sortiert nach ELO-Rating (höchste zuerst)</p>
+                  <p class="small mb-2">Sortiert nach padELO-Rating (höchste zuerst)</p>
                   
                   <!-- Suchfeld für Spieler -->
                   <div class="input-group">
@@ -80,7 +80,7 @@
                            data-elo="<%= user.eloRating %>">
                         <div>
                           <strong class="player-name"><%= user.username %></strong>
-                          <span class="badge bg-primary ms-2"><%= user.eloRating %> ELO</span>
+                          <span class="badge bg-primary ms-2"><%= user.eloRating %> padELO</span>
                         </div>
                         <button class="btn btn-sm btn-outline-primary add-player-btn">
                           <i class="fas fa-plus"></i>
@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div>
                         <span class="badge bg-secondary me-2">${index + 1}</span>
                         <strong>${player.username}</strong>
-                        <span class="badge bg-success ms-2">${player.elo} ELO</span>
+                        <span class="badge bg-success ms-2">${player.elo} padELO</span>
                     </div>
                     <button class="btn btn-sm btn-outline-danger remove-player-btn">
                         <i class="fas fa-times"></i>
@@ -505,11 +505,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 ${court.team1.map(player => `
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span><strong>${player.username}</strong></span>
-                                        <span class="badge bg-primary">${player.elo} ELO</span>
+                                        <span class="badge bg-primary">${player.elo} padELO</span>
                                     </div>
                                 `).join('')}
                                 <div class="mt-2 text-center">
-                                    <span class="badge bg-primary">Ø ${court.team1Elo} ELO</span>
+                                    <span class="badge bg-primary">Ø ${court.team1Elo} padELO</span>
                                 </div>
                             </div>
                         </div>
@@ -524,11 +524,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 ${court.team2.map(player => `
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span><strong>${player.username}</strong></span>
-                                        <span class="badge bg-primary">${player.elo} ELO</span>
+                                        <span class="badge bg-primary">${player.elo} padELO</span>
                                     </div>
                                 `).join('')}
                                 <div class="mt-2 text-center">
-                                    <span class="badge bg-primary">Ø ${court.team2Elo} ELO</span>
+                                    <span class="badge bg-primary">Ø ${court.team2Elo} padELO</span>
                                 </div>
                             </div>
                         </div>
@@ -536,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     <div class="text-center mt-3">
                         <small class="text-muted">
-                            ELO-Differenz: ${Math.abs(court.team1Elo - court.team2Elo)} Punkte
+                            padELO-Differenz: ${Math.abs(court.team1Elo - court.team2Elo)} Punkte
                         </small>
                     </div>
                 </div>

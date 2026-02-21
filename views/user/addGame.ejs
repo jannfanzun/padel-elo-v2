@@ -19,7 +19,7 @@
                   <label class="form-label">Du</label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-user"></i></span>
-                    <input type="text" class="form-control" value="<%= user.username %> (<%= user.eloRating %> ELO)" disabled>
+                    <input type="text" class="form-control" value="<%= user.username %> (<%= user.eloRating %> padELO)" disabled>
                   </div>
                 </div>
                 
@@ -258,7 +258,7 @@
           // Create suggestion items
           availablePlayers.forEach(player => {
             const item = document.createElement('div');
-            item.innerHTML = `<strong>${player.username}</strong> (${player.eloRating} ELO)`;
+            item.innerHTML = `<strong>${player.username}</strong> (${player.eloRating} padELO)`;
             
             // Add click event
             item.addEventListener('click', function() {
@@ -269,7 +269,7 @@
               hiddenInput.value = player.id;
               
               // Show selected player badge
-              selectedText.textContent = `${player.username} (${player.eloRating} ELO)`;
+              selectedText.textContent = `${player.username} (${player.eloRating} padELO)`;
               selectedContainer.classList.remove('d-none');
               
               // Clear search input and suggestions
