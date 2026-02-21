@@ -142,7 +142,9 @@ exports.getRankings = async (req, res) => {
     const rankingType = req.query.type || 'elo';
 
     // Pagination settings
-    const itemsPerPage = 10;
+    const allowedPerPage = [10, 20, 50, 100, 500];
+    const requestedPerPage = parseInt(req.query.perPage);
+    const itemsPerPage = allowedPerPage.includes(requestedPerPage) ? requestedPerPage : 10;
     const page = parseInt(req.query.page) || 1;
     
     // Get current date

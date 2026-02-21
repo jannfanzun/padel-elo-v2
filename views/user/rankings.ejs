@@ -23,22 +23,22 @@
     <!-- Ranking Type Tabs -->
     <ul class="nav nav-tabs d-flex flex-column flex-md-row">
       <li class="nav-item">
-        <a class="nav-link w-100 w-md-auto <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'elo' ? 'active' : '' %>" href="?type=elo&perPage=<%= pagination.itemsPerPage %>">
           <i class="fas fa-trophy me-2"></i>ELO Rangliste
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-improvement' ? 'active' : '' %>" href="?type=quarterly-improvement&perPage=<%= pagination.itemsPerPage %>">
           <i class="fas fa-chart-line me-2"></i>Quartal: ELO-Verbesserung
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-games' ? 'active' : '' %>" href="?type=quarterly-games">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'quarterly-games' ? 'active' : '' %>" href="?type=quarterly-games&perPage=<%= pagination.itemsPerPage %>">
           <i class="fas fa-gamepad me-2"></i>Quartal: Spieleanzahl
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link w-100 w-md-auto <%= rankingType === 'alltime-games' ? 'active' : '' %>" href="?type=alltime-games">
+        <a class="nav-link w-100 w-md-auto <%= rankingType === 'alltime-games' ? 'active' : '' %>" href="?type=alltime-games&perPage=<%= pagination.itemsPerPage %>">
           <i class="fas fa-tshirt me-2"></i>All Time padELO Spiele
         </a>
       </li>
@@ -50,7 +50,7 @@
   <div class="col-md-12">
     <div class="card shadow">
       <div class="card-header bg-white">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <% if (rankingType === 'elo') { %>
             <h3 class="h5 mb-0">Aktuelle Rangliste</h3>
           <% } else if (rankingType === 'quarterly-improvement') { %>
@@ -60,7 +60,14 @@
           <% } else if (rankingType === 'alltime-games') { %>
             <h3 class="h5 mb-0">All Time padELO Spiele - Shirt Ranking</h3>
           <% } %>
-          <small class="text-muted"><%= rankings.length %> Spieler</small>
+          <div class="d-flex align-items-center">
+            <label for="perPageSelect" class="form-label mb-0 me-2 text-muted small text-nowrap">Spieler pro Seite:</label>
+            <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;" onchange="window.location.href='?type=<%= rankingType %>&perPage=' + this.value">
+              <% [10, 20, 50, 100, 500].forEach(function(n) { %>
+                <option value="<%= n %>" <%= pagination.itemsPerPage === n ? 'selected' : '' %>><%= n %></option>
+              <% }) %>
+            </select>
+          </div>
         </div>
       </div>
       <div class="card-body p-0">
@@ -187,14 +194,14 @@
           <nav aria-label="Rangliste Navigation">
             <ul class="pagination justify-content-center mb-0">
               <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
-                <a class="page-link" href="?type=<%= rankingType %>&page=<%= pagination.currentPage - 1 %>" aria-label="Zurück">
+                <a class="page-link" href="?type=<%= rankingType %>&perPage=<%= pagination.itemsPerPage %>&page=<%= pagination.currentPage - 1 %>" aria-label="Zurück">
                   <span aria-hidden="true">&laquo;</span>
                 </a>
               </li>
               <% for (let i = 1; i <= pagination.totalPages; i++) { %>
                 <% if (i === 1 || i === pagination.totalPages || (i >= pagination.currentPage - 2 && i <= pagination.currentPage + 2)) { %>
                   <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
-                    <a class="page-link" href="?type=<%= rankingType %>&page=<%= i %>"><%= i %></a>
+                    <a class="page-link" href="?type=<%= rankingType %>&perPage=<%= pagination.itemsPerPage %>&page=<%= i %>"><%= i %></a>
                   </li>
                 <% } else if (i === pagination.currentPage - 3 || i === pagination.currentPage + 3) { %>
                   <li class="page-item disabled">
@@ -203,7 +210,7 @@
                 <% } %>
               <% } %>
               <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
-                <a class="page-link" href="?type=<%= rankingType %>&page=<%= pagination.currentPage + 1 %>" aria-label="Weiter">
+                <a class="page-link" href="?type=<%= rankingType %>&perPage=<%= pagination.itemsPerPage %>&page=<%= pagination.currentPage + 1 %>" aria-label="Weiter">
                   <span aria-hidden="true">&raquo;</span>
                 </a>
               </li>
