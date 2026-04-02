@@ -575,14 +575,14 @@ const sendScheduleNotificationEmail = async (schedule, courts) => {
       const mailOptions = {
         from: `"padELO Ranking" <${process.env.EMAIL_FROM}>`,
         to: player.email,
-        subject: `🎾 padELO Spielplan - Heute um ${timeStr} Uhr`,
+        subject: `🎾 padELO Spielplan für das kommende padELO am ${dateStr}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
             <h2 style="color: #0d6efd; text-align: center;">🎾 padELO Spielplan</h2>
 
             <p>Hallo ${player.username},</p>
 
-            <p>Der Spielplan für heute ist verfügbar. Du bist dabei! 🙌</p>
+            <p>Der Spielplan für das kommende padELO am ${dateStr} ist verfügbar. Du bist dabei! 🙌</p>
 
             <p style="font-size: 18px; text-align: center; margin: 25px 0;">
               📅 <strong>${dateStr} um ${timeStr} Uhr</strong>
