@@ -9,7 +9,7 @@ const UmkleideSetting = require('../models/UmkleideSetting');
 const sharp = require('sharp');
 const moment = require('moment-timezone');
 const { sendRegistrationApprovedEmail, sendScheduleNotificationEmail } = require('../config/email');
-const { recalculateQuarterlyELO, distributeQuarterlyAwards } = require('../utils/cronJobs');
+const { recalculateQuarterlyELO, recalculateAllELO, distributeQuarterlyAwards } = require('../utils/cronJobs');
 const { getShirtLevel, SHIRT_LEVELS } = require('../utils/shirtLevelUtils');
 const { getAllAwardTypes, getAvailableQuarters, getAwardInfo } = require('../utils/awardUtils');
 
@@ -497,37 +497,27 @@ exports.manageGames = async (req, res) => {
 exports.deleteGame = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Find game
     const game = await Game.findById(id);
-    
+
     if (!game) {
       return res.redirect('/admin/games?error=Spiel nicht gefunden');
     }
-    
-    // Reverse ELO changes for all players
-    for (const player of game.team1) {
-      await User.findByIdAndUpdate(player.player, {
-        eloRating: player.eloBeforeGame
-      });
-    }
-    
-    for (const player of game.team2) {
-      await User.findByIdAndUpdate(player.player, {
-        eloRating: player.eloBeforeGame
-      });
-    }
-    
+
     // Delete any reports associated with this game
     await GameReport.deleteMany({ game: id });
-    
+
     // Delete game
     await Game.findByIdAndDelete(id);
-    
-    const redirectUrl = req.query.userId 
-      ? `/admin/games?userId=${req.query.userId}&success=Spiel erfolgreich gelöscht` 
-      : '/admin/games?success=Spiel erfolgreich gelöscht';
-    
+
+    // Full recalculation to ensure all subsequent games are correct
+    await recalculateAllELO();
+
+    const redirectUrl = req.query.userId
+      ? `/admin/games?userId=${req.query.userId}&success=Spiel erfolgreich gelöscht und ELO neu berechnet`
+      : '/admin/games?success=Spiel erfolgreich gelöscht und ELO neu berechnet';
+
     res.redirect(redirectUrl);
   } catch (error) {
     console.error('Delete game error:', error);
@@ -821,14 +811,9 @@ exports.resetSystem = async (req, res) => {
 // @access  Private (Admin only)
 exports.recalculateELO = async (req, res) => {
   try {
-    // Get current quarter information
-    const now = new Date();
-    const currentQuarter = Math.floor(now.getMonth() / 3);
-    const currentYear = now.getFullYear();
-    
-    // Use the same function that the cron job uses
-    await recalculateQuarterlyELO({ year: currentYear, quarter: currentQuarter });
-    
+    // Full recalculation from scratch - processes ALL games ever
+    await recalculateAllELO();
+
     res.redirect('/admin/dashboard?success=ELO-Werte für alle Spiele wurden erfolgreich neu berechnet');
   } catch (error) {
     console.error('ELO recalculation error:', error);

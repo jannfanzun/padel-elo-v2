@@ -245,96 +245,151 @@ const sendQuarterlyReport = async (quarterInfo) => {
 };
 
 /**
- * Recalculate ELO ratings for a specific quarter (used by admin)
+ * Recalculate ELO ratings for a specific quarter (used by cron jobs)
  */
 const recalculateQuarterlyELO = async (quarterInfo) => {
-  try {
-    const { year, quarter } = quarterInfo;
-    console.log(`Starting ELO recalculation for Q${quarter + 1}/${year}`);
+  // Delegate to full recalculation to ensure consistency
+  await recalculateAllELO();
+};
 
-    const quarterStart = new Date(year, quarter * 3, 1);
-    const quarterEnd = new Date(year, (quarter + 1) * 3, 0);
+/**
+ * Full recalculation of ALL ELO ratings from scratch.
+ * Optimized: all calculations in-memory, then batch-write to DB.
+ * ~5 DB operations instead of ~2000+ sequential ones.
+ */
+const recalculateAllELO = async () => {
+  const DEFAULT_ELO = 500;
+  console.log('Starting FULL ELO recalculation from scratch...');
 
-    const games = await Game.find({
-      createdAt: { $gte: quarterStart, $lte: quarterEnd }
-    })
-    .sort({ createdAt: 1 })
-    .populate('team1.player team2.player', 'username eloRating');
+  // Step 1: Single DB read - get ALL games sorted chronologically
+  const games = await Game.find({}).sort({ createdAt: 1 }).lean();
+  console.log(`Found ${games.length} total games to recalculate`);
 
-    if (games.length === 0) {
-      console.log(`No games found in Q${quarter + 1}/${year}`);
-      return;
-    }
+  // Step 2: Collect all player IDs
+  const playerIds = new Set();
+  games.forEach(game => {
+    game.team1.forEach(p => playerIds.add(p.player.toString()));
+    game.team2.forEach(p => playerIds.add(p.player.toString()));
+  });
 
-    console.log(`Found ${games.length} games to recalculate`);
-
-    const playerIds = new Set();
-    games.forEach(game => {
-      game.team1.forEach(player => playerIds.add(player.player._id.toString()));
-      game.team2.forEach(player => playerIds.add(player.player._id.toString()));
-    });
-
-    const quarterlyRecords = await QuarterlyELO.find({
-      user: { $in: Array.from(playerIds) },
-      year,
-      quarter
-    });
-
-    const quarterlyELOMap = new Map();
-    quarterlyRecords.forEach(record => {
-      quarterlyELOMap.set(record.user.toString(), record.startELO);
-    });
-
-    // Reset players to quarterly starting ELO
-    for (const playerId of playerIds) {
-      const startELO = quarterlyELOMap.get(playerId) || 500;
-      await User.findByIdAndUpdate(playerId, { eloRating: startELO });
-    }
-
-    // Process each game
-    for (const game of games) {
-      const player1 = await User.findById(game.team1[0].player._id);
-      const player2 = await User.findById(game.team1[1].player._id);
-      const player3 = await User.findById(game.team2[0].player._id);
-      const player4 = await User.findById(game.team2[1].player._id);
-
-      const playersInfo = {
-        team1: { player1, player2 },
-        team2: { player1: player3, player2: player4 }
-      };
-
-      const eloResults = calculateEloForMatch(playersInfo.team1, playersInfo.team2, game.score);
-
-      game.team1.forEach((player, index) => {
-        player.eloBeforeGame = eloResults.team1[index].eloBeforeGame;
-        player.eloAfterGame = eloResults.team1[index].eloAfterGame;
-        player.eloChange = eloResults.team1[index].eloChange;
-      });
-
-      game.team2.forEach((player, index) => {
-        player.eloBeforeGame = eloResults.team2[index].eloBeforeGame;
-        player.eloAfterGame = eloResults.team2[index].eloAfterGame;
-        player.eloChange = eloResults.team2[index].eloChange;
-      });
-
-      game.teamElo = eloResults.teamElo;
-      await game.save();
-
-      await User.findByIdAndUpdate(game.team1[0].player._id, { eloRating: eloResults.team1[0].eloAfterGame });
-      await User.findByIdAndUpdate(game.team1[1].player._id, { eloRating: eloResults.team1[1].eloAfterGame });
-      await User.findByIdAndUpdate(game.team2[0].player._id, { eloRating: eloResults.team2[0].eloAfterGame });
-      await User.findByIdAndUpdate(game.team2[1].player._id, { eloRating: eloResults.team2[1].eloAfterGame });
-    }
-
-    console.log(`ELO recalculation for Q${quarter + 1}/${year} completed`);
-  } catch (error) {
-    console.error('Error recalculating ELO:', error);
+  // Step 3: In-memory ELO tracker
+  const currentElo = new Map();
+  for (const playerId of playerIds) {
+    currentElo.set(playerId, DEFAULT_ELO);
   }
+
+  // Step 4: QuarterlyELO tracking
+  const quarterlyRecordsCreated = new Set();
+  const quarterlyRecordsToInsert = [];
+
+  const getQuarterInfo = (playerId, date) => {
+    const year = date.getFullYear();
+    const quarter = Math.floor(date.getMonth() / 3);
+    return { key: `${playerId}-${year}-${quarter}`, year, quarter };
+  };
+
+  // Step 5: Batch of game updates to write
+  const gameUpdates = [];
+
+  // Step 6: Process each game in chronological order (pure calculation, no DB)
+  for (const game of games) {
+    const p1Id = game.team1[0].player.toString();
+    const p2Id = game.team1[1].player.toString();
+    const p3Id = game.team2[0].player.toString();
+    const p4Id = game.team2[1].player.toString();
+
+    // Track quarterly records
+    for (const playerId of [p1Id, p2Id, p3Id, p4Id]) {
+      const { key, year, quarter } = getQuarterInfo(playerId, game.createdAt);
+      if (!quarterlyRecordsCreated.has(key)) {
+        quarterlyRecordsToInsert.push({
+          user: playerId,
+          year,
+          quarter,
+          startELO: currentElo.get(playerId)
+        });
+        quarterlyRecordsCreated.add(key);
+      }
+    }
+
+    // Build team objects with current in-memory ELO
+    const team1 = {
+      player1: { _id: game.team1[0].player, eloRating: currentElo.get(p1Id) },
+      player2: { _id: game.team1[1].player, eloRating: currentElo.get(p2Id) }
+    };
+    const team2 = {
+      player1: { _id: game.team2[0].player, eloRating: currentElo.get(p3Id) },
+      player2: { _id: game.team2[1].player, eloRating: currentElo.get(p4Id) }
+    };
+
+    // Calculate ELO (pure math, no DB)
+    const eloResults = calculateEloForMatch(team1, team2, game.score);
+
+    // Queue game update for batch write
+    gameUpdates.push({
+      updateOne: {
+        filter: { _id: game._id },
+        update: {
+          $set: {
+            'team1.0.eloBeforeGame': eloResults.team1[0].eloBeforeGame,
+            'team1.0.eloAfterGame': eloResults.team1[0].eloAfterGame,
+            'team1.0.eloChange': eloResults.team1[0].eloChange,
+            'team1.1.eloBeforeGame': eloResults.team1[1].eloBeforeGame,
+            'team1.1.eloAfterGame': eloResults.team1[1].eloAfterGame,
+            'team1.1.eloChange': eloResults.team1[1].eloChange,
+            'team2.0.eloBeforeGame': eloResults.team2[0].eloBeforeGame,
+            'team2.0.eloAfterGame': eloResults.team2[0].eloAfterGame,
+            'team2.0.eloChange': eloResults.team2[0].eloChange,
+            'team2.1.eloBeforeGame': eloResults.team2[1].eloBeforeGame,
+            'team2.1.eloAfterGame': eloResults.team2[1].eloAfterGame,
+            'team2.1.eloChange': eloResults.team2[1].eloChange,
+            'teamElo': eloResults.teamElo,
+            'winner': eloResults.winner
+          }
+        }
+      }
+    });
+
+    // Update in-memory ELO tracker
+    currentElo.set(p1Id, eloResults.team1[0].eloAfterGame);
+    currentElo.set(p2Id, eloResults.team1[1].eloAfterGame);
+    currentElo.set(p3Id, eloResults.team2[0].eloAfterGame);
+    currentElo.set(p4Id, eloResults.team2[1].eloAfterGame);
+  }
+
+  // Step 7: Batch-write everything to DB (few large operations instead of many small ones)
+
+  // 7a: Delete old QuarterlyELO records
+  await QuarterlyELO.deleteMany({ user: { $in: Array.from(playerIds) } });
+
+  // 7b: Insert new QuarterlyELO records in one batch
+  if (quarterlyRecordsToInsert.length > 0) {
+    await QuarterlyELO.insertMany(quarterlyRecordsToInsert);
+  }
+
+  // 7c: Batch-update all games (bulkWrite handles up to 100k ops)
+  if (gameUpdates.length > 0) {
+    await Game.bulkWrite(gameUpdates);
+  }
+
+  // 7d: Batch-update all user ELO ratings
+  const userUpdates = Array.from(currentElo).map(([playerId, elo]) => ({
+    updateOne: {
+      filter: { _id: playerId },
+      update: { $set: { eloRating: elo } }
+    }
+  }));
+  if (userUpdates.length > 0) {
+    await User.bulkWrite(userUpdates);
+  }
+
+  console.log(`FULL ELO recalculation completed. Processed ${games.length} games for ${playerIds.size} players.`);
 };
 
 module.exports = {
   initCronJobs,
   recalculateQuarterlyELO,
+  recalculateAllELO,
   getPreviousQuarter,
   distributeQuarterlyAwards,
   sendQuarterlyReport
